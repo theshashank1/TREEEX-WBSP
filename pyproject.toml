@@ -1,7 +1,12 @@
 [project]
-name = "myapp"
+name = "TREEEX-WBSP"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastapi[standard]>=0.123.2",
+    "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.1",
+    "sqlmodel>=0.0.27",
+]
