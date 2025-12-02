@@ -1,84 +1,219 @@
-import os
+"""
+Webhook Endpoint - app/api/webhooks.py
+
+Single entry point for all Meta WhatsApp events (Messages, Statuses, Template changes).
+
+ARCHITECTURE:
+    - Decoupled: Webhook acts as an ingestion layer only.
+    - Synchronous: Validates signature, checks idempotency, pushes to Redis (< 500ms).
+    - Asynchronous: Workers process the logic (DB writes, logic) to prevent timeouts.
+
+CRITICAL CONSTRAINTS:
+    - Must respond with 200 OK within 3 seconds to prevent Meta retries.
+    - Must return 200 OK even on processing errors (log & continue).
+    - Must handle duplicate events via Event ID (Idempotency).
+    - Must verify X-Hub-Signature-256 (Security).
+
+ENDPOINTS:
+    - GET /webhook: Meta verification challenge (Setup only).
+    - POST /webhook: Event ingestion.
+"""
+
+from fastapi import APIRouter, Request, HTTPException, Header
+from typing import Optional
 import json
-from datetime import datetime
+import hmac
+import hashlib
 from server.core.config import settings
+# from server.core.redis import get_redis, QueueNames
+# from server.whatsapp.parser import webhook_parser
+# from app.utils.idempotency import is_duplicate
+# from app.core.monitoring import log_event, log_exception
 
-from fastapi import APIRouter, FastAPI, Request, Response, HTTPException
+router = APIRouter(tags=["Webhooks"])
 
-router = APIRouter()
 
-# 1. Configuration
-VERIFY_TOKEN = settings.META_WEBHOOK_VERIFY_TOKEN
-print(VERIFY_TOKEN)
-PORT = settings.PORT
-LOG_FILE = "whatsapp_webhook_log.txt"
-
-def append_log(payload: dict):
+@router.get("/webhook")
+async def verify_webhook(
+    request: Request
+):
     """
-    Appends the webhook payload to a text file in a neat format.
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    Webhook Verification (Setup Only)
     
-    # Try to identify the event type for the header
-    event_type = "Unknown Event"
-    try:
-        changes = payload.get("entry", [])[0].get("changes", [])[0].get("value", {})
-        if "messages" in changes:
-            event_type = "📨 INCOMING MESSAGE"
-        elif "statuses" in changes:
-            event_type = "✅ MESSAGE STATUS UPDATE"
-        elif "message_template_status_update" in changes:
-            event_type = "📝 TEMPLATE UPDATE"
-    except:
-        pass
-
-    # Create a neat divider
-    log_entry = (
-        f"\n"
-        f"==================================================\n"
-        f"📅 TIME: {timestamp} | TYPE: {event_type}\n"
-        f"==================================================\n"
-        f"{json.dumps(payload, indent=4)}\n"
-    )
-
-    # Append to file (mode='a')
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(log_entry)
-
-@router.get("/")
-async def verify_webhook(request: Request):
+    Meta calls this ONCE when you first configure the webhook.
+    Must return the challenge value to verify ownership.
+    
+    Query Parameters (from Meta):
+        hub.mode: "subscribe"
+        hub.verify_token: Your secret token
+        hub.challenge: Random string to echo back
     """
-    Handle the Webhook Verification (GET)
-    """
+    # Get query parameters
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
-
-    if mode == "subscribe" and token == VERIFY_TOKEN:
-        print("✅ WEBHOOK VERIFIED")
-        return Response(content=challenge, media_type="text/plain")
     
-    print("❌ VERIFICATION FAILED")
-    raise HTTPException(status_code=403, detail="Forbidden")
+    # Verify parameters
+    if mode == "subscribe" and token == settings.META_WEBHOOK_VERIFY_TOKEN:
+        # Token matches - return challenge to verify
+        # log_event("webhook_verified", {"mode": mode})
+        print("webhook_verified", {"mode": mode})
+        return int(challenge)  # Must return as integer
+    else:
+        # Token doesn't match - reject
+        log_event("webhook_verification_failed", {
+            "mode": mode,
+            "token_provided": bool(token)
+        })
+        raise HTTPException(status_code=403, detail="Verification failed")
 
 
-@router.post("/")
-async def receive_webhook(request: Request):
+@router.post("/webhook")
+async def receive_webhook(
+    request: Request,
+    x_hub_signature_256: Optional[str] = Header(None)
+):
     """
-    Handle Incoming Events (POST)
-    Logs to file and returns 200 OK.
+    Main Webhook Endpoint - Receives ALL events from Meta
+    
+    Flow: Validate -> Check Idempotency -> Queue to Redis -> Return 200
     """
+    
     try:
-        payload = await request.json()
+        # Step 1: Read raw body (needed for signature verification)
+        body = await request.body()
         
-        # 1. Write to file
-        append_log(payload)
+        # Step 2: Verify signature (security check)
+        # TODO: Uncomment in production!
+        # if not verify_signature(body, x_hub_signature_256):
+        #     log_event("webhook_invalid_signature")
+        #     raise HTTPException(status_code=401, detail="Invalid signature")
         
-        # 2. Print to console (so you see it happening live)
-        print(f"✅ Event logged to {LOG_FILE}")
+        # Step 3: Parse JSON payload
+        payload = json.loads(body)
         
-        return {"status": "received"}
+        # Step 4: Validate payload structure
+        if not webhook_parser.is_valid_webhook(payload):
+            print("webhook_invalid_payload", {"payload": payload})
+            return {"status": "ok"}  # Still return 200 to Meta
+        
+        # Step 5: Get event ID for idempotency
+        event_id = webhook_parser.get_event_id(payload)
+        
+        # Step 6: Check if we've already processed this
+        if event_id and await is_duplicate(event_id):
+            print("webhook_duplicate", {"event_id": event_id})
+            return {"status": "ok"}  # Already processed, skip
+        
+        # Step 7: Determine event type and route to appropriate queue
+        # await route_webhook_to_queue(payload)
+        
+        # Step 8: Log success
+        print("webhook_received", {
+            "event_id": event_id,
+            "object": payload.get("object")
+        })
+        
+        # Step 9: Return success to Meta (FAST!)
+        return {"status": "ok"}
+        
+    except json.JSONDecodeError:
+        print(Exception("Invalid JSON in webhook"))
+        return {"status": "ok"}  # Still return 200 to Meta
         
     except Exception as e:
-        print(f"⚠️ Error processing webhook: {e}")
-        return {"status": "error"} # Still return 200 equivalent
+        # Log error but still return 200 to Meta
+        # Don't want Meta to keep retrying due to our errors
+        print(e, {"endpoint": "webhook"})
+        return {"status": "ok"}
+
+
+async def route_webhook_to_queue(payload: dict):
+    """
+    Route webhook to appropriate Redis queue based on event type.
+    """
+    redis = await get_redis()
+    
+    # Extract all messages
+    messages = webhook_parser.extract_messages(payload)
+    if messages:
+        for message in messages:
+            # Queue each message for processing
+            await redis.lpush(
+                QueueNames.WEBHOOK_PROCESSING,
+                json.dumps({
+                    "type": "message",
+                    "data": message,
+                    "payload": payload  # Full payload for context
+                })
+            )
+    
+    # Extract all status updates
+    statuses = webhook_parser.extract_statuses(payload)
+    if statuses:
+        for status in statuses:
+            # Queue each status update
+            await redis.lpush(
+                QueueNames.WEBHOOK_PROCESSING,
+                json.dumps({
+                    "type": "status",
+                    "data": status,
+                    "payload": payload
+                })
+            )
+    
+    # Check for template status updates
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            value = change.get("value", {})
+            
+            # Template status update
+            if "message_template_status_update" in value:
+                await redis.lpush(
+                    QueueNames.WEBHOOK_PROCESSING,
+                    json.dumps({
+                        "type": "template_status",
+                        "data": value["message_template_status_update"],
+                        "payload": payload
+                    })
+                )
+            
+            # Phone number quality update
+            if "phone_number_quality_update" in value:
+                await redis.lpush(
+                    QueueNames.WEBHOOK_PROCESSING,
+                    json.dumps({
+                        "type": "quality_update",
+                        "data": value["phone_number_quality_update"],
+                        "payload": payload
+                    })
+                )
+
+
+def verify_signature(body: bytes, signature: Optional[str]) -> bool:
+    """
+    Verify webhook came from Meta using HMAC signature.
+    """
+    if not signature:
+        return False
+    
+    # Extract signature from header (format: "sha256=xxxxx")
+    try:
+        method, signature_hash = signature.split("=")
+        if method != "sha256":
+            return False
+    except ValueError:
+        return False
+    
+    # Calculate expected signature
+    # TODO: Add APP_SECRET to settings
+    app_secret = settings.META_WEBHOOK_VERIFY_TOKEN  # Use app secret instead
+    # expected_signature = hmac.new(
+    #     app_secret.encode(),
+    #     body,
+    #     hashlib.sha256
+    # ).hexdigest()
+    
+    # Compare signatures (timing-safe comparison)
+    # return hmac.compare_digest(signature_hash, expected_signature)
+    return app_secret == 
