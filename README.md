@@ -13,3 +13,13 @@ uv run main.py
 ```
 uv add ruff
 ```
+## FastAPI Server
+```
+fastapi run main.py
+```
+
+## Forword Poxry
+
+```
+ngrok http 8000
+```
