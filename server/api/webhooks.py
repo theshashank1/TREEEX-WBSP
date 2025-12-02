@@ -216,4 +216,4 @@ def verify_signature(body: bytes, signature: Optional[str]) -> bool:
     
     # Compare signatures (timing-safe comparison)
     # return hmac.compare_digest(signature_hash, expected_signature)
-    return app_secret == 
+    return app_secret == signature_hash
