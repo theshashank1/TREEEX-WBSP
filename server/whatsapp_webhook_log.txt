@@ -1,0 +1,1867 @@
+
+==================================================
+📅 TIME: 2025-12-02 18:15:57 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "0",
+            "changes": [
+                {
+                    "field": "messages",
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "16505551111",
+                            "phone_number_id": "123456123"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "test user name"
+                                },
+                                "wa_id": "16315551181"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "16315551181",
+                                "id": "ABGGFlA5Fpa",
+                                "timestamp": "1504902988",
+                                "type": "text",
+                                "text": {
+                                    "body": "this is a text message"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:17:42 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUM1OTI0RUEwRjZCMjMxOUVCMTIwNjU2MEM5NDNBOEEA",
+                                "timestamp": "1764699461",
+                                "text": {
+                                    "body": "Hey how are you"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:18:12 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUM3RkJBRDVDNUFBMEI4MTRFOERGQ0RFMzNGQkJGNUMA",
+                                "timestamp": "1764699491",
+                                "text": {
+                                    "body": "Im good"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:20:32 | TYPE: Unknown Event
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "0",
+            "changes": [
+                {
+                    "field": "history",
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "history": [
+                            {
+                                "metadata": {
+                                    "phase": 1,
+                                    "chunk_order": 131,
+                                    "progress": 30
+                                },
+                                "threads": [
+                                    {
+                                        "id": "1234567890",
+                                        "messages": [
+                                            {
+                                                "from": "16505551111",
+                                                "id": "ABGGFlA5Fpa",
+                                                "timestamp": "1504902988",
+                                                "type": "media_placeholder",
+                                                "history_context": {
+                                                    "status": "read",
+                                                    "from_me": true
+                                                }
+                                            },
+                                            {
+                                                "from": "16315551181",
+                                                "id": "ABGGFlA5Fpa",
+                                                "timestamp": "1504902988",
+                                                "type": "text",
+                                                "text": {
+                                                    "body": "this is a text message"
+                                                },
+                                                "history_context": {
+                                                    "status": "delivered",
+                                                    "from_me": false
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "metadata": {
+                            "display_phone_number": "16505551111",
+                            "phone_number_id": "123123123"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:22:16 | TYPE: Unknown Event
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "0",
+            "changes": [
+                {
+                    "field": "tracking_events",
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "16505551111",
+                            "phone_number_id": "123456123"
+                        },
+                        "events": [
+                            {
+                                "event_name": "sent",
+                                "timestamp": 1504902988,
+                                "tracking_data": {
+                                    "click_id": "test-click-id",
+                                    "tracking_token": "test-tracking-token"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:23:13 | TYPE: Unknown Event
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "0",
+            "changes": [
+                {
+                    "field": "group_status_update",
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "12345550001",
+                            "phone_number_id": "123456123"
+                        },
+                        "groups": [
+                            {
+                                "timestamp": 1695414936173,
+                                "type": "group_suspend",
+                                "group_id": "TestGroupId"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:24:24 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUNBMDA3NUM2RTdCRDkwQkQ1NzdBQzFCQTZEQzhCMjMA",
+                                "timestamp": "1764699863",
+                                "text": {
+                                    "body": "Byee"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:28:00 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMzhGNDJBOUI2MTQ2RDFDNjUyAA==",
+                                "status": "sent",
+                                "timestamp": "1764700079",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:28:01 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMzhGNDJBOUI2MTQ2RDFDNjUyAA==",
+                                "status": "delivered",
+                                "timestamp": "1764700080",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:28:06 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMzhGNDJBOUI2MTQ2RDFDNjUyAA==",
+                                "status": "read",
+                                "timestamp": "1764700086",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:28:51 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTdCMTJDNTY3RjgxQUZEQ0QzAA==",
+                                "status": "sent",
+                                "timestamp": "1764700130",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:28:52 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTdCMTJDNTY3RjgxQUZEQ0QzAA==",
+                                "status": "read",
+                                "timestamp": "1764700131",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:29:26 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQjZBMDg5NDIxQzM2M0VGNjI4AA==",
+                                "status": "sent",
+                                "timestamp": "1764700166",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:29:28 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQjZBMDg5NDIxQzM2M0VGNjI4AA==",
+                                "status": "read",
+                                "timestamp": "1764700168",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:30:27 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQzNFNTA2MEU2MUZEMTY1RUE2AA==",
+                                "status": "sent",
+                                "timestamp": "1764700227",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:30:29 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQzNFNTA2MEU2MUZEMTY1RUE2AA==",
+                                "status": "delivered",
+                                "timestamp": "1764700228",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:30:30 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQzNFNTA2MEU2MUZEMTY1RUE2AA==",
+                                "status": "read",
+                                "timestamp": "1764700229",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:31:57 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQUFBRjJFNzc2MDY1NDRDMDhGAA==",
+                                "status": "sent",
+                                "timestamp": "1764700316",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:00 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQUFBRjJFNzc2MDY1NDRDMDhGAA==",
+                                "status": "read",
+                                "timestamp": "1764700319",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:00 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQUFBRjJFNzc2MDY1NDRDMDhGAA==",
+                                "status": "delivered",
+                                "timestamp": "1764700319",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:02 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQUFBRjJFNzc2MDY1NDRDMDhGAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUM5NTA0MjZEQjcxQzM0RjQyODBDMUQ2QzNFNUJENzEA",
+                                "timestamp": "1764700321",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "button_reply",
+                                    "button_reply": {
+                                        "id": "<UNIQUE_BUTTON_ID_1>",
+                                        "title": "<BUTTON_TITLE_1>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:04 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQUFBRjJFNzc2MDY1NDRDMDhGAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUM0QkRFMUNGNUNDRDQ4NTc1RDEzNjlCNjI2NkI5MzEA",
+                                "timestamp": "1764700322",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "button_reply",
+                                    "button_reply": {
+                                        "id": "<UNIQUE_BUTTON_ID_2>",
+                                        "title": "<BUTTON_TITLE_2>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:35 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTU1NzdEMkEzMUQwNjQwN0ZBAA==",
+                                "status": "sent",
+                                "timestamp": "1764700355",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:36 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTU1NzdEMkEzMUQwNjQwN0ZBAA==",
+                                "status": "read",
+                                "timestamp": "1764700356",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:32:38 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTU1NzdEMkEzMUQwNjQwN0ZBAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUMwRTdGNDNBRERDQzI5RTJFRDFFMEJBOEM0OTFCM0YA",
+                                "timestamp": "1764700357",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "button_reply",
+                                    "button_reply": {
+                                        "id": "<UNIQUE_BUTTON_ID_1>",
+                                        "title": "<BUTTON_TITLE_1>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:33:16 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTU1NzdEMkEzMUQwNjQwN0ZBAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUNGOUJBRTIxOTU2REZERUVGQzUzQzg5OTVFQjcxQTYA",
+                                "timestamp": "1764700395",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "button_reply",
+                                    "button_reply": {
+                                        "id": "<UNIQUE_BUTTON_ID_2>",
+                                        "title": "<BUTTON_TITLE_2>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:47:43 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSODEzRjFBRkFFMTAzNzc3OUYzAA==",
+                                "status": "failed",
+                                "timestamp": "1764701262",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:48:03 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNEI5NTIyRjJFRUMzOUZGNkI4AA==",
+                                "status": "failed",
+                                "timestamp": "1764701282",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:48:45 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMEJDNzVEOTE1QTcwRTFCQzEwAA==",
+                                "status": "failed",
+                                "timestamp": "1764701324",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:49:23 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNTZCMEE4NDZFNTFFOUQ1RURBAA==",
+                                "status": "failed",
+                                "timestamp": "1764701362",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:14 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMDAzNUU3OEZBNzQwRDNFMTJEAA==",
+                                "status": "failed",
+                                "timestamp": "1764701413",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:16 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSQkZDMzI3NDgyRDY5ODQ0MjA3AA==",
+                                "status": "failed",
+                                "timestamp": "1764701416",
+                                "recipient_id": "919492834190",
+                                "errors": [
+                                    {
+                                        "code": 131053,
+                                        "title": "Media upload error",
+                                        "message": "Media upload error",
+                                        "error_data": {
+                                            "details": "Unsupported Image mime type image/webp. Please use one of image/png, image/jpeg."
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:48 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA==",
+                                "status": "sent",
+                                "timestamp": "1764701447",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:49 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA==",
+                                "status": "delivered",
+                                "timestamp": "1764701448",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:51 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA==",
+                                "status": "read",
+                                "timestamp": "1764701450",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:50:55 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUNFOTZDNkI2OUIwM0VBQTQyRjUzMjE4OTA2NDc5NzEA",
+                                "timestamp": "1764701454",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "list_reply",
+                                    "list_reply": {
+                                        "id": "<LIST_SECTION_1_ROW_1_ID>",
+                                        "title": "<SECTION_1_ROW_1_TITLE>",
+                                        "description": "<SECTION_1_ROW_1_DESC>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:51:00 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUM4MUUxQkQ1MTVGN0JGMTFDNTNGRDczRTE4ODJBRTQA",
+                                "timestamp": "1764701460",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "list_reply",
+                                    "list_reply": {
+                                        "id": "<LIST_SECTION_2_ROW_1_ID>",
+                                        "title": "<SECTION_2_ROW_1_TITLE>",
+                                        "description": "<SECTION_2_ROW_1_DESC>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:51:04 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "context": {
+                                    "from": "15551664412",
+                                    "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSMTI1RkJBMkY0NjgwNTgwQUYyAA=="
+                                },
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUNBMEJFODA5RkExMzFGNjVEMUUyNDBCQkFEQzk0NDQA",
+                                "timestamp": "1764701464",
+                                "type": "interactive",
+                                "interactive": {
+                                    "type": "list_reply",
+                                    "list_reply": {
+                                        "id": "<LIST_SECTION_2_ROW_2_ID>",
+                                        "title": "<SECTION_2_ROW_2_TITLE>",
+                                        "description": "<SECTION_2_ROW_2_DESC>"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:51:20 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUNFRUNGQzI4NkRGRUU5MUY0OEU5OEY4RDFGMzUyM0QA",
+                                "timestamp": "1764701479",
+                                "text": {
+                                    "body": "Okay"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:00 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzFCMjdGN0REMjU1OUZCOTVDAA==",
+                                "status": "sent",
+                                "timestamp": "1764701520",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:02 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzFCMjdGN0REMjU1OUZCOTVDAA==",
+                                "status": "delivered",
+                                "timestamp": "1764701522",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:14 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzY0NjBENzY0OEE4Qzg0REU1AA==",
+                                "status": "sent",
+                                "timestamp": "1764701534",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:16 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzY0NjBENzY0OEE4Qzg0REU1AA==",
+                                "status": "delivered",
+                                "timestamp": "1764701535",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:37 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzFCMjdGN0REMjU1OUZCOTVDAA==",
+                                "status": "read",
+                                "timestamp": "1764701556",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 18:52:37 | TYPE: ✅ MESSAGE STATUS UPDATE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "statuses": [
+                            {
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAERgSNzY0NjBENzY0OEE4Qzg0REU1AA==",
+                                "status": "read",
+                                "timestamp": "1764701556",
+                                "recipient_id": "919492834190",
+                                "pricing": {
+                                    "billable": false,
+                                    "pricing_model": "PMP",
+                                    "category": "service",
+                                    "type": "free_customer_service"
+                                }
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}

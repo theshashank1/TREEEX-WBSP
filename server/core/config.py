@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # Meta WhatsApp
     META_API_VERSION: Optional[str] = None
     META_GRAPH_API_URL: Optional[str] = None
-    META_WEBHOOK_VERIFY_TOKEN: Optional[str] = None
+    META_WEBHOOK_VERIFY_TOKEN: str = "vibecode"
     META_ACCESS_TOKEN: Optional[str] = None
     
     # Azure Blob Storage
