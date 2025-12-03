@@ -22,7 +22,7 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
     phone_number_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)

@@ -80,7 +80,7 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     type: Mapped[str] = mapped_column(String(20), nullable=False)
     original_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -135,7 +135,7 @@ class Message(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_bot: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sent_by: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("workspace_members. id", ondelete="SET NULL"), nullable=True
+        ForeignKey("workspace_members.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         default=utc_now, server_default=func.now(), nullable=False
