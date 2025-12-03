@@ -1,4 +1,4 @@
-from .base import Base
+from . base import Base
 
 # Import all sub-modules to register them with metadata
 from .access import User, Workspace, WorkspaceMember
@@ -10,15 +10,15 @@ from .audit import WebhookLog
 __all__ = [
     "Base",
     "User",
-    "Workspace", 
+    "Workspace",
     "WorkspaceMember",
-    "Contact", 
+    "Contact",
     "PhoneNumber",
-    "Conversation", 
-    "Message", 
+    "Conversation",
+    "Message",
     "MediaFile",
-    "Campaign", 
-    "CampaignMessage", 
+    "Campaign",
+    "CampaignMessage",
     "Template",
-    "WebhookLog"
+    "WebhookLog",
 ]
