@@ -1,0 +1,108 @@
+
+==================================================
+📅 TIME: 2025-12-02 20:33:32 | TYPE: Unknown Event
+==================================================
+"vibecode"
+
+==================================================
+📅 TIME: 2025-12-02 20:36:32 | TYPE: Unknown Event
+==================================================
+{
+    "mode": null,
+    "token": "vibecode",
+    "challenge": null
+}
+{"mode": "None", "token": "None", "challenge": "None"}
+{"mode": "None", "token": "None", "challenge": "None"}
+{"mode": "None", "token": "None", "challenge": "None"}
+{"mode": "None", "token": "None", "challenge": "None"}
+{"token": "vibecode"}
+{"token": "vibecode"}
+{"token": "vibecode"}
+{"token": "vibecode"}
+
+==================================================
+📅 TIME: 2025-12-02 20:55:06 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "1903853310227863",
+            "changes": [
+                {
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "15551664412",
+                            "phone_number_id": "881598551708915"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "Shashank Gunda"
+                                },
+                                "wa_id": "919492834190"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "919492834190",
+                                "id": "wamid.HBgMOTE5NDkyODM0MTkwFQIAEhggQUMwQzlCRTlDNTFDRTM4MEQxRDZEN0IyOTM0MTdFQzAA",
+                                "timestamp": "1764708906",
+                                "text": {
+                                    "body": "Hi"
+                                },
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    "field": "messages"
+                }
+            ]
+        }
+    ]
+}
+
+==================================================
+📅 TIME: 2025-12-02 20:57:44 | TYPE: 📨 INCOMING MESSAGE
+==================================================
+{
+    "object": "whatsapp_business_account",
+    "entry": [
+        {
+            "id": "0",
+            "changes": [
+                {
+                    "field": "messages",
+                    "value": {
+                        "messaging_product": "whatsapp",
+                        "metadata": {
+                            "display_phone_number": "16505551111",
+                            "phone_number_id": "123456123"
+                        },
+                        "contacts": [
+                            {
+                                "profile": {
+                                    "name": "test user name"
+                                },
+                                "wa_id": "16315551181"
+                            }
+                        ],
+                        "messages": [
+                            {
+                                "from": "16315551181",
+                                "id": "ABGGFlA5Fpa",
+                                "timestamp": "1504902988",
+                                "type": "text",
+                                "text": {
+                                    "body": "this is a text message"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
