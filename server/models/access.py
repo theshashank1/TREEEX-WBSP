@@ -58,7 +58,7 @@ class Workspace(TimestampMixin, SoftDeleteMixin, Base):
         ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )
     plan: Mapped[str] = mapped_column(String(20), default=WorkspacePlan.FREE.value, nullable=False)
-    status: Mapped[str] = mapped_column(String(20), default=WorkspaceStatus.ACTIVE. value, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default=WorkspaceStatus.ACTIVE.value, nullable=False)
     settings: Mapped[dict] = mapped_column(JSONB, server_default=text("'{}'::jsonb"), nullable=False)
 
     # Relationships

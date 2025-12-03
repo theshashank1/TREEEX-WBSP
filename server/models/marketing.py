@@ -21,7 +21,7 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
     """Message templates - scoped to phone_number_id for Meta API registration."""
     __tablename__ = "templates"
 
-    id: Mapped[uuid. UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
