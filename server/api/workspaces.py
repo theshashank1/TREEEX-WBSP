@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Annotated, List, Optional
 from uuid import UUID
 
@@ -10,7 +9,7 @@ from server.core.db import get_async_session
 from server.core.supabase import Client, get_user
 from server.dependencies import get_supabase_client
 from server.models.access import User, Workspace, WorkspaceMember
-from server.models.base import MemberRole, MemberStatus
+from server.models.base import MemberRole, MemberStatus, utc_now
 from server.schemas.workspaces import (
     AddMemberRequest,
     WorkspaceCreate,
@@ -106,13 +105,12 @@ async def create_workspace(
         await session.flush()  # Get workspace ID before creating member
 
         # Add creator as OWNER member
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
         member = WorkspaceMember(
             workspace_id=workspace.id,
             user_id=user.id,
             role=MemberRole.OWNER.value,
             status=MemberStatus.ACTIVE.value,
-            joined_at=now,
+            joined_at=utc_now(),
         )
 
         session.add(member)
@@ -121,9 +119,9 @@ async def create_workspace(
 
         return workspace
 
-    except Exception as e:
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to create workspace")
 
 
 @router.get("", response_model=List[WorkspaceListResponse])
@@ -210,9 +208,9 @@ async def update_workspace(
 
         return workspace
 
-    except Exception as e:
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to update workspace")
 
 
 @router.delete("/{workspace_id}", status_code=204)
@@ -235,9 +233,9 @@ async def delete_workspace(
         workspace.soft_delete()
         await session.commit()
 
-    except Exception as e:
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to delete workspace")
 
 
 @router.get("/{workspace_id}/members", response_model=List[WorkspaceMemberResponse])
@@ -257,7 +255,10 @@ async def list_workspace_members(
     )
 
     result = await session.execute(
-        select(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace_id)
+        select(WorkspaceMember).where(
+            WorkspaceMember.workspace_id == workspace_id,
+            WorkspaceMember.status == MemberStatus.ACTIVE.value,
+        )
     )
 
     members = result.scalars().all()
@@ -305,15 +306,14 @@ async def add_workspace_member(
         )
 
     try:
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
         member = WorkspaceMember(
             workspace_id=workspace_id,
             user_id=new_member_user.id,
             role=data.role.value,
             status=MemberStatus.ACTIVE.value,
             invited_by=user.id,
-            invited_at=now,
-            joined_at=now,
+            invited_at=utc_now(),
+            joined_at=utc_now(),
         )
 
         session.add(member)
@@ -322,6 +322,6 @@ async def add_workspace_member(
 
         return member
 
-    except Exception as e:
+    except Exception:
         await session.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail="Failed to add member")
