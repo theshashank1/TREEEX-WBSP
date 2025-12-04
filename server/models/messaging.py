@@ -135,7 +135,7 @@ class Message(Base):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_bot: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     sent_by: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("workspace_members. id", ondelete="SET NULL"), nullable=True
+        ForeignKey("workspace_members.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
         default=utc_now, server_default=func.now(), nullable=False

@@ -19,7 +19,7 @@ class WebhookLog(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True  # FIXED: Removed space
+        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True
     )
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     event_id_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
