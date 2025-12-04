@@ -121,6 +121,12 @@ async def signin(
         raise HTTPException(status_code=400, detail="Unsupported provider")
 
 
+@router.post("/refresh")
+async def refresh(supabase: SupabaseDep):
+    return supabase.auth.refresh_session()
+    pass
+
+
 @router.get("/me")
 async def me(supabase: SupabaseDep):
     return get_user(supabase)
