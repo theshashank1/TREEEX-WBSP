@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from supabase import create_client
 
 # Import routers
-from server.api import auth, webhooks
+from server.api import auth, webhooks, workspaces
 from server.core import redis as redis_client
 from server.core.config import settings
 from server.core.supabase import get_supabase_client
@@ -33,3 +33,4 @@ app = FastAPI(lifespan=lifespan)
 # Register Routers
 app.include_router(webhooks.router)
 app.include_router(auth.router, prefix="/auth")
+app.include_router(workspaces.router)
