@@ -1,9 +1,10 @@
 from __future__ import annotations
-import uuid
-from typing import Optional
-from datetime import datetime
 
-from sqlalchemy import String, Boolean, Text, ForeignKey, Index, Uuid, func
+import uuid
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import Boolean, ForeignKey, Index, String, Text, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +13,7 @@ from .base import Base, utc_now
 
 class WebhookLog(Base):
     """Webhook audit log with idempotency - no soft delete for audit trail."""
+
     __tablename__ = "webhook_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -35,11 +37,15 @@ class WebhookLog(Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="webhook_logs")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="webhook_logs"
+    )
     phone_number: Mapped[Optional["PhoneNumber"]] = relationship("PhoneNumber")
 
     __table_args__ = (
-        Index("idx_webhook_workspace_event", "workspace_id", "event_id_hash", unique=True),
+        Index(
+            "idx_webhook_workspace_event", "workspace_id", "event_id_hash", unique=True
+        ),
         Index("idx_webhook_workspace_time", "workspace_id", "received_at"),
         Index("idx_webhook_phone_time", "phone_number_id", "received_at"),
         Index("idx_webhook_unprocessed", "processed", "received_at"),

@@ -1,23 +1,25 @@
 from __future__ import annotations
-import uuid
-from typing import List, Optional
-from datetime import datetime
 
-from sqlalchemy import String, Boolean, Integer, Text, ForeignKey, Index, Uuid, text
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+import uuid
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, Text, Uuid, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.models.base import (
     Base,
-    TimestampMixin,
-    SoftDeleteMixin,
     PhoneNumberQuality,
     PhoneNumberStatus,
+    SoftDeleteMixin,
+    TimestampMixin,
 )
 
 
 class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
     """WhatsApp Business Phone Numbers with Meta credentials."""
+
     __tablename__ = "phone_numbers"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -25,7 +27,9 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
-    phone_number_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    phone_number_id: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False
+    )
     display_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     access_token: Mapped[str] = mapped_column(Text, nullable=False)
     business_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -40,7 +44,9 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
     verified_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="phone_numbers")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="phone_numbers"
+    )
     conversations: Mapped[List["Conversation"]] = relationship(
         "Conversation", back_populates="phone_number", cascade="all, delete-orphan"
     )
@@ -58,7 +64,9 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     __table_args__ = (
-        Index("idx_phone_workspace_number", "workspace_id", "phone_number", unique=True),
+        Index(
+            "idx_phone_workspace_number", "workspace_id", "phone_number", unique=True
+        ),
         Index("idx_phone_workspace", "workspace_id"),
         Index("idx_phone_status", "status"),
         Index("idx_phone_number_id", "phone_number_id"),
@@ -67,6 +75,7 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
 
 class Contact(TimestampMixin, SoftDeleteMixin, Base):
     """Customer database with opt-in compliance tracking."""
+
     __tablename__ = "contacts"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -86,7 +95,9 @@ class Contact(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="contacts")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="contacts"
+    )
     conversations: Mapped[List["Conversation"]] = relationship(
         "Conversation", back_populates="contact", cascade="all, delete-orphan"
     )

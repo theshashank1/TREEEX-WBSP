@@ -1,7 +1,8 @@
-from sqlmodel import create_engine
-from sqlalchemy import text
 import os
+
 from dotenv import load_dotenv
+from sqlalchemy import text
+from sqlmodel import create_engine
 
 load_dotenv()
 
@@ -13,11 +14,13 @@ db_name = os.environ.get("POSTGRES_DB")
 
 # URL encode password
 from urllib.parse import quote
+
 db_password = quote(db_password)
 
 connection_string = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
 
 engine = create_engine(connection_string, echo=True)
+
 
 async def test_db():
     try:
@@ -28,9 +31,12 @@ async def test_db():
     except Exception as e:
         return f"Database connection failed: {e}, {connection_string}"
 
+
 # FastAPI example
 from fastapi import FastAPI
+
 app = FastAPI()
+
 
 @app.get("/test-db")
 async def test_db_route():
@@ -44,4 +50,5 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

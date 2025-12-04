@@ -4,13 +4,14 @@ Handles connection pooling, caching, queue operations, and pub/sub
 """
 
 from __future__ import annotations
+
 import json
 import logging
-from enum import Enum
-from typing import Optional, Any, TypeVar, Callable
 from contextlib import asynccontextmanager
+from enum import Enum
+from typing import Any, Callable, Optional, TypeVar
 
-import redis. asyncio as redis
+import redis.asyncio as redis
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
 
@@ -25,24 +26,25 @@ T = TypeVar("T")
 # QUEUE NAMES
 # ============================================================================
 
+
 class Queue(str, Enum):
     """Queue names for async job processing"""
-    
+
     # Core messaging
     OUTBOUND_MESSAGES = "queue:outbound"
     INBOUND_WEBHOOKS = "queue:webhooks"
     MESSAGE_STATUS = "queue:status"
-    
+
     # Media (Azure Blob)
     MEDIA_DOWNLOAD = "queue:media:download"
     MEDIA_UPLOAD = "queue:media:upload"
-    
+
     # Campaigns
     CAMPAIGN_JOBS = "queue:campaigns"
-    
+
     # Templates
     TEMPLATE_SYNC = "queue:templates"
-    
+
     # Priority & DLQ
     HIGH_PRIORITY = "queue:priority"
     DEAD_LETTER = "queue:dlq"
@@ -52,13 +54,15 @@ class Queue(str, Enum):
 # TTL CONSTANTS (seconds)
 # ============================================================================
 
+
 class TTL:
     """Cache TTL values in seconds"""
-    IDEMPOTENCY = 86400      # 24 hours - webhook deduplication
-    SESSION = 604800         # 7 days - user sessions
-    CACHE = 3600             # 1 hour - general cache
-    RATE_LIMIT = 60          # 1 minute - rate limit windows
-    VERIFICATION = 300       # 5 minutes - codes
+
+    IDEMPOTENCY = 86400  # 24 hours - webhook deduplication
+    SESSION = 604800  # 7 days - user sessions
+    CACHE = 3600  # 1 hour - general cache
+    RATE_LIMIT = 60  # 1 minute - rate limit windows
+    VERIFICATION = 300  # 5 minutes - codes
     CONVERSATION_WINDOW = 86400  # 24 hours - WhatsApp session window
 
 
@@ -66,25 +70,31 @@ class TTL:
 # CACHE KEY BUILDERS
 # ============================================================================
 
+
 def key_idempotency(workspace_id: str, event_hash: str) -> str:
     """Webhook idempotency key"""
     return f"idempotency:{workspace_id}:{event_hash}"
+
 
 def key_rate_limit(phone_number_id: str) -> str:
     """Outbound rate limit key"""
     return f"ratelimit:{phone_number_id}"
 
+
 def key_api_rate_limit(workspace_id: str, endpoint: str) -> str:
     """API rate limit key"""
     return f"ratelimit:api:{workspace_id}:{endpoint}"
+
 
 def key_session(user_id: str) -> str:
     """User session key"""
     return f"session:{user_id}"
 
+
 def key_conversation_window(conversation_id: str) -> str:
     """24h conversation window tracking"""
     return f"window:{conversation_id}"
+
 
 def key_realtime(workspace_id: str, event_type: str = "messages") -> str:
     """Pub/sub channel for real-time events"""
@@ -101,17 +111,17 @@ _redis: Optional[Redis] = None
 async def get_redis() -> Redis:
     """
     Get Redis client.  Initializes connection on first call.
-    
+
     Usage:
         redis = await get_redis()
         await redis.set("key", "value")
     """
     global _redis
-    
+
     if _redis is None:
         if not settings.REDIS_URL:
             raise RuntimeError("REDIS_URL not configured in settings")
-        
+
         _redis = redis.from_url(
             settings.REDIS_URL,
             encoding="utf-8",
@@ -119,18 +129,18 @@ async def get_redis() -> Redis:
             socket_timeout=5,
             socket_connect_timeout=5,
         )
-        
+
         # Verify connection
         await _redis.ping()
         logger.info("✅ Redis connected")
-    
+
     return _redis
 
 
 async def close_redis() -> None:
     """Close Redis connection.  Call on app shutdown."""
     global _redis
-    
+
     if _redis is not None:
         await _redis.close()
         _redis = None
@@ -152,6 +162,7 @@ async def redis_health() -> bool:
 # CORE OPERATIONS
 # ============================================================================
 
+
 async def cache_get(key: str, deserialize: bool = True) -> Optional[Any]:
     """Get value from cache"""
     try:
@@ -166,10 +177,7 @@ async def cache_get(key: str, deserialize: bool = True) -> Optional[Any]:
 
 
 async def cache_set(
-    key: str,
-    value: Any,
-    ttl: int = TTL. CACHE,
-    serialize: bool = True
+    key: str, value: Any, ttl: int = TTL.CACHE, serialize: bool = True
 ) -> bool:
     """Set value in cache with TTL"""
     try:
@@ -198,15 +206,16 @@ async def cache_delete(key: str) -> bool:
 # IDEMPOTENCY
 # ============================================================================
 
+
 async def is_duplicate(key: str, ttl: int = TTL.IDEMPOTENCY) -> bool:
     """
-    Check if operation already processed (idempotency). 
-    Uses SET NX - returns True if duplicate, False if new. 
-    
+    Check if operation already processed (idempotency).
+    Uses SET NX - returns True if duplicate, False if new.
+
     Usage:
         if await is_duplicate(key_idempotency(workspace_id, event_hash)):
             return  # Skip duplicate
-        # Process new event... 
+        # Process new event...
     """
     try:
         r = await get_redis()
@@ -221,13 +230,14 @@ async def is_duplicate(key: str, ttl: int = TTL.IDEMPOTENCY) -> bool:
 # RATE LIMITING
 # ============================================================================
 
+
 async def check_rate_limit(key: str, limit: int, window: int = 60) -> tuple[bool, int]:
     """
-    Fixed window rate limiting. 
-    
+    Fixed window rate limiting.
+
     Returns:
         (allowed: bool, remaining: int)
-    
+
     Usage:
         allowed, remaining = await check_rate_limit(
             key_rate_limit(phone_number_id),
@@ -240,10 +250,10 @@ async def check_rate_limit(key: str, limit: int, window: int = 60) -> tuple[bool
     try:
         r = await get_redis()
         current = await r.incr(key)
-        
+
         if current == 1:
             await r.expire(key, window)
-        
+
         allowed = current <= limit
         remaining = max(0, limit - current)
         return allowed, remaining
@@ -256,10 +266,11 @@ async def check_rate_limit(key: str, limit: int, window: int = 60) -> tuple[bool
 # QUEUE OPERATIONS
 # ============================================================================
 
+
 async def enqueue(queue: Queue, data: dict, priority: bool = False) -> bool:
     """
-    Add job to queue. 
-    
+    Add job to queue.
+
     Args:
         queue: Queue enum value
         data: Job payload (will be JSON serialized)
@@ -268,12 +279,12 @@ async def enqueue(queue: Queue, data: dict, priority: bool = False) -> bool:
     try:
         r = await get_redis()
         payload = json.dumps(data)
-        
+
         if priority:
             await r.rpush(queue.value, payload)  # Front
         else:
             await r.lpush(queue.value, payload)  # Back
-        
+
         return True
     except RedisError as e:
         logger.error(f"enqueue failed [{queue.value}]: {e}")
@@ -283,18 +294,18 @@ async def enqueue(queue: Queue, data: dict, priority: bool = False) -> bool:
 async def dequeue(queue: Queue, timeout: int = 5) -> Optional[dict]:
     """
     Get job from queue (blocking).
-    
+
     Args:
         queue: Queue enum value
         timeout: Seconds to wait if queue empty
-    
+
     Returns:
         Job data dict or None if timeout
     """
     try:
         r = await get_redis()
         result = await r.brpop(queue.value, timeout=timeout)
-        
+
         if result:
             _, payload = result
             return json.loads(payload)
@@ -317,7 +328,7 @@ async def queue_length(queue: Queue) -> int:
 async def move_to_dlq(queue: Queue, data: dict, error: str) -> bool:
     """Move failed job to dead letter queue with error info"""
     dlq_data = {
-        "original_queue": queue. value,
+        "original_queue": queue.value,
         "data": data,
         "error": error,
     }
@@ -328,10 +339,11 @@ async def move_to_dlq(queue: Queue, data: dict, error: str) -> bool:
 # PUB/SUB (Real-time Events)
 # ============================================================================
 
+
 async def publish(channel: str, data: dict) -> bool:
     """
     Publish message to channel (for Socket.IO/WebSocket relay).
-    
+
     Usage:
         await publish(
             key_realtime(workspace_id, "messages"),
@@ -340,7 +352,7 @@ async def publish(channel: str, data: dict) -> bool:
     """
     try:
         r = await get_redis()
-        await r. publish(channel, json.dumps(data))
+        await r.publish(channel, json.dumps(data))
         return True
     except RedisError as e:
         logger.error(f"publish failed [{channel}]: {e}")
@@ -351,21 +363,21 @@ async def publish(channel: str, data: dict) -> bool:
 async def subscribe(channel: str):
     """
     Subscribe to channel.  Use as async context manager.
-    
+
     Usage:
         async with subscribe(key_realtime(workspace_id)) as messages:
             async for msg in messages:
                 print(msg)
     """
     r = await get_redis()
-    pubsub = r. pubsub()
+    pubsub = r.pubsub()
     await pubsub.subscribe(channel)
-    
+
     async def message_generator():
         async for message in pubsub.listen():
             if message["type"] == "message":
                 yield json.loads(message["data"])
-    
+
     try:
         yield message_generator()
     finally:
@@ -376,6 +388,7 @@ async def subscribe(channel: str):
 # ============================================================================
 # FASTAPI INTEGRATION
 # ============================================================================
+
 
 async def startup() -> None:
     """Call from FastAPI lifespan startup"""

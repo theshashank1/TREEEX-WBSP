@@ -1,10 +1,14 @@
 """
 Async Database Configuration for asyncpg
 """
+
 import ssl
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from server.core.config import settings
-from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
+
 
 def create_db_engine_and_session_factory():
     """
@@ -17,21 +21,21 @@ def create_db_engine_and_session_factory():
 
     parsed_url = urlparse(url_str)
     query_params = parse_qs(parsed_url.query)
-    
+
     # Extract sslmode before creating async URL
     ssl_mode = query_params.get("sslmode", [None])[0]
-    
+
     # Remove sslmode from query params (asyncpg doesn't accept it in URL)
     if "sslmode" in query_params:
         del query_params["sslmode"]
-    
+
     # Rebuild query string without sslmode
     new_query = urlencode(query_params, doseq=True)
-    
+
     # Create async URL without sslmode parameter
     async_url = parsed_url._replace(
         scheme=parsed_url.scheme.replace("postgresql", "postgresql+asyncpg", 1),
-        query=new_query
+        query=new_query,
     ).geturl()
 
     connect_args = {}
@@ -45,7 +49,7 @@ def create_db_engine_and_session_factory():
             # Full SSL verification (requires certificate paths)
             # For production, you'd add certificate paths here
             ssl_context = ssl.create_default_context()
-            ssl_context.check_hostname = (ssl_mode == "verify-full")
+            ssl_context.check_hostname = ssl_mode == "verify-full"
             ssl_context.verify_mode = ssl.CERT_REQUIRED
             connect_args["ssl"] = ssl_context
 
@@ -59,15 +63,15 @@ def create_db_engine_and_session_factory():
     )
 
     session_factory = async_sessionmaker(
-        engine,
-        class_=AsyncSession,
-        expire_on_commit=False
+        engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     return engine, session_factory
+
 
 # Create global engine and session maker
 engine, async_session_maker = create_db_engine_and_session_factory()
+
 
 async def get_async_session():
     """Dependency for FastAPI routes to get a database session."""

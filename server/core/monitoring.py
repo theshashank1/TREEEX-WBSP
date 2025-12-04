@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 import logging
-import traceback
-import sys
 import os
-from typing import Any, Optional
+import sys
+import traceback
 from logging.handlers import RotatingFileHandler
+from typing import Any, Optional
 
 from server.core.config import settings
 
 # Determine logs directory: use settings.LOG_DIR if provided, else default to server/logs
-LOG_DIR = settings.LOG_DIR or os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
+LOG_DIR = settings.LOG_DIR or os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "logs"
+)
 
 # Formatter
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
@@ -38,25 +41,25 @@ error_logger.addHandler(error_console_handler)
 # Try to set up file handlers - fallback to console-only if it fails
 try:
     os.makedirs(LOG_DIR, exist_ok=True)
-    
+
     # Log file paths
     EVENT_LOG_FILE = os.path.join(LOG_DIR, "events.log")
     ERROR_LOG_FILE = os.path.join(LOG_DIR, "errors.log")
-    
+
     event_file_handler = RotatingFileHandler(
         EVENT_LOG_FILE,
         maxBytes=10 * 1024 * 1024,  # 10 MB
         backupCount=5,
-        encoding="utf-8"
+        encoding="utf-8",
     )
     event_file_handler.setFormatter(formatter)
     event_logger.addHandler(event_file_handler)
-    
+
     error_file_handler = RotatingFileHandler(
         ERROR_LOG_FILE,
         maxBytes=10 * 1024 * 1024,  # 10 MB
         backupCount=5,
-        encoding="utf-8"
+        encoding="utf-8",
     )
     error_file_handler.setFormatter(formatter)
     error_logger.addHandler(error_file_handler)
@@ -65,45 +68,38 @@ except OSError:
     pass
 
 
-def log_event(
-    event: str,
-    *,
-    level: str = "info",
-    **context: Any
-) -> None:
+def log_event(event: str, *, level: str = "info", **context: Any) -> None:
     """
     Log an event to console and optionally to file (if file logging is available).
-    
+
     Args:
         event: Event name/description
         level: Log level (debug, info, warning, error)
         **context: Additional key-value pairs
-    
+
     Example:
         log_event("user_login", user_id="123", workspace_id="abc")
     """
     log_func = getattr(event_logger, level.lower(), event_logger.info)
-    
+
     if context:
-        ctx_str = " | ". join(f"{k}={v}" for k, v in context.items())
+        ctx_str = " | ".join(f"{k}={v}" for k, v in context.items())
         log_func(f"{event} | {ctx_str}")
     else:
         log_func(event)
 
 
 def log_exception(
-    message: str,
-    exc: Optional[BaseException] = None,
-    **context: Any
+    message: str, exc: Optional[BaseException] = None, **context: Any
 ) -> None:
     """
     Log an exception to console and optionally to file (if file logging is available).
-    
+
     Args:
         message: Error description
         exc: Exception object (uses current if None)
         **context: Additional key-value pairs
-    
+
     Example:
         try:
             risky_operation()
@@ -112,13 +108,13 @@ def log_exception(
     """
     if exc is None:
         exc = sys.exc_info()[1]
-    
+
     ctx_str = ""
     if context:
-        ctx_str = " | " + " | ". join(f"{k}={v}" for k, v in context.items())
-    
+        ctx_str = " | " + " | ".join(f"{k}={v}" for k, v in context.items())
+
     if exc:
         tb = traceback.format_exception(type(exc), exc, exc.__traceback__)
         error_logger.error(f"{message}{ctx_str}\n{''. join(tb)}")
     else:
-        error_logger. error(f"{message}{ctx_str}")
+        error_logger.error(f"{message}{ctx_str}")

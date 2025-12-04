@@ -1,25 +1,37 @@
 from __future__ import annotations
-import uuid
-from typing import List, Optional
-from datetime import datetime
 
-from sqlalchemy import String, Boolean, Integer, Text, BigInteger, ForeignKey, Index, Uuid, func
+import uuid
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    Uuid,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.models.base import (
     Base,
-    TimestampMixin,
-    SoftDeleteMixin,
-    utc_now,
-    MessageStatus,
     ConversationStatus,
     ConversationType,
+    MessageStatus,
+    SoftDeleteMixin,
+    TimestampMixin,
+    utc_now,
 )
 
 
 class Conversation(TimestampMixin, Base):
     """Message threads grouped by contact and phone number."""
+
     __tablename__ = "conversations"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -47,9 +59,13 @@ class Conversation(TimestampMixin, Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="conversations")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="conversations"
+    )
     contact: Mapped["Contact"] = relationship("Contact", back_populates="conversations")
-    phone_number: Mapped["PhoneNumber"] = relationship("PhoneNumber", back_populates="conversations")
+    phone_number: Mapped["PhoneNumber"] = relationship(
+        "PhoneNumber", back_populates="conversations"
+    )
     assignee: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="assigned_conversations"
     )
@@ -58,7 +74,13 @@ class Conversation(TimestampMixin, Base):
     )
 
     __table_args__ = (
-        Index("idx_conv_workspace_contact_phone", "workspace_id", "contact_id", "phone_number_id", unique=True),
+        Index(
+            "idx_conv_workspace_contact_phone",
+            "workspace_id",
+            "contact_id",
+            "phone_number_id",
+            unique=True,
+        ),
         Index("idx_conv_workspace_status", "workspace_id", "status"),
         Index("idx_conv_workspace", "workspace_id"),
         Index("idx_conv_contact", "contact_id"),
@@ -76,6 +98,7 @@ class Conversation(TimestampMixin, Base):
 
 class MediaFile(TimestampMixin, SoftDeleteMixin, Base):
     """Media file metadata - actual files stored in R2/S3."""
+
     __tablename__ = "media_files"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -93,7 +116,9 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="media_files")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="media_files"
+    )
     uploader: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="uploaded_media"
     )
@@ -107,9 +132,10 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, Base):
 
 class Message(Base):
     """All WhatsApp messages - no soft delete for compliance."""
+
     __tablename__ = "messages"
 
-    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
@@ -144,10 +170,18 @@ class Message(Base):
     read_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="messages")
-    conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")
-    phone_number: Mapped["PhoneNumber"] = relationship("PhoneNumber", back_populates="messages")
-    media: Mapped[Optional["MediaFile"]] = relationship("MediaFile", back_populates="messages")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="messages"
+    )
+    conversation: Mapped["Conversation"] = relationship(
+        "Conversation", back_populates="messages"
+    )
+    phone_number: Mapped["PhoneNumber"] = relationship(
+        "PhoneNumber", back_populates="messages"
+    )
+    media: Mapped[Optional["MediaFile"]] = relationship(
+        "MediaFile", back_populates="messages"
+    )
     sender: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="sent_messages"
     )
@@ -157,7 +191,9 @@ class Message(Base):
 
     __table_args__ = (
         Index("idx_msg_conversation_time", "conversation_id", "created_at"),
-        Index("idx_msg_conv_direction_time", "conversation_id", "direction", "created_at"),
+        Index(
+            "idx_msg_conv_direction_time", "conversation_id", "direction", "created_at"
+        ),
         Index("idx_msg_wa_id", "wa_message_id"),
         Index("idx_msg_workspace_time", "workspace_id", "created_at"),
         Index("idx_msg_phone_time", "phone_number_id", "created_at"),

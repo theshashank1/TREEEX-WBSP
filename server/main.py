@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
+
 from server.api import webhooks
 from server.core import redis as redis_client
 

@@ -1,24 +1,26 @@
 from __future__ import annotations
-import uuid
-from typing import List, Optional
-from datetime import datetime
 
-from sqlalchemy import String, Integer, Text, ForeignKey, Index, Uuid
+import uuid
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import ForeignKey, Index, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from server.models.base import (
     Base,
-    TimestampMixin,
-    SoftDeleteMixin,
-    TemplateStatus,
     CampaignStatus,
     MessageStatus,
+    SoftDeleteMixin,
+    TemplateStatus,
+    TimestampMixin,
 )
 
 
 class Template(TimestampMixin, SoftDeleteMixin, Base):
     """Message templates - scoped to phone_number_id for Meta API registration."""
+
     __tablename__ = "templates"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -42,15 +44,27 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="templates")
-    phone_number: Mapped["PhoneNumber"] = relationship("PhoneNumber", back_populates="templates")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="templates"
+    )
+    phone_number: Mapped["PhoneNumber"] = relationship(
+        "PhoneNumber", back_populates="templates"
+    )
     creator: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="created_templates"
     )
-    campaigns: Mapped[List["Campaign"]] = relationship("Campaign", back_populates="template")
+    campaigns: Mapped[List["Campaign"]] = relationship(
+        "Campaign", back_populates="template"
+    )
 
     __table_args__ = (
-        Index("idx_template_workspace_phone_name", "workspace_id", "phone_number_id", "name", unique=True),
+        Index(
+            "idx_template_workspace_phone_name",
+            "workspace_id",
+            "phone_number_id",
+            "name",
+            unique=True,
+        ),
         Index("idx_template_workspace_status", "workspace_id", "status"),
         Index("idx_template_workspace_category", "workspace_id", "category"),
         Index("idx_template_phone_status", "phone_number_id", "status"),
@@ -61,6 +75,7 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
 
 class Campaign(TimestampMixin, SoftDeleteMixin, Base):
     """Bulk messaging campaigns - scoped to phone number."""
+
     __tablename__ = "campaigns"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -90,9 +105,15 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
     )
 
     # Relationships
-    workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="campaigns")
-    phone_number: Mapped["PhoneNumber"] = relationship("PhoneNumber", back_populates="campaigns")
-    template: Mapped[Optional["Template"]] = relationship("Template", back_populates="campaigns")
+    workspace: Mapped["Workspace"] = relationship(
+        "Workspace", back_populates="campaigns"
+    )
+    phone_number: Mapped["PhoneNumber"] = relationship(
+        "PhoneNumber", back_populates="campaigns"
+    )
+    template: Mapped[Optional["Template"]] = relationship(
+        "Template", back_populates="campaigns"
+    )
     creator: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="created_campaigns"
     )
@@ -111,6 +132,7 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
 
 class CampaignMessage(Base):
     """Individual campaign message tracking - no soft delete."""
+
     __tablename__ = "campaign_messages"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -130,15 +152,19 @@ class CampaignMessage(Base):
         ForeignKey("messages.id", ondelete="SET NULL"), nullable=True
     )
     status: Mapped[str] = mapped_column(
-        String(20), default=MessageStatus.PENDING. value, nullable=False
+        String(20), default=MessageStatus.PENDING.value, nullable=False
     )
     error_code: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sent_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
     # Relationships
-    campaign: Mapped["Campaign"] = relationship("Campaign", back_populates="campaign_messages")
-    contact: Mapped["Contact"] = relationship("Contact", back_populates="campaign_messages")
+    campaign: Mapped["Campaign"] = relationship(
+        "Campaign", back_populates="campaign_messages"
+    )
+    contact: Mapped["Contact"] = relationship(
+        "Contact", back_populates="campaign_messages"
+    )
     phone_number: Mapped[Optional["PhoneNumber"]] = relationship(
         "PhoneNumber", back_populates="campaign_messages"
     )
@@ -147,7 +173,9 @@ class CampaignMessage(Base):
     )
 
     __table_args__ = (
-        Index("idx_camp_msg_campaign_contact", "campaign_id", "contact_id", unique=True),
+        Index(
+            "idx_camp_msg_campaign_contact", "campaign_id", "contact_id", unique=True
+        ),
         Index("idx_camp_msg_campaign_status", "campaign_id", "status"),
         Index("idx_camp_msg_workspace", "workspace_id"),
         Index("idx_camp_msg_status", "status"),

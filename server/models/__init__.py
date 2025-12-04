@@ -1,11 +1,10 @@
-from . base import Base
-
 # Import all sub-modules to register them with metadata
 from .access import User, Workspace, WorkspaceMember
-from .contacts import Contact, PhoneNumber
-from .messaging import Conversation, Message, MediaFile
-from .marketing import Campaign, CampaignMessage, Template
 from .audit import WebhookLog
+from .base import Base
+from .contacts import Contact, PhoneNumber
+from .marketing import Campaign, CampaignMessage, Template
+from .messaging import Conversation, MediaFile, Message
 
 __all__ = [
     "Base",
