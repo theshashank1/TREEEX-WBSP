@@ -7,7 +7,7 @@ from sqlalchemy import String, Integer, Text, ForeignKey, Index, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from . base import (
+from server.models.base import (
     Base,
     TimestampMixin,
     SoftDeleteMixin,
@@ -21,24 +21,24 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
     """Message templates - scoped to phone_number_id for Meta API registration."""
     __tablename__ = "templates"
 
-    id: Mapped[uuid. UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid. UUID] = mapped_column(
+    phone_number_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(String(20), nullable=False)
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     status: Mapped[str] = mapped_column(
-        String(20), default=TemplateStatus. PENDING.value, nullable=False
+        String(20), default=TemplateStatus.PENDING.value, nullable=False
     )
     meta_template_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     components: Mapped[dict] = mapped_column(JSONB, nullable=False)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("workspace_members. id", ondelete="SET NULL"), nullable=True
+        ForeignKey("workspace_members.id", ondelete="SET NULL"), nullable=True
     )
 
     # Relationships
@@ -65,7 +65,7 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
@@ -115,16 +115,16 @@ class CampaignMessage(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
-    campaign_id: Mapped[uuid. UUID] = mapped_column(
-        ForeignKey("campaigns. id", ondelete="CASCADE"), nullable=False
+    campaign_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("campaigns.id", ondelete="CASCADE"), nullable=False
     )
     contact_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
     phone_number_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("phone_numbers. id", ondelete="SET NULL"), nullable=True
+        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True
     )
     message_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("messages.id", ondelete="SET NULL"), nullable=True

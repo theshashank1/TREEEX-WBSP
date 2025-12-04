@@ -4,10 +4,10 @@ from typing import List, Optional
 from datetime import datetime
 
 from sqlalchemy import String, Boolean, Integer, Text, ForeignKey, Index, Uuid, text
-from sqlalchemy. dialects.postgresql import JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from . base import (
+from server.models.base import (
     Base,
     TimestampMixin,
     SoftDeleteMixin,
@@ -22,7 +22,7 @@ class PhoneNumber(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
     phone_number_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
@@ -69,7 +69,7 @@ class Contact(TimestampMixin, SoftDeleteMixin, Base):
     """Customer database with opt-in compliance tracking."""
     __tablename__ = "contacts"
 
-    id: Mapped[uuid. UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )

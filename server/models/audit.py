@@ -4,8 +4,8 @@ from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import String, Boolean, Text, ForeignKey, Index, Uuid, func
-from sqlalchemy.dialects. postgresql import JSONB
-from sqlalchemy. orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base, utc_now
 
@@ -19,7 +19,7 @@ class WebhookLog(Base):
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     phone_number_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("phone_numbers. id", ondelete="SET NULL"), nullable=True
+        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True  # FIXED: Removed space
     )
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     event_id_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -27,7 +27,7 @@ class WebhookLog(Base):
     processed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     received_at: Mapped[datetime] = mapped_column(
-        default=utc_now, server_default=func. now(), nullable=False
+        default=utc_now, server_default=func.now(), nullable=False
     )
     processed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     updated_at: Mapped[datetime] = mapped_column(

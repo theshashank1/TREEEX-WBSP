@@ -7,7 +7,7 @@ from sqlalchemy import String, Boolean, Integer, Text, BigInteger, ForeignKey, I
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import (
+from server.models.base import (
     Base,
     TimestampMixin,
     SoftDeleteMixin,
@@ -23,7 +23,7 @@ class Conversation(TimestampMixin, Base):
     __tablename__ = "conversations"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    workspace_id: Mapped[uuid. UUID] = mapped_column(
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     contact_id: Mapped[uuid.UUID] = mapped_column(
@@ -33,7 +33,7 @@ class Conversation(TimestampMixin, Base):
         ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[str] = mapped_column(
-        String(20), default=ConversationStatus. OPEN.value, nullable=False
+        String(20), default=ConversationStatus.OPEN.value, nullable=False
     )
     conversation_type: Mapped[str] = mapped_column(
         String(30), default=ConversationType.USER_INITIATED.value, nullable=False
@@ -80,7 +80,7 @@ class MediaFile(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("workspaces. id", ondelete="CASCADE"), nullable=False
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     type: Mapped[str] = mapped_column(String(20), nullable=False)
     original_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -109,14 +109,14 @@ class Message(Base):
     """All WhatsApp messages - no soft delete for compliance."""
     __tablename__ = "messages"
 
-    id: Mapped[uuid. UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid. uuid4)
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid. UUID] = mapped_column(
+    phone_number_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
     )
     wa_message_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
