@@ -8,7 +8,7 @@ from server.core.config import settings
 
 # Fetch environment variables
 url: Optional[str] = settings.SUPABASE_URL
-key: Optional[str] = settings.SUPABASE_ANON_KEY
+key: Optional[str] = settings.SUPABASE_SECRET_KEY
 
 # Ensure Supabase credentials are available
 if not url or not key:
