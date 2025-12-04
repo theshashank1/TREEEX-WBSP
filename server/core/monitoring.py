@@ -72,7 +72,7 @@ def log_event(
     **context: Any
 ) -> None:
     """
-    Log an event to the events log file (and console).
+    Log an event to console and optionally to file (if file logging is available).
     
     Args:
         event: Event name/description
@@ -97,7 +97,7 @@ def log_exception(
     **context: Any
 ) -> None:
     """
-    Log an exception to the errors log file (and console).
+    Log an exception to console and optionally to file (if file logging is available).
     
     Args:
         message: Error description
