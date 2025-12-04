@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     # Meta WhatsApp
     META_API_VERSION: Optional[str] = None
     META_GRAPH_API_URL: Optional[str] = None
-    META_WEBHOOK_VERIFY_TOKEN: str = None
+    META_WEBHOOK_VERIFY_TOKEN: Optional[str] = None
     META_ACCESS_TOKEN: Optional[str] = None
     
     # Azure Blob Storage
@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     
     # Monitoring - Azure Application Insights
     APPLICATIONINSIGHTS_CONNECTION_STRING: Optional[str] = None
+    
+    # Logging
+    LOG_DIR: Optional[str] = None
 
 # Singleton instance
 settings = Settings()

@@ -223,7 +223,7 @@ async def is_duplicate(key: str, ttl: int = TTL.IDEMPOTENCY) -> bool:
 
 async def check_rate_limit(key: str, limit: int, window: int = 60) -> tuple[bool, int]:
     """
-    Sliding window rate limiting. 
+    Fixed window rate limiting. 
     
     Returns:
         (allowed: bool, remaining: int)
