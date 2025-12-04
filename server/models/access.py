@@ -25,7 +25,6 @@ class User(TimestampMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     avatar_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -33,7 +32,6 @@ class User(TimestampMixin, SoftDeleteMixin, Base):
     last_login_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
 
     # Relationships
-    # Note: Using string references for foreign_keys because Workspace/WorkspaceMember are defined below
     owned_workspaces: Mapped[List["Workspace"]] = relationship(
         "Workspace", back_populates="owner", foreign_keys="Workspace.created_by"
     )
@@ -85,7 +83,6 @@ class Workspace(TimestampMixin, SoftDeleteMixin, Base):
         "WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan"
     )
 
-    # The following relationships assume these models exist in the full file
     phone_numbers: Mapped[List["PhoneNumber"]] = relationship(
         "PhoneNumber", back_populates="workspace", cascade="all, delete-orphan"
     )
@@ -158,7 +155,6 @@ class WorkspaceMember(TimestampMixin, Base):
     )
     inviter: Mapped[Optional["User"]] = relationship("User", foreign_keys=[invited_by])
 
-    # The following relationships assume these models exist in the full file
     assigned_conversations: Mapped[List["Conversation"]] = relationship(
         "Conversation", back_populates="assignee"
     )
