@@ -3,7 +3,8 @@ Async Database Configuration for asyncpg
 """
 
 import ssl
-from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
+import sys
+from urllib.parse import parse_qs, urlencode, urlparse
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -15,11 +16,24 @@ def create_db_engine_and_session_factory():
     Parses the DATABASE_URL and creates an async engine and session factory,
     correctly handling SSL configuration for asyncpg.
     """
-    url_str = str(settings.DATABASE_URL)
-    if not url_str:
+    # 1. Check if DATABASE_URL is actually set
+    if not settings.DATABASE_URL:
+        print("❌ ERROR: DATABASE_URL is not configured.", file=sys.stderr)
+        print(
+            "   Please create a .env file with DATABASE_URL=postgresql://user:pass@host:port/db",
+            file=sys.stderr,
+        )
+        # We raise an error here because the app cannot function without a DB
         raise ValueError("DATABASE_URL not configured")
 
+    url_str = str(settings.DATABASE_URL)
     parsed_url = urlparse(url_str)
+
+    # 2. Ensure correct async scheme (postgresql+asyncpg)
+    scheme = parsed_url.scheme
+    if scheme == "postgresql":
+        scheme = "postgresql+asyncpg"
+
     query_params = parse_qs(parsed_url.query)
 
     # Extract sslmode before creating async URL
@@ -34,7 +48,7 @@ def create_db_engine_and_session_factory():
 
     # Create async URL without sslmode parameter
     async_url = parsed_url._replace(
-        scheme=parsed_url.scheme.replace("postgresql", "postgresql+asyncpg", 1),
+        scheme=scheme,
         query=new_query,
     ).geturl()
 
@@ -47,7 +61,6 @@ def create_db_engine_and_session_factory():
             connect_args["ssl"] = True
         elif ssl_mode in ("verify-ca", "verify-full"):
             # Full SSL verification (requires certificate paths)
-            # For production, you'd add certificate paths here
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = ssl_mode == "verify-full"
             ssl_context.verify_mode = ssl.CERT_REQUIRED
@@ -70,11 +83,19 @@ def create_db_engine_and_session_factory():
 
 
 # Create global engine and session maker
-engine, async_session_maker = create_db_engine_and_session_factory()
+try:
+    engine, async_session_maker = create_db_engine_and_session_factory()
+except ValueError:
+    # Allow import to succeed (e.g. for tests) but engine will be None
+    engine = None
+    async_session_maker = None
 
 
 async def get_async_session():
     """Dependency for FastAPI routes to get a database session."""
+    if async_session_maker is None:
+        raise RuntimeError("Database is not configured. Cannot create session.")
+
     async with async_session_maker() as session:
         try:
             yield session
