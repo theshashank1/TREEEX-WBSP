@@ -23,3 +23,8 @@ fastapi run main.py
 ```
 ngrok http 8000
 ```
+
+## Connect Database
+```
+psql "postgresql://theshashank1:<password>@treeex.postgres.database.azure.com:5432/postgres"
+```
