@@ -6,54 +6,63 @@ import os
 from typing import Any, Optional
 from logging.handlers import RotatingFileHandler
 
-# Create logs directory: server/logs
-LOG_DIR = os.path.join(os.path.dirname(os.path. dirname(__file__)), "logs")
-os.makedirs(LOG_DIR, exist_ok=True)
+from server.core.config import settings
 
-# Log file paths
-EVENT_LOG_FILE = os.path.join(LOG_DIR, "events. log")
-ERROR_LOG_FILE = os.path.join(LOG_DIR, "errors.log")
+# Determine logs directory: use settings.LOG_DIR if provided, else default to server/logs
+LOG_DIR = settings.LOG_DIR or os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
 
 # Formatter
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-formatter = logging. Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
+formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
 # Event logger
-event_logger = logging. getLogger("treeex. events")
+event_logger = logging.getLogger("treeex.events")
 event_logger.setLevel(logging.DEBUG)
 event_logger.propagate = False
-
-event_file_handler = RotatingFileHandler(
-    EVENT_LOG_FILE,
-    maxBytes=10 * 1024 * 1024,  # 10 MB
-    backupCount=5,
-    encoding="utf-8"
-)
-event_file_handler.setFormatter(formatter)
-event_logger.addHandler(event_file_handler)
-
-event_console_handler = logging. StreamHandler(sys. stdout)
-event_console_handler.setFormatter(formatter)
-event_logger.addHandler(event_console_handler)
 
 # Error logger
 error_logger = logging.getLogger("treeex.errors")
 error_logger.setLevel(logging.ERROR)
-error_logger. propagate = False
+error_logger.propagate = False
 
-error_file_handler = RotatingFileHandler(
-    ERROR_LOG_FILE,
-    maxBytes=10 * 1024 * 1024,  # 10 MB
-    backupCount=5,
-    encoding="utf-8"
-)
-error_file_handler.setFormatter(formatter)
-error_logger.addHandler(error_file_handler)
+# Console handlers (always added)
+event_console_handler = logging.StreamHandler(sys.stdout)
+event_console_handler.setFormatter(formatter)
+event_logger.addHandler(event_console_handler)
 
 error_console_handler = logging.StreamHandler(sys.stderr)
-error_console_handler. setFormatter(formatter)
-error_logger. addHandler(error_console_handler)
+error_console_handler.setFormatter(formatter)
+error_logger.addHandler(error_console_handler)
+
+# Try to set up file handlers - fallback to console-only if it fails
+try:
+    os.makedirs(LOG_DIR, exist_ok=True)
+    
+    # Log file paths
+    EVENT_LOG_FILE = os.path.join(LOG_DIR, "events.log")
+    ERROR_LOG_FILE = os.path.join(LOG_DIR, "errors.log")
+    
+    event_file_handler = RotatingFileHandler(
+        EVENT_LOG_FILE,
+        maxBytes=10 * 1024 * 1024,  # 10 MB
+        backupCount=5,
+        encoding="utf-8"
+    )
+    event_file_handler.setFormatter(formatter)
+    event_logger.addHandler(event_file_handler)
+    
+    error_file_handler = RotatingFileHandler(
+        ERROR_LOG_FILE,
+        maxBytes=10 * 1024 * 1024,  # 10 MB
+        backupCount=5,
+        encoding="utf-8"
+    )
+    error_file_handler.setFormatter(formatter)
+    error_logger.addHandler(error_file_handler)
+except OSError:
+    # File logging setup failed (e.g., read-only filesystem), console-only logging is active
+    pass
 
 
 def log_event(
@@ -63,7 +72,7 @@ def log_event(
     **context: Any
 ) -> None:
     """
-    Log an event to server/logs/events. log
+    Log an event to the events log file (and console).
     
     Args:
         event: Event name/description
@@ -88,7 +97,7 @@ def log_exception(
     **context: Any
 ) -> None:
     """
-    Log an exception to server/logs/errors.log
+    Log an exception to the errors log file (and console).
     
     Args:
         message: Error description
