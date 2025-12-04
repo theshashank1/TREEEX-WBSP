@@ -1,11 +1,17 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from server.api import webhooks
+from server.core import redis as redis_client
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await redis_client.startup()
+    yield
+    # Shutdown
+    await redis_client.shutdown()
 
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(webhooks.router)
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload = True)
