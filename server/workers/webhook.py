@@ -206,7 +206,8 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
 
         await session.commit()
 
-        # 10. Queue media download if needed
+        # Post-commit operations (best-effort, failures don't affect message processing)
+        # 10. Queue media download if needed (stickers excluded - they're cached by WhatsApp)
         if media_id and message_type in ("image", "video", "audio", "document"):
             await enqueue(
                 Queue.MEDIA_DOWNLOAD,
