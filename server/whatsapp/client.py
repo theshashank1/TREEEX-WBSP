@@ -3,6 +3,7 @@ WhatsApp Business API Client for interacting with Meta's Graph API.
 """
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -19,6 +20,24 @@ META_GRAPH_API_BASE = "https://graph.facebook.com"
 
 # Timeout for HTTP requests (in seconds)
 HTTP_TIMEOUT = 10.0
+
+
+def _normalize_phone_number(phone: str) -> str:
+    """
+    Normalize a phone number by removing all non-digit characters except leading +.
+
+    Args:
+        phone: Phone number string (e.g., "+1 (555) 123-4567")
+
+    Returns:
+        Normalized phone number (e.g., "+15551234567")
+    """
+    if not phone:
+        return ""
+    # Preserve leading + if present, then keep only digits
+    has_plus = phone.startswith("+")
+    digits = re.sub(r"[^\d]", "", phone)
+    return f"+{digits}" if has_plus else digits
 
 
 @dataclass
@@ -158,7 +177,7 @@ class WhatsAppClient:
                     )
 
                 phone_info = PhoneNumberInfo(
-                    phone_number=data.get("display_phone_number", "").replace(" ", "").replace("-", ""),
+                    phone_number=_normalize_phone_number(data.get("display_phone_number", "")),
                     display_phone_number=data.get("display_phone_number", ""),
                     verified_name=data.get("verified_name"),
                     quality_rating=data.get("quality_rating"),
