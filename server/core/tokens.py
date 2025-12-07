@@ -63,7 +63,7 @@ async def get_access_token(phone_number_id: UUID) -> Optional[str]:
 
             token = phone_number.access_token
 
-            if not token:
+            if not token or token.strip() == "":
                 log_event(
                     "token_empty_in_db",
                     level="warning",
@@ -119,7 +119,7 @@ async def refresh_access_token(phone_number_id: UUID) -> Optional[str]:
 
             token = phone_number.access_token
 
-            if not token:
+            if not token or token.strip() == "":
                 log_event(
                     "token_refresh_empty_in_db",
                     level="warning",
