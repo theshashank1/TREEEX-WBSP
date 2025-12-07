@@ -430,3 +430,71 @@ async def sync_phone_number(
         tier=phone_number.tier,
         status=phone_number.status,
     )
+
+
+@router.post("/{phone_number_id}/exchange-token", response_model=PhoneNumberResponse)
+async def exchange_token_for_long_term(
+    phone_number_id: UUID,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+):
+    """
+    Exchange short-lived access token for long-lived token.
+    
+    This endpoint attempts to exchange the current access token for a long-lived
+    token (typically 60 days vs 1 hour). This is useful when you have a short-lived
+    user access token and want to convert it to a long-lived one.
+    
+    Note: System user tokens are already long-lived and don't need exchange.
+    
+    Requires workspace admin access.
+    """
+    # Fetch phone number
+    result = await session.execute(
+        select(PhoneNumber).where(
+            PhoneNumber.id == phone_number_id,
+            PhoneNumber.deleted_at.is_(None),
+        )
+    )
+    phone_number = result.scalar_one_or_none()
+
+    if not phone_number:
+        raise HTTPException(
+            status_code=404,
+            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+        )
+
+    # Verify admin access
+    await require_workspace_admin(phone_number.workspace_id, current_user, session)
+
+    # Exchange token
+    wa_client = WhatsAppClient(access_token=phone_number.access_token)
+    long_lived_token, error = await wa_client.exchange_token_for_long_term()
+
+    if not long_lived_token:
+        log_event(
+            "token_exchange_failed",
+            level="warning",
+            phone_number_id=str(phone_number_id),
+            error_code=error.code if error else "unknown",
+        )
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "TOKEN_EXCHANGE_FAILED",
+                "message": error.message if error else "Failed to exchange token for long-lived token.",
+            },
+        )
+
+    # Update phone number with new long-lived token
+    phone_number.access_token = long_lived_token
+    await session.commit()
+    await session.refresh(phone_number)
+
+    log_event(
+        "token_exchanged",
+        level="info",
+        phone_number_id=str(phone_number_id),
+    )
+
+    return _phone_number_to_response(phone_number)

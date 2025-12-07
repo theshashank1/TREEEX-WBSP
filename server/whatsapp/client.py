@@ -226,3 +226,73 @@ class WhatsAppClient:
             "TIER_UNLIMITED": 999999999,
         }
         return tier_mapping.get(tier, 1000)
+
+    async def exchange_token_for_long_term(
+        self,
+    ) -> tuple[Optional[str], Optional[MetaAPIError]]:
+        """
+        Exchange a short-lived access token for a long-lived access token.
+        
+        Meta provides an endpoint to exchange short-lived tokens (typically 1 hour)
+        for long-lived tokens (typically 60 days).
+        
+        Returns:
+            Tuple of (long_lived_token, None) on success,
+            or (None, MetaAPIError) on failure.
+            
+        Note: This requires the current token to be a valid short-lived user access token.
+        System user tokens are already long-lived and don't need exchange.
+        """
+        try:
+            async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+                response = await client.get(
+                    f"{META_GRAPH_API_BASE}/oauth/access_token",
+                    params={
+                        "grant_type": "fb_exchange_token",
+                        "client_id": settings.META_APP_ID if hasattr(settings, 'META_APP_ID') else "",
+                        "client_secret": settings.META_APP_SECRET,
+                        "fb_exchange_token": self.access_token,
+                    },
+                )
+
+                data = response.json()
+
+                if response.status_code != 200:
+                    error_data = data.get("error", {})
+                    return None, MetaAPIError(
+                        code=error_data.get("code", response.status_code),
+                        message=error_data.get("message", "Unknown error"),
+                        error_subcode=error_data.get("error_subcode"),
+                    )
+
+                long_lived_token = data.get("access_token")
+                if not long_lived_token:
+                    return None, MetaAPIError(
+                        code=-1,
+                        message="No access token returned from exchange",
+                    )
+
+                expires_in = data.get("expires_in", 0)
+                token_type = data.get("token_type", "bearer")
+
+                log_event(
+                    "token_exchanged_for_long_term",
+                    level="info",
+                    expires_in=expires_in,
+                    token_type=token_type,
+                )
+
+                return long_lived_token, None
+
+        except httpx.TimeoutException:
+            log_exception("Token exchange timed out")
+            return None, MetaAPIError(
+                code=-1,
+                message="Request to Meta API timed out.",
+            )
+        except Exception as e:
+            log_exception("Token exchange failed", e)
+            return None, MetaAPIError(
+                code=-1,
+                message=f"Failed to exchange token: {str(e)}",
+            )
