@@ -276,7 +276,7 @@ async def start_campaign(
     """
     Start a campaign.
     
-    Changes status from DRAFT to ACTIVE.
+    Changes status from DRAFT/SCHEDULED to SENDING.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -292,13 +292,13 @@ async def start_campaign(
     # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
-    if campaign.status != CampaignStatus.DRAFT.value:
+    if campaign.status not in [CampaignStatus.DRAFT.value, CampaignStatus.SCHEDULED.value]:
         raise HTTPException(
             status_code=400,
-            detail="Campaign must be in DRAFT status to start",
+            detail="Campaign must be in DRAFT or SCHEDULED status to start",
         )
 
-    campaign.status = CampaignStatus.ACTIVE.value
+    campaign.status = CampaignStatus.SENDING.value
     await session.commit()
     await session.refresh(campaign)
 
@@ -317,9 +317,10 @@ async def pause_campaign(
     current_user: CurrentUserDep,
 ):
     """
-    Pause an active campaign.
+    Pause a sending campaign.
     
-    Changes status from ACTIVE to PAUSED.
+    Changes status from SENDING to SCHEDULED (paused state).
+    Note: In this system, SCHEDULED also represents a paused campaign.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -335,13 +336,13 @@ async def pause_campaign(
     # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
-    if campaign.status != CampaignStatus.ACTIVE.value:
+    if campaign.status != CampaignStatus.SENDING.value:
         raise HTTPException(
             status_code=400,
-            detail="Campaign must be ACTIVE to pause",
+            detail="Campaign must be SENDING to pause",
         )
 
-    campaign.status = CampaignStatus.PAUSED.value
+    campaign.status = CampaignStatus.SCHEDULED.value
     await session.commit()
     await session.refresh(campaign)
 
