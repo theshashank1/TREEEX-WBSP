@@ -63,6 +63,14 @@ async def get_access_token(phone_number_id: UUID) -> Optional[str]:
 
             token = phone_number.access_token
 
+            if not token:
+                log_event(
+                    "token_empty_in_db",
+                    level="warning",
+                    phone_number_id=str(phone_number_id),
+                )
+                return None
+
             # Cache the token for future use
             await cache_token(phone_number_id, token, TTL.ACCESS_TOKEN)
 
@@ -110,6 +118,14 @@ async def refresh_access_token(phone_number_id: UUID) -> Optional[str]:
                 return None
 
             token = phone_number.access_token
+
+            if not token:
+                log_event(
+                    "token_refresh_empty_in_db",
+                    level="warning",
+                    phone_number_id=str(phone_number_id),
+                )
+                return None
 
             # Update cache with fresh token
             await cache_token(phone_number_id, token, TTL.ACCESS_TOKEN)

@@ -210,6 +210,13 @@ async def update_campaign(
         campaign.name = data.name
     
     if data.status is not None:
+        # Validate status is a valid CampaignStatus enum value
+        valid_statuses = [s.value for s in CampaignStatus]
+        if data.status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
+            )
         campaign.status = data.status
 
     await session.commit()
