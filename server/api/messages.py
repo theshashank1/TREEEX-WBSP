@@ -95,8 +95,12 @@ async def send_text_message(
     """
     Send a text message.
     
-    Note: This is a placeholder endpoint. Actual message sending
-    should integrate with WhatsApp client and queue the message.
+    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+    Actual implementation should:
+    1. Find or create contact and conversation
+    2. Create message record with conversation_id
+    3. Queue message to Redis for async sending via WhatsApp API
+    4. Return the queued message
     
     Requires workspace membership.
     """
@@ -115,29 +119,17 @@ async def send_text_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # Create message record (placeholder - actual sending would go through queue)
-    message = Message(
-        workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
-        direction=MessageDirection.OUTGOING.value,
-        from_number=phone_number.phone_number,
-        to_number=data.to,
-        type="text",
-        content={"type": "text", "text": data.text},
-        status=MessageStatus.PENDING.value,
+    # TODO: Implement actual message sending logic
+    # This would involve:
+    # - Finding or creating contact
+    # - Finding or creating conversation
+    # - Creating message with conversation_id
+    # - Queueing to Redis for sending
+    
+    raise HTTPException(
+        status_code=501,
+        detail="Message sending not yet implemented. This is a placeholder endpoint.",
     )
-
-    session.add(message)
-    await session.commit()
-    await session.refresh(message)
-
-    log_event(
-        "text_message_queued",
-        message_id=str(message.id),
-        workspace_id=str(data.workspace_id),
-    )
-
-    return message
 
 
 @router.post("/send/template", response_model=MessageResponse, status_code=201)
@@ -149,8 +141,9 @@ async def send_template_message(
     """
     Send a template message.
     
-    Note: This is a placeholder endpoint. Actual message sending
-    should integrate with WhatsApp client and queue the message.
+    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+    Actual implementation should integrate with WhatsApp client,
+    create conversation, and queue the message.
     
     Requires workspace membership.
     """
@@ -169,34 +162,11 @@ async def send_template_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # Create message record (placeholder - actual sending would go through queue)
-    message = Message(
-        workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
-        direction=MessageDirection.OUTGOING.value,
-        from_number=phone_number.phone_number,
-        to_number=data.to,
-        type="template",
-        content={
-            "type": "template",
-            "template_name": data.template_name,
-            "template_language": data.template_language,
-            "components": data.components or {},
-        },
-        status=MessageStatus.PENDING.value,
+    # TODO: Implement actual template message sending
+    raise HTTPException(
+        status_code=501,
+        detail="Template message sending not yet implemented. This is a placeholder endpoint.",
     )
-
-    session.add(message)
-    await session.commit()
-    await session.refresh(message)
-
-    log_event(
-        "template_message_queued",
-        message_id=str(message.id),
-        workspace_id=str(data.workspace_id),
-    )
-
-    return message
 
 
 @router.post("/send/media", response_model=MessageResponse, status_code=201)
@@ -208,8 +178,9 @@ async def send_media_message(
     """
     Send a media message.
     
-    Note: This is a placeholder endpoint. Actual message sending
-    should integrate with WhatsApp client and queue the message.
+    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+    Actual implementation should integrate with WhatsApp client,
+    create conversation, and queue the message.
     
     Requires workspace membership.
     """
@@ -228,33 +199,11 @@ async def send_media_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # Create message record (placeholder - actual sending would go through queue)
-    message = Message(
-        workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
-        direction=MessageDirection.OUTGOING.value,
-        from_number=phone_number.phone_number,
-        to_number=data.to,
-        type=data.media_type,
-        content={
-            "type": data.media_type,
-            "caption": data.caption,
-        },
-        media_id=data.media_id,
-        status=MessageStatus.PENDING.value,
+    # TODO: Implement actual media message sending
+    raise HTTPException(
+        status_code=501,
+        detail="Media message sending not yet implemented. This is a placeholder endpoint.",
     )
-
-    session.add(message)
-    await session.commit()
-    await session.refresh(message)
-
-    log_event(
-        "media_message_queued",
-        message_id=str(message.id),
-        workspace_id=str(data.workspace_id),
-    )
-
-    return message
 
 
 @router.get("/{message_id}/status", response_model=MessageStatusResponse)

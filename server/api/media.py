@@ -71,32 +71,22 @@ async def upload_media(
     """
     Upload a media file.
     
-    Note: This is a placeholder endpoint. Actual file upload
-    should be implemented with multipart/form-data handling.
+    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+    Actual implementation should:
+    1. Accept multipart/form-data file upload
+    2. Upload to Azure Blob Storage
+    3. Create MediaFile record with storage URLs
     
     Requires workspace membership.
     """
     # Verify workspace membership
     await get_workspace_member(data.workspace_id, current_user, session)
 
-    media = MediaFile(
-        workspace_id=data.workspace_id,
-        type=data.type,
-        file_name=data.file_name,
-        mime_type=data.mime_type,
+    # TODO: Implement actual file upload with multipart/form-data
+    raise HTTPException(
+        status_code=501,
+        detail="Media upload not yet implemented. This is a placeholder endpoint.",
     )
-
-    session.add(media)
-    await session.commit()
-    await session.refresh(media)
-
-    log_event(
-        "media_uploaded",
-        media_id=str(media.id),
-        workspace_id=str(data.workspace_id),
-    )
-
-    return media
 
 
 @router.get("", response_model=MediaListResponse)
