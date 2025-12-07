@@ -106,142 +106,135 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             log_event("webhook_message_missing_fields", level="warning", event=event)
             return False
 
-        # # 1. Find PhoneNumber by Meta's phone_number_id
-        # phone_number = await session.execute(
-        #     select(PhoneNumber).where(
-        #         PhoneNumber.phone_number_id == phone_number_id_meta
-        #     )
-        # )
-        # phone_number = phone_number.scalar_one_or_none()
+        # 1. Find PhoneNumber by Meta's phone_number_id
+        phone_number = await session.execute(
+            select(PhoneNumber).where(
+                PhoneNumber.phone_number_id == phone_number_id_meta
+            )
+        )
+        phone_number = phone_number.scalar_one_or_none()
 
-        # if not phone_number:
-        #     log_event(
-        #         "webhook_phone_not_found",
-        #         level="warning",
-        #         phone_number_id=phone_number_id_meta
-        #     )
-        #     return False
+        if not phone_number:
+            log_event(
+                "webhook_phone_not_found",
+                level="warning",
+                phone_number_id=phone_number_id_meta,
+            )
+            return False
 
-        # workspace_id = phone_number.workspace_id
+        workspace_id = phone_number.workspace_id
 
-        # # 2. Find or create Contact
-        # contact = await _get_or_create_contact(
-        #     session=session,
-        #     workspace_id=workspace_id,
-        #     wa_id=contact_data.get("wa_id") or from_number,
-        #     phone_number=from_number,
-        #     name=contact_data.get("name"),
-        # )
+        # 2. Find or create Contact
+        contact = await _get_or_create_contact(
+            session=session,
+            workspace_id=workspace_id,
+            wa_id=contact_data.get("wa_id") or from_number,
+            phone_number=from_number,
+            name=contact_data.get("name"),
+        )
 
-        # # 3. Find or create Conversation
-        # conversation = await _get_or_create_conversation(
-        #     session=session,
-        #     workspace_id=workspace_id,
-        #     contact_id=contact.id,
-        #     phone_number_id=phone_number.id,
-        # )
+        # 3. Find or create Conversation
+        conversation = await _get_or_create_conversation(
+            session=session,
+            workspace_id=workspace_id,
+            contact_id=contact.id,
+            phone_number_id=phone_number.id,
+        )
 
-        # # 4. Parse message timestamp
-        # message_time = utc_now()
-        # if timestamp:
-        #     try:
-        #         message_time = datetime.fromtimestamp(int(timestamp), tz=timezone.utc).replace(tzinfo=None)
-        #     except (ValueError, TypeError):
-        #         pass
+        # 4. Parse message timestamp
+        message_time = utc_now()
+        if timestamp:
+            try:
+                message_time = datetime.fromtimestamp(
+                    int(timestamp), tz=timezone.utc
+                ).replace(tzinfo=None)
+            except (ValueError, TypeError):
+                pass
 
-        # # 5. Handle media if present
-        # media_id = None
+        # 5. Handle media if present
+        media_id = None
         message_type = message_data.get("type", "text")
 
-        # if message_type in ("image", "video", "audio", "document", "sticker"):
-        #     media_id = await _create_media_placeholder(
-        #         session=session,
-        #         workspace_id=workspace_id,
-        #         message_data=message_data,
-        #         message_type=message_type,
-        #     )
+        if message_type in ("image", "video", "audio", "document", "sticker"):
+            media_id = await _create_media_placeholder(
+                session=session,
+                workspace_id=workspace_id,
+                message_data=message_data,
+                message_type=message_type,
+            )
 
-        # # 6. Build message content
-        # content = _extract_message_content(message_data)
+        # 6. Build message content
+        content = _extract_message_content(message_data)
 
-        # # 7. Create Message record
-        # message = Message(
-        #     workspace_id=workspace_id,
-        #     conversation_id=conversation.id,
-        #     phone_number_id=phone_number.id,
-        #     wa_message_id=wa_message_id,
-        #     direction=MessageDirection.INCOMING.value,
-        #     from_number=from_number,
-        #     to_number=metadata.get("display_phone_number", phone_number.phone_number),
-        #     type=message_type,
-        #     content=content,
-        #     media_id=media_id,
-        #     status=MessageStatus.DELIVERED.value,  # Incoming messages are already delivered
-        #     is_bot=False,
-        #     created_at=message_time,
-        # )
-        # session.add(message)
+        # 7. Create Message record
+        message = Message(
+            workspace_id=workspace_id,
+            conversation_id=conversation.id,
+            phone_number_id=phone_number.id,
+            wa_message_id=wa_message_id,
+            direction=MessageDirection.INCOMING.value,
+            from_number=from_number,
+            to_number=metadata.get("display_phone_number", phone_number.phone_number),
+            type=message_type,
+            content=content,
+            media_id=media_id,
+            status=MessageStatus.DELIVERED.value,  # Incoming messages are already delivered
+            is_bot=False,
+            created_at=message_time,
+        )
+        session.add(message)
 
-        # # 8. Update conversation
-        # conversation.last_message_at = message_time
-        # conversation.last_inbound_at = message_time
-        # conversation.window_expires_at = message_time + timedelta(hours=24)
-        # conversation.unread_count += 1
-        # conversation.status = ConversationStatus.OPEN.value
-        # conversation.conversation_type = ConversationType.USER_INITIATED.value
+        # 8. Update conversation
+        conversation.last_message_at = message_time
+        conversation.last_inbound_at = message_time
+        conversation.window_expires_at = message_time + timedelta(hours=24)
+        conversation.unread_count += 1
+        conversation.status = ConversationStatus.OPEN.value
+        conversation.conversation_type = ConversationType.USER_INITIATED.value
 
-        # # 9. Create WebhookLog for audit
-        # webhook_log = WebhookLog(
-        #     workspace_id=workspace_id,
-        #     phone_number_id=phone_number.id,
-        #     event_type="message",
-        #     event_id_hash=wa_message_id,
-        #     payload=event,
-        #     processed=True,
-        #     processed_at=utc_now(),
-        # )
-        # session.add(webhook_log)
+        # 9. Create WebhookLog for audit
+        webhook_log = WebhookLog(
+            workspace_id=workspace_id,
+            phone_number_id=phone_number.id,
+            event_type="message",
+            event_id_hash=wa_message_id,
+            payload=event,
+            processed=True,
+            processed_at=utc_now(),
+        )
+        session.add(webhook_log)
 
-        # await session.commit()
+        await session.commit()
 
-        # # 10. Queue media download if needed
-        # if media_id and message_type in ("image", "video", "audio", "document"):
-        #     await enqueue(Queue.MEDIA_DOWNLOAD, {
-        #         "media_id": str(media_id),
-        #         "workspace_id": str(workspace_id),
-        #         "wa_media_id": message_data.get(message_type, {}).get("id"),
-        #         "mime_type": message_data.get(message_type, {}).get("mime_type"),
-        #         "phone_number_id": phone_number_id_meta,
-        #     })
+        # Post-commit operations (best-effort, failures don't affect message processing)
+        # 10. Queue media download if needed (stickers excluded - they're cached by WhatsApp)
+        if media_id and message_type in ("image", "video", "audio", "document"):
+            await enqueue(
+                Queue.MEDIA_DOWNLOAD,
+                {
+                    "media_id": str(media_id),
+                    "workspace_id": str(workspace_id),
+                    "wa_media_id": message_data.get(message_type, {}).get("id"),
+                    "mime_type": message_data.get(message_type, {}).get("mime_type"),
+                    "phone_number_id": phone_number_id_meta,
+                },
+            )
 
-        # # 11. Publish real-time update
-        # await publish(
-        #     key_realtime(str(workspace_id), "messages"),
-        #     {
-        #         "type": "new_message",
-        #         "conversation_id": str(conversation.id),
-        #         "message": message.to_dict(),
-        #     }
-        # )
-
-        # log_event(
-        #     "webhook_message_processed",
-        #     wa_message_id=wa_message_id,
-        #     conversation_id=str(conversation.id),
-        #     message_type=message_type,
-        # )
+        # 11. Publish real-time update
+        await publish(
+            key_realtime(str(workspace_id), "messages"),
+            {
+                "type": "new_message",
+                "conversation_id": str(conversation.id),
+                "message": message.to_dict(),
+            },
+        )
 
         log_event(
             "webhook_message_processed",
             wa_message_id=wa_message_id,
-            # conversation_id=str(conversation.id),
+            conversation_id=str(conversation.id),
             message_type=message_type,
-            phone_number_id_meta=event.get("phone_number_id"),  # Meta's phone_number_id
-            from_number=event.get("from"),  # Customer's WhatsApp number
-            message_data=event.get("message", {}),
-            contact_data=event.get("contact", {}),
-            metadata=event.get("metadata", {}),
-            timestamp=event.get("timestamp"),
         )
 
         return True
@@ -583,14 +576,17 @@ async def _get_or_create_conversation(
     if conversation:
         return conversation
 
-    # Create new conversation
+    # Create new conversation with initial 24-hour window
+    now = utc_now()
     conversation = Conversation(
         workspace_id=workspace_id,
         contact_id=contact_id,
         phone_number_id=phone_number_id,
         status=ConversationStatus.OPEN.value,
         conversation_type=ConversationType.USER_INITIATED.value,
-        last_message_at=utc_now(),
+        last_message_at=now,
+        last_inbound_at=now,
+        window_expires_at=now + timedelta(hours=24),
         unread_count=0,
     )
     session.add(conversation)
