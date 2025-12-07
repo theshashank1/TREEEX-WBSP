@@ -64,6 +64,8 @@ class TTL:
     RATE_LIMIT = 60  # 1 minute - rate limit windows
     VERIFICATION = 300  # 5 minutes - codes
     CONVERSATION_WINDOW = 86400  # 24 hours - WhatsApp session window
+    ACCESS_TOKEN = 3600  # 1 hour - Meta short-lived tokens
+    ACCESS_TOKEN_BUFFER = 300  # 5 min buffer before expiry
 
 
 # ============================================================================
@@ -99,6 +101,11 @@ def key_conversation_window(conversation_id: str) -> str:
 def key_realtime(workspace_id: str, event_type: str = "messages") -> str:
     """Pub/sub channel for real-time events"""
     return f"realtime:{workspace_id}:{event_type}"
+
+
+def key_access_token(phone_number_id: str) -> str:
+    """Short-term access token cache key"""
+    return f"token:access:{phone_number_id}"
 
 
 # ============================================================================

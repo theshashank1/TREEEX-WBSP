@@ -143,36 +143,34 @@ def _verify_signature(body: bytes, signature: Optional[str]) -> bool:
     Meta sends: X-Hub-Signature-256: sha256=<hex_digest>
     We compute HMAC of body using app secret and compare.
     """
-    # # Skip verification in development if no secret configured
-    # if settings.ENV == "development" and not settings.META_WEBHOOK_VERIFY_TOKEN:
-    #     return True
+    # Skip verification in development if no secret configured
+    if settings.ENV == "development" and not settings.META_APP_SECRET:
+        return True
 
-    # if not signature:
-    #     return False
+    if not signature:
+        return False
 
-    # if not signature.startswith("sha256="):
-    #     return False
+    if not signature.startswith("sha256="):
+        return False
 
-    # # Extract the hex digest
-    # expected_signature = signature[7:]  # Remove "sha256=" prefix
+    # Extract the hex digest
+    expected_signature = signature[7:]  # Remove "sha256=" prefix
 
-    # # Get app secret (same as verify token for Meta webhooks)
-    # app_secret = settings. META_WEBHOOK_VERIFY_TOKEN
-    # if not app_secret:
-    #     log_event("webhook_secret_missing", level="error")
-    #     return False
+    # Get app secret (use META_APP_SECRET for signature verification)
+    app_secret = settings.META_APP_SECRET
+    if not app_secret:
+        log_event("webhook_secret_missing", level="error")
+        return False
 
-    # # Compute HMAC
-    # computed = hmac.new(
-    #     key=app_secret. encode("utf-8"),
-    #     msg=body,
-    #     digestmod=hashlib.sha256
-    # ). hexdigest()
+    # Compute HMAC
+    computed = hmac.new(
+        key=app_secret.encode("utf-8"),
+        msg=body,
+        digestmod=hashlib.sha256
+    ).hexdigest()
 
-    # # Constant-time comparison to prevent timing attacks
-    # return hmac.compare_digest(computed, expected_signature)
-
-    return True
+    # Constant-time comparison to prevent timing attacks
+    return hmac.compare_digest(computed, expected_signature)
 
 
 # ============================================================================
