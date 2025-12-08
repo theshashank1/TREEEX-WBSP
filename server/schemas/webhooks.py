@@ -18,5 +18,5 @@ class WebhookEventType(str, Enum):
 
 
 __all__ = [
-    WebhookEventType,
+    "WebhookEventType",
 ]

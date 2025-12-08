@@ -43,4 +43,4 @@ class SigninResponse(BaseModel):
         from_attributes = True
 
 
-__all__ = [Provider, Signup, SignupResponse, SigninResponse]
+__all__ = ["Provider", "Signup", "SignupResponse", "SigninResponse"]
