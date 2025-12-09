@@ -22,7 +22,6 @@ ENDPOINTS:
 import hashlib
 import hmac
 import json
-from enum import Enum
 from typing import Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
@@ -30,25 +29,9 @@ from fastapi import APIRouter, Header, HTTPException, Request, Response
 from server.core.config import settings
 from server.core.monitoring import log_event, log_exception
 from server.core.redis import Queue, enqueue, is_duplicate, key_idempotency
+from server.schemas.webhooks import *
 
 router = APIRouter(prefix="/webhook", tags=["Webhooks"])
-
-
-# ============================================================================
-# EVENT TYPES
-# ============================================================================
-
-
-class WebhookEventType(str, Enum):
-    """Meta WhatsApp webhook event types"""
-
-    MESSAGE = "message"
-    STATUS = "status"
-    ERROR = "error"
-    TEMPLATE_STATUS = "template_status"
-    HISTORY = "history"
-    TRACKING = "tracking"
-    UNKNOWN = "unknown"
 
 
 # ============================================================================
@@ -164,9 +147,7 @@ def _verify_signature(body: bytes, signature: Optional[str]) -> bool:
 
     # Compute HMAC
     computed = hmac.new(
-        key=app_secret.encode("utf-8"),
-        msg=body,
-        digestmod=hashlib.sha256
+        key=app_secret.encode("utf-8"), msg=body, digestmod=hashlib.sha256
     ).hexdigest()
 
     # Constant-time comparison to prevent timing attacks
