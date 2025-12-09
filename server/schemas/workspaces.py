@@ -75,3 +75,15 @@ class AddMemberRequest(BaseModel):
 
     user_email: EmailStr
     role: MemberRole = MemberRole.MEMBER
+
+
+__all__ = [
+    "WorkspaceCreate",
+    "WorkspaceListResponse",
+    "WorkspaceMemberResponse",
+    "WorkspacePlan",
+    "WorkspaceResponse",
+    "WorkspaceStatus",
+    "WorkspaceUpdate",
+    "AddMemberRequest",
+]

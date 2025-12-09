@@ -9,7 +9,7 @@ from server.core.db import get_async_session
 from server.core.supabase import Client, get_user
 from server.dependencies import get_supabase_client
 from server.models.access import User
-from server.schemas.auth import Provider, SigninResponse, Signup, SignupResponse
+from server.schemas.auth import *
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

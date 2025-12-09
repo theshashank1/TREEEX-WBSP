@@ -1,12 +1,12 @@
 """
 Pydantic schemas for Phone Number API.
 """
+
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 
 # ============================================================================
 # ERROR SCHEMAS
@@ -39,7 +39,8 @@ class PhoneNumberCreate(BaseModel):
         ..., description="Meta's Phone Number ID from Business Suite"
     )
     access_token: str = Field(
-        ..., description="System User Access Token with whatsapp_business_messaging permission"
+        ...,
+        description="System User Access Token with whatsapp_business_messaging permission",
     )
     display_name: Optional[str] = Field(None, description="Friendly name")
     business_id: Optional[str] = Field(
@@ -106,3 +107,12 @@ class PhoneNumberSyncResponse(BaseModel):
     message_limit: int
     tier: Optional[str] = None
     status: str
+
+
+__all__ = [
+    "ErrorDetail",
+    "ErrorResponse",
+    "PhoneNumberCreate",
+    "PhoneNumberUpdate",
+    "PhoneNumberResponse",
+]
