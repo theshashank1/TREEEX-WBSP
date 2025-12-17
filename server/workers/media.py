@@ -33,7 +33,7 @@ from sqlalchemy import select
 from server.core.db import async_session_maker as async_session
 from server.core.db import engine
 from server.core.monitoring import log_event, log_exception
-from server.core.redis import Queue, dequeue, move_to_dlq
+from server.core.redis import Queue, dequeue, enqueue, move_to_dlq
 from server.core.redis import shutdown as redis_shutdown
 from server.core.redis import startup as redis_startup
 from server.models.contacts import PhoneNumber
@@ -262,8 +262,6 @@ async def worker_loop(worker_id: int = 0) -> None:
                     job["_retry_count"] = retry_counts[retry_key]
                     await asyncio.sleep(2 ** retry_counts[retry_key])  # Backoff
                     # Re-enqueue by pushing back to queue
-                    from server.core.redis import enqueue
-
                     await enqueue(Queue.MEDIA_DOWNLOAD, job)
                 else:
                     # Move to DLQ

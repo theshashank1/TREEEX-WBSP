@@ -408,9 +408,10 @@ class WhatsAppClient:
 
                 return file_bytes, mime_type, None
 
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as e:
             log_exception(
                 "whatsapp_media_download_timeout",
+                e,
                 media_id=media_id,
             )
             return None, None, MetaAPIError(

@@ -76,16 +76,6 @@ async def upload_file(
             settings.AZURE_STORAGE_CONTAINER_NAME
         )
 
-        # Ensure container exists
-        try:
-            container_client.get_container_properties()
-        except AzureError:
-            container_client.create_container()
-            log_event(
-                "azure_container_created",
-                container=settings.AZURE_STORAGE_CONTAINER_NAME,
-            )
-
         # Generate unique blob name with workspace isolation
         unique_id = uuid.uuid4().hex[:12]
         safe_filename = filename.replace("/", "_").replace("\\", "_")
