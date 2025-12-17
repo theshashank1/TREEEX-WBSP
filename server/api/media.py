@@ -1,6 +1,7 @@
 """
 Media File Management API endpoints for WhatsApp Business.
 """
+
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -22,42 +23,6 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
 # ============================================================================
-# SCHEMAS
-# ============================================================================
-
-
-class MediaUploadRequest(BaseModel):
-    """Schema for media upload request"""
-    workspace_id: UUID
-    type: str
-    file_name: Optional[str] = None
-    mime_type: Optional[str] = None
-
-
-class MediaResponse(BaseModel):
-    """Schema for media response"""
-    id: UUID
-    workspace_id: UUID
-    type: str
-    original_url: Optional[str]
-    storage_url: Optional[str]
-    file_name: Optional[str]
-    file_size: Optional[int]
-    mime_type: Optional[str]
-
-    class Config:
-        from_attributes = True
-
-
-class MediaListResponse(BaseModel):
-    """Schema for paginated media list"""
-    data: list[MediaResponse]
-    total: int
-    limit: int
-    offset: int
-
-
-# ============================================================================
 # ENDPOINTS
 # ============================================================================
 
@@ -70,13 +35,13 @@ async def upload_media(
 ):
     """
     Upload a media file.
-    
+
     NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
     Actual implementation should:
     1. Accept multipart/form-data file upload
     2. Upload to Azure Blob Storage
     3. Create MediaFile record with storage URLs
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -100,7 +65,7 @@ async def list_media(
 ):
     """
     List media files for a workspace.
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -141,7 +106,7 @@ async def get_media(
 ):
     """
     Get media file details.
-    
+
     Requires workspace membership.
     """
     result = await session.execute(
@@ -169,7 +134,7 @@ async def delete_media(
 ):
     """
     Soft delete a media file.
-    
+
     Requires workspace membership.
     """
     result = await session.execute(
