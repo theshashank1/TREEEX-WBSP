@@ -296,3 +296,134 @@ class WhatsAppClient:
                 code=-1,
                 message=f"Failed to exchange token: {str(e)}",
             )
+
+    async def download_media(
+        self,
+        media_id: str,
+        phone_number_id: str,
+    ) -> tuple[Optional[bytes], Optional[str], Optional[MetaAPIError]]:
+        """
+        Download media file from WhatsApp.
+
+        Two-step process:
+        1. GET /{api_version}/{media_id} with access token
+           Response: {"url": "https://...", "mime_type": "...", "file_size": 123}
+        2. Download file from URL with Authorization: Bearer {token}
+
+        Args:
+            media_id: Meta's media ID (from webhook payload)
+            phone_number_id: Meta's phone number ID (for logging)
+
+        Returns:
+            Tuple of (file_bytes, mime_type, error).
+            On success: (bytes, mime_type_string, None)
+            On failure: (None, None, MetaAPIError)
+        """
+        try:
+            # Longer timeout for media downloads (larger files)
+            media_timeout = 60.0
+
+            async with httpx.AsyncClient(timeout=media_timeout) as client:
+                # Step 1: Get media URL from Meta Graph API
+                log_event(
+                    "whatsapp_media_url_fetch_start",
+                    level="debug",
+                    media_id=media_id,
+                )
+
+                url_response = await client.get(
+                    f"{self.base_url}/{media_id}",
+                    headers={"Authorization": f"Bearer {self.access_token}"},
+                )
+
+                if url_response.status_code != 200:
+                    try:
+                        error_data = url_response.json().get("error", {})
+                    except Exception:
+                        error_data = {}
+
+                    log_event(
+                        "whatsapp_media_url_fetch_failed",
+                        level="error",
+                        media_id=media_id,
+                        status_code=url_response.status_code,
+                    )
+
+                    return None, None, MetaAPIError(
+                        code=error_data.get("code", url_response.status_code),
+                        message=error_data.get("message", "Failed to get media URL"),
+                        error_subcode=error_data.get("error_subcode"),
+                    )
+
+                url_data = url_response.json()
+                download_url = url_data.get("url")
+                mime_type = url_data.get("mime_type")
+                file_size = url_data.get("file_size")
+
+                if not download_url:
+                    log_event(
+                        "whatsapp_media_no_url",
+                        level="error",
+                        media_id=media_id,
+                    )
+                    return None, None, MetaAPIError(
+                        code=-1,
+                        message="No download URL in response",
+                    )
+
+                log_event(
+                    "whatsapp_media_url_fetched",
+                    level="debug",
+                    media_id=media_id,
+                    mime_type=mime_type,
+                    file_size=file_size,
+                )
+
+                # Step 2: Download actual file from CDN URL
+                download_response = await client.get(
+                    download_url,
+                    headers={"Authorization": f"Bearer {self.access_token}"},
+                )
+
+                if download_response.status_code != 200:
+                    log_event(
+                        "whatsapp_media_download_failed",
+                        level="error",
+                        media_id=media_id,
+                        status_code=download_response.status_code,
+                    )
+                    return None, None, MetaAPIError(
+                        code=download_response.status_code,
+                        message=f"Failed to download media: HTTP {download_response.status_code}",
+                    )
+
+                file_bytes = download_response.content
+
+                log_event(
+                    "whatsapp_media_downloaded",
+                    media_id=media_id,
+                    size=len(file_bytes),
+                    mime_type=mime_type,
+                )
+
+                return file_bytes, mime_type, None
+
+        except httpx.TimeoutException:
+            log_exception(
+                "whatsapp_media_download_timeout",
+                media_id=media_id,
+            )
+            return None, None, MetaAPIError(
+                code=-1,
+                message="Request to Meta API timed out during media download.",
+            )
+        except Exception as e:
+            log_exception(
+                "whatsapp_media_download_error",
+                e,
+                media_id=media_id,
+            )
+            return None, None, MetaAPIError(
+                code=-1,
+                message=f"Failed to download media: {str(e)}",
+            )
