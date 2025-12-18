@@ -1,22 +1,36 @@
 """
 Message Sending API endpoints for WhatsApp Business.
 """
+
 import uuid as uuid_module
 from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.db import get_async_session
 from server.core.monitoring import log_event
 from server.core.redis import Queue, enqueue
-from server.dependencies import User, get_current_user, get_workspace_member
+from server.dependencies import (
+    User,
+    WorkspaceMember,
+    WorkspaceMemberDep,
+    get_current_user,
+    get_workspace_member,
+)
 from server.models.base import MessageDirection, MessageStatus
 from server.models.contacts import PhoneNumber
 from server.models.messaging import MediaFile, Message
+from server.schemas.messages import (
+    MessageQueuedResponse,
+    MessageResponse,
+    MessageStatusResponse,
+    SendMediaMessageRequest,
+    SendTemplateMessageRequest,
+    SendTextMessageRequest,
+)
 from server.services import azure_storage
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
@@ -24,6 +38,7 @@ router = APIRouter(prefix="/messages", tags=["Messages"])
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+# WorkspaceMemberDep = Annotated[WorkspaceMember, Depends(get_workspace_member)]
 
 
 # ============================================================================
@@ -32,84 +47,6 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 # Valid media types
 VALID_MEDIA_TYPES = {"image", "video", "audio", "document"}
-
-
-# ============================================================================
-# SCHEMAS
-# ============================================================================
-
-
-class SendTextMessageRequest(BaseModel):
-    """Schema for sending a text message"""
-    workspace_id: UUID
-    phone_number_id: UUID
-    to: str = Field(..., description="Recipient phone number")
-    text: str = Field(..., min_length=1, description="Message text")
-
-
-class SendTemplateMessageRequest(BaseModel):
-    """Schema for sending a template message"""
-    workspace_id: UUID
-    phone_number_id: UUID
-    to: str = Field(..., description="Recipient phone number")
-    template_name: str
-    template_language: str = "en"
-    components: Optional[dict] = None
-
-
-class SendMediaMessageRequest(BaseModel):
-    """Schema for sending a media message"""
-    workspace_id: UUID
-    phone_number_id: UUID
-    to: str = Field(..., description="Recipient phone number")
-    media_type: str = Field(..., description="Type: image, video, audio, document")
-    media_id: UUID = Field(..., description="Media file ID from /api/media")
-    caption: Optional[str] = Field(None, max_length=3000, description="Optional caption")
-
-    @field_validator("media_type")
-    @classmethod
-    def validate_media_type(cls, v: str) -> str:
-        v = v.lower()
-        if v not in VALID_MEDIA_TYPES:
-            raise ValueError(f"Invalid media_type. Must be one of: {', '.join(VALID_MEDIA_TYPES)}")
-        return v
-
-
-class MessageResponse(BaseModel):
-    """Schema for message response"""
-    id: UUID
-    workspace_id: UUID
-    phone_number_id: UUID
-    wa_message_id: Optional[str]
-    direction: str
-    from_number: str
-    to_number: str
-    type: str
-    status: str
-
-    class Config:
-        from_attributes = True
-
-
-class MessageStatusResponse(BaseModel):
-    """Schema for message status response"""
-    id: UUID
-    wa_message_id: Optional[str]
-    status: str
-    delivered_at: Optional[str]
-    read_at: Optional[str]
-
-
-class MessageQueuedResponse(BaseModel):
-    """Response for queued message"""
-    id: UUID
-    workspace_id: UUID
-    phone_number_id: UUID
-    to_number: str
-    type: str
-    status: str
-    media_id: Optional[UUID] = None
-    queued: bool = True
 
 
 # ============================================================================
@@ -125,14 +62,14 @@ async def send_text_message(
 ):
     """
     Send a text message.
-    
+
     NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
     Actual implementation should:
     1. Find or create contact and conversation
     2. Create message record with conversation_id
     3. Queue message to Redis for async sending via WhatsApp API
     4. Return the queued message
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -156,7 +93,7 @@ async def send_text_message(
     # - Finding or creating conversation
     # - Creating message with conversation_id
     # - Queueing to Redis for sending
-    
+
     raise HTTPException(
         status_code=501,
         detail="Message sending not yet implemented. This is a placeholder endpoint.",
@@ -171,11 +108,11 @@ async def send_template_message(
 ):
     """
     Send a template message.
-    
+
     NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
     Actual implementation should integrate with WhatsApp client,
     create conversation, and queue the message.
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -277,14 +214,20 @@ async def send_media_message(
     if not blob_name:
         raise HTTPException(
             status_code=500,
-            detail={"code": "STORAGE_ERROR", "message": "Failed to parse media storage URL"},
+            detail={
+                "code": "STORAGE_ERROR",
+                "message": "Failed to parse media storage URL",
+            },
         )
 
     sas_url = azure_storage.generate_sas_url(blob_name, expiry_minutes=30)
     if not sas_url:
         raise HTTPException(
             status_code=500,
-            detail={"code": "SAS_ERROR", "message": "Failed to generate media download URL"},
+            detail={
+                "code": "SAS_ERROR",
+                "message": "Failed to generate media download URL",
+            },
         )
 
     # Create a placeholder message record
@@ -313,7 +256,10 @@ async def send_media_message(
     if not success:
         raise HTTPException(
             status_code=503,
-            detail={"code": "QUEUE_ERROR", "message": "Failed to queue message for sending"},
+            detail={
+                "code": "QUEUE_ERROR",
+                "message": "Failed to queue message for sending",
+            },
         )
 
     log_event(
@@ -344,12 +290,10 @@ async def get_message_status(
 ):
     """
     Get message delivery status.
-    
+
     Requires workspace membership.
     """
-    result = await session.execute(
-        select(Message).where(Message.id == message_id)
-    )
+    result = await session.execute(select(Message).where(Message.id == message_id))
     message = result.scalar_one_or_none()
 
     if not message:
