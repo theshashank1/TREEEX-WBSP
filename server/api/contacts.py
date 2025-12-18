@@ -31,8 +31,8 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 # CONSTANTS
 # ============================================================================
 
-# E.164 phone number regex
-E164_REGEX = re.compile(r"^\+[1-9]\d{1,14}$")
+# E.164 phone number regex - allows 1-15 total digits including country code
+E164_REGEX = re.compile(r"^\+[1-9]\d{0,14}$")
 
 # Maximum contacts per import
 MAX_IMPORT_ROWS = 10000

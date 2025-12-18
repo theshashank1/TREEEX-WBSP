@@ -207,7 +207,7 @@ async def create_broadcast(
                 and_(
                     Contact.workspace_id == data.workspace_id,
                     Contact.deleted_at.is_(None),
-                    Contact.opted_in == True,
+                    Contact.opted_in.is_(True),
                     Contact.tags.overlap(data.audience.labels_filter),
                 )
             )

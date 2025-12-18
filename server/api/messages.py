@@ -1,6 +1,7 @@
 """
 Message Sending API endpoints for WhatsApp Business.
 """
+import uuid as uuid_module
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -288,7 +289,6 @@ async def send_media_message(
 
     # Create a placeholder message record
     # Note: In a full implementation, this would create contact/conversation first
-    import uuid as uuid_module
     message_id = uuid_module.uuid4()
 
     # Queue the message for async sending
