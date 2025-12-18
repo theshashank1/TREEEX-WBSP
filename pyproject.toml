@@ -9,6 +9,7 @@ dependencies = [
     "asyncpg>=0.31.0",
     "azure-storage-blob>=12.19.0",
     "fastapi[standard]>=0.123.2",
+    "openpyxl>=3.1.2",
     "pre-commit>=4.5.0",
     "psycopg2-binary>=2.9.11",
     "pydantic-settings>=2.12.0",

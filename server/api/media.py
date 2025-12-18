@@ -2,7 +2,7 @@
 Media File Management API endpoints for WhatsApp Business.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -36,7 +36,7 @@ MAX_AUDIO_SIZE = 16 * 1024 * 1024  # 16 MB
 MAX_DOCUMENT_SIZE = 100 * 1024 * 1024  # 100 MB
 
 # Allowed MIME types per category
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/bmp"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/3gpp", "video/quicktime"}
 ALLOWED_AUDIO_TYPES = {"audio/aac", "audio/mp4", "audio/mpeg", "audio/amr", "audio/ogg"}
 ALLOWED_DOCUMENT_TYPES = {
@@ -89,6 +89,7 @@ class MediaURLResponse(BaseModel):
 
     url: str
     expires_in_minutes: int = Field(..., description="URL validity in minutes")
+    expires_at: datetime = Field(..., description="Expiration timestamp")
 
 
 # ============================================================================
@@ -210,7 +211,7 @@ async def upload_media(
 
     # Upload to Azure Blob Storage
     filename = file.filename or f"upload_{media_type}"
-    blob_url, error = await azure_storage.upload_file(
+    blob_url, blob_name, error = await azure_storage.upload_file(
         file_data=file_data,
         filename=filename,
         mime_type=mime_type,
@@ -250,6 +251,7 @@ async def upload_media(
         workspace_id=str(workspace_id),
         type=media_type,
         size=file_size,
+        blob_name=blob_name,
     )
 
     return media_file
@@ -464,7 +466,13 @@ async def get_media_url(
         expiry_minutes=expiry_minutes,
     )
 
-    return MediaURLResponse(url=sas_url, expires_in_minutes=expiry_minutes)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
+
+    return MediaURLResponse(
+        url=sas_url,
+        expires_in_minutes=expiry_minutes,
+        expires_at=expires_at,
+    )
 
 
 @router.delete("/{media_id}", status_code=204)

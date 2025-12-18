@@ -7,10 +7,12 @@ Provides workspace-isolated storage with SAS token generation.
 
 from __future__ import annotations
 
+import re
+import unicodedata
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
-from urllib.parse import urlparse
+from urllib.parse import quote, unquote, urlparse
 
 from azure.core.exceptions import AzureError
 from azure.storage.blob import (
@@ -22,6 +24,69 @@ from azure.storage.blob import (
 
 from server.core.config import settings
 from server.core.monitoring import log_event, log_exception
+
+
+# ============================================================================
+# FILENAME SANITIZATION
+# ============================================================================
+
+
+def sanitize_filename(filename: str, max_length: int = 180) -> str:
+    """
+    Sanitize filename for safe Azure Blob storage.
+
+    - NFC normalize unicode
+    - Replace spaces and control characters with underscores
+    - Remove invalid characters (<>:"|?*)
+    - Cap length while preserving extension
+    - Add short UUID if needed to avoid collisions
+
+    Args:
+        filename: Original filename
+        max_length: Maximum length for the filename (default 180)
+
+    Returns:
+        Sanitized filename safe for Azure Blob storage
+    """
+    if not filename:
+        return f"file_{uuid.uuid4().hex[:8]}"
+
+    # NFC normalize unicode
+    filename = unicodedata.normalize("NFC", filename)
+
+    # Split into name and extension
+    if "." in filename:
+        name, ext = filename.rsplit(".", 1)
+        ext = "." + ext
+    else:
+        name = filename
+        ext = ""
+
+    # Replace spaces and control characters with underscores
+    name = re.sub(r"[\s\x00-\x1f\x7f]+", "_", name)
+
+    # Remove invalid characters for Azure Blob: <>:"|?*
+    name = re.sub(r'[<>:"|?*]+', "", name)
+
+    # Replace multiple underscores with single
+    name = re.sub(r"_+", "_", name)
+
+    # Strip leading/trailing underscores and dots
+    name = name.strip("_.")
+
+    # If name is empty after sanitization, generate a random one
+    if not name:
+        name = f"file_{uuid.uuid4().hex[:8]}"
+
+    # Cap length while preserving extension
+    ext_len = len(ext)
+    max_name_len = max_length - ext_len - 1  # -1 for safety
+
+    if len(name) > max_name_len:
+        name = name[:max_name_len]
+        name = name.rstrip("_.")
+
+    return name + ext
 
 # Cached blob service client
 _blob_service_client: Optional[BlobServiceClient] = None
@@ -56,7 +121,7 @@ async def upload_file(
     filename: str,
     mime_type: str,
     workspace_id: str,
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
     """
     Upload a file to Azure Blob Storage.
 
@@ -67,8 +132,8 @@ async def upload_file(
         workspace_id: Workspace UUID for isolation
 
     Returns:
-        Tuple of (blob_url, error). On success, error is None.
-        On failure, blob_url is None and error contains the message.
+        Tuple of (blob_url, blob_name, error). On success, error is None.
+        On failure, blob_url and blob_name are None and error contains the message.
     """
     try:
         client = get_blob_client()
@@ -78,7 +143,7 @@ async def upload_file(
 
         # Generate unique blob name with workspace isolation
         unique_id = uuid.uuid4().hex[:12]
-        safe_filename = filename.replace("/", "_").replace("\\", "_")
+        safe_filename = sanitize_filename(filename)
         blob_name = f"{workspace_id}/{unique_id}_{safe_filename}"
 
         # Get blob client and upload
@@ -101,17 +166,17 @@ async def upload_file(
             mime_type=mime_type,
         )
 
-        return blob_url, None
+        return blob_url, blob_name, None
 
     except AzureError as e:
         log_exception("azure_upload_failed", e, filename=filename)
-        return None, f"Azure upload failed: {str(e)}"
+        return None, None, f"Azure upload failed: {str(e)}"
     except RuntimeError as e:
         log_exception("azure_upload_failed", e, filename=filename)
-        return None, str(e)
+        return None, None, str(e)
     except Exception as e:
         log_exception("azure_upload_failed", e, filename=filename)
-        return None, f"Unexpected error during upload: {str(e)}"
+        return None, None, f"Unexpected error during upload: {str(e)}"
 
 
 async def download_file(blob_name: str) -> Tuple[Optional[bytes], Optional[str]]:
@@ -188,9 +253,6 @@ async def delete_file(blob_name: str) -> bool:
         return False
 
 
-from urllib.parse import quote
-
-
 def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
     try:
         if not settings.AZURE_STORAGE_ACCOUNT_NAME:
@@ -262,6 +324,9 @@ def extract_blob_name_from_url(blob_url: str) -> Optional[str]:
 
         parsed = urlparse(blob_url)
         path = parsed.path
+
+        # URL-decode the path to handle encoded characters
+        path = unquote(path)
 
         # Path format: /container_name/blob_name
         # Remove leading slash and container name

@@ -18,6 +18,16 @@ from server.models.base import (
 )
 
 
+# Broadcast status enum values
+class BroadcastStatus:
+    DRAFT = "draft"
+    SCHEDULED = "scheduled"
+    SENDING = "sending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELED = "canceled"
+
+
 class Template(TimestampMixin, SoftDeleteMixin, Base):
     """Message templates - scoped to phone_number_id for Meta API registration."""
 
@@ -179,4 +189,45 @@ class CampaignMessage(Base):
         Index("idx_camp_msg_campaign_status", "campaign_id", "status"),
         Index("idx_camp_msg_workspace", "workspace_id"),
         Index("idx_camp_msg_status", "status"),
+    )
+
+
+class Broadcast(TimestampMixin, SoftDeleteMixin, Base):
+    """Broadcast messaging with audience selection."""
+
+    __tablename__ = "broadcasts"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
+    )
+    phone_number_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    message_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    media_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("media_files.id", ondelete="SET NULL"), nullable=True
+    )
+    # Audience: either contact_ids (list of UUIDs) or labels_filter (list of label strings)
+    audience: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    status: Mapped[str] = mapped_column(
+        String(20), default=BroadcastStatus.DRAFT, nullable=False
+    )
+    scheduled_for: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    started_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    completed_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+    total_recipients: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    sent_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    delivered_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    read_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("workspace_members.id", ondelete="SET NULL"), nullable=True
+    )
+
+    __table_args__ = (
+        Index("idx_broadcast_workspace_status", "workspace_id", "status"),
+        Index("idx_broadcast_scheduled", "scheduled_for"),
+        Index("idx_broadcast_workspace", "workspace_id"),
     )

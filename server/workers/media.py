@@ -173,7 +173,7 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
 
             # 4. Upload to Azure Blob Storage
             filename = media.file_name or f"{media.type}_{wa_media_id}"
-            blob_url, upload_error = await azure_storage.upload_file(
+            blob_url, blob_name, upload_error = await azure_storage.upload_file(
                 file_data=file_bytes,
                 filename=filename,
                 mime_type=final_mime_type,
@@ -201,6 +201,7 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 media_id=media_id,
                 workspace_id=workspace_id,
                 file_size=len(file_bytes),
+                blob_name=blob_name,
             )
 
             return True

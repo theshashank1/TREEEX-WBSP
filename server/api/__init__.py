@@ -4,7 +4,9 @@ API routers for the TREEEX WhatsApp BSP platform.
 
 from server.api import (
     auth,
+    broadcasts,
     campaigns,
+    contacts,
     media,
     messages,
     phone_numbers,
@@ -15,11 +17,13 @@ from server.api import (
 
 __all__ = [
     "auth",
-    "workspaces",
-    "phone_numbers",
-    "webhooks",
+    "broadcasts",
     "campaigns",
+    "contacts",
     "media",
     "messages",
+    "phone_numbers",
     "templates",
+    "webhooks",
+    "workspaces",
 ]
