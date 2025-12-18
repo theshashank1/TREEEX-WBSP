@@ -188,17 +188,10 @@ async def delete_file(blob_name: str) -> bool:
         return False
 
 
+from urllib.parse import quote
+
+
 def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
-    """
-    Generate a temporary Shared Access Signature (SAS) URL for a blob.
-
-    Args:
-        blob_name: Full blob path (e.g., "workspace_id/uuid_filename.jpg")
-        expiry_minutes: URL validity in minutes (default: 60)
-
-    Returns:
-        SAS URL string or None if generation fails
-    """
     try:
         if not settings.AZURE_STORAGE_ACCOUNT_NAME:
             log_event(
@@ -216,20 +209,27 @@ def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
             )
             return None
 
+        start_time = datetime.now(timezone.utc) - timedelta(minutes=5)
         expiry_time = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
 
+        # Use a valid storage API version or omit to let SDK choose the latest supported
         sas_token = generate_blob_sas(
             account_name=settings.AZURE_STORAGE_ACCOUNT_NAME,
             container_name=settings.AZURE_STORAGE_CONTAINER_NAME,
             blob_name=blob_name,
             account_key=settings.AZURE_STORAGE_ACCOUNT_KEY,
             permission=BlobSasPermissions(read=True),
+            start=start_time,
             expiry=expiry_time,
+            version="2023-11-03",  # or remove this line to use SDK default
         )
+
+        # Encode blob name to avoid signature/path mismatches with spaces/parentheses
+        encoded_blob_name = quote(blob_name, safe="/")
 
         sas_url = (
             f"https://{settings.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/"
-            f"{settings.AZURE_STORAGE_CONTAINER_NAME}/{blob_name}?{sas_token}"
+            f"{settings.AZURE_STORAGE_CONTAINER_NAME}/{encoded_blob_name}?{sas_token}"
         )
 
         log_event(
