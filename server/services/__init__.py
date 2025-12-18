@@ -8,6 +8,7 @@ from server.services.azure_storage import (
     extract_blob_name_from_url,
     generate_sas_url,
     get_blob_client,
+    sanitize_filename,
     upload_file,
 )
 
@@ -18,4 +19,5 @@ __all__ = [
     "delete_file",
     "generate_sas_url",
     "extract_blob_name_from_url",
+    "sanitize_filename",
 ]
