@@ -1,0 +1,4387 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "FastAPI",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/webhook": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Verify Webhook",
+                "description": "Webhook Verification (Setup Only)\n\nMeta calls this ONCE when you first configure the webhook.\nMust return the challenge value to verify ownership.",
+                "operationId": "verify_webhook_webhook_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "summary": "Receive Webhook",
+                "description": "Main Webhook Endpoint - Receives ALL events from Meta\n\nFlow:\n  1. Read raw body\n  2. Verify HMAC signature\n  3. Parse JSON\n  4.  Check idempotency (skip duplicates)\n  5. Route to Redis queue by event type\n  6. Return 200 OK immediately",
+                "operationId": "receive_webhook_webhook_post",
+                "parameters": [
+                    {
+                        "name": "X-Hub-Signature-256",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "X-Hub-Signature-256"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/signup": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Signup",
+                "operationId": "signup_api_auth_signup_post",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/Provider",
+                            "default": "Email"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Signup"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SignupResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/signin": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Signin",
+                "operationId": "signin_api_auth_signin_post",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/Provider",
+                            "default": "Email"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Signup"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SigninResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Refresh",
+                "operationId": "refresh_api_auth_refresh_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/me": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Me",
+                "operationId": "me_api_auth_me_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/workspaces": {
+            "get": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "List Workspaces",
+                "description": "List all workspaces user is a member of.",
+                "operationId": "list_workspaces_api_workspaces_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/WorkspaceListResponse"
+                                    },
+                                    "type": "array",
+                                    "title": "Response List Workspaces Api Workspaces Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "Create Workspace",
+                "description": "Create a new workspace.",
+                "operationId": "create_workspace_api_workspaces_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkspaceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/workspaces/{workspace_id}": {
+            "get": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "Get Workspace",
+                "description": "Get specific workspace. Requires membership.",
+                "operationId": "get_workspace_api_workspaces__workspace_id__get",
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkspaceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "Update Workspace",
+                "description": "Update workspace. Requires OWNER or ADMIN role.",
+                "operationId": "update_workspace_api_workspaces__workspace_id__patch",
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WorkspaceUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkspaceResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "Delete Workspace",
+                "description": "Soft delete workspace. Requires OWNER role only.",
+                "operationId": "delete_workspace_api_workspaces__workspace_id__delete",
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/workspaces/{workspace_id}/members": {
+            "get": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "List Workspace Members",
+                "description": "List workspace members. Requires membership.",
+                "operationId": "list_workspace_members_api_workspaces__workspace_id__members_get",
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/WorkspaceMemberResponse"
+                                    },
+                                    "title": "Response List Workspace Members Api Workspaces  Workspace Id  Members Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Workspaces"
+                ],
+                "summary": "Add Workspace Member",
+                "description": "Add member to workspace. Requires OWNER or ADMIN role.",
+                "operationId": "add_workspace_member_api_workspaces__workspace_id__members_post",
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Workspace Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AddMemberRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WorkspaceMemberResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/phone-numbers": {
+            "post": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Create Phone Number",
+                "description": "Register a new WhatsApp Business phone number.\n\nFlow:\n1. Verify workspace membership (OWNER or ADMIN)\n2. Validate access_token with Meta API\n3. Fetch phone number details from Meta\n4. Check if phone_number_id already exists\n5. Create PhoneNumber record\n6. Return PhoneNumberResponse",
+                "operationId": "create_phone_number_api_phone_numbers_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PhoneNumberCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "List Phone Numbers",
+                "description": "List phone numbers for a workspace.\n\nRequires workspace membership.",
+                "operationId": "list_phone_numbers_api_phone_numbers_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID to filter by",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID to filter by"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status (pending, active, disabled)",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status (pending, active, disabled)"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "description": "Results per page",
+                            "default": 20,
+                            "title": "Limit"
+                        },
+                        "description": "Results per page"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Offset for pagination",
+                            "default": 0,
+                            "title": "Offset"
+                        },
+                        "description": "Offset for pagination"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/phone-numbers/{phone_number_id}": {
+            "get": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Get Phone Number",
+                "description": "Get details of a specific phone number.\n\nRequires workspace membership.",
+                "operationId": "get_phone_number_api_phone_numbers__phone_number_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "phone_number_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Phone Number Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Update Phone Number",
+                "description": "Update phone number settings.\n\nRequires OWNER or ADMIN role.",
+                "operationId": "update_phone_number_api_phone_numbers__phone_number_id__patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "phone_number_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Phone Number Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PhoneNumberUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Delete Phone Number",
+                "description": "Soft delete a phone number.\n\nRequires OWNER or ADMIN role.",
+                "operationId": "delete_phone_number_api_phone_numbers__phone_number_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "phone_number_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Phone Number Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/phone-numbers/{phone_number_id}/sync": {
+            "post": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Sync Phone Number",
+                "description": "Sync phone number data from Meta API.\n\nFetches the latest quality rating, message limit, and tier from Meta.\nRequires workspace membership.",
+                "operationId": "sync_phone_number_api_phone_numbers__phone_number_id__sync_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "phone_number_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Phone Number Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberSyncResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/phone-numbers/{phone_number_id}/exchange-token": {
+            "post": {
+                "tags": [
+                    "Phone Numbers"
+                ],
+                "summary": "Exchange Token For Long Term",
+                "description": "Exchange short-lived access token for long-lived token.\n\nThis endpoint attempts to exchange the current access token for a long-lived\ntoken (typically 60 days vs 1 hour). This is useful when you have a short-lived\nuser access token and want to convert it to a long-lived one.\n\nNote: System user tokens are already long-lived and don't need exchange.\n\nRequires workspace admin access.",
+                "operationId": "exchange_token_for_long_term_api_phone_numbers__phone_number_id__exchange_token_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "phone_number_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Phone Number Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PhoneNumberResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/campaigns": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Create Campaign",
+                "description": "Create a new campaign.\n\nRequires workspace membership.",
+                "operationId": "create_campaign_api_campaigns_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CampaignCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "List Campaigns",
+                "description": "List campaigns for a workspace.\n\nRequires workspace membership.",
+                "operationId": "list_campaigns_api_campaigns_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID to filter by",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID to filter by"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/campaigns/{campaign_id}": {
+            "get": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Get Campaign",
+                "description": "Get campaign details.\n\nRequires workspace membership.",
+                "operationId": "get_campaign_api_campaigns__campaign_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Campaign Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Update Campaign",
+                "description": "Update campaign.\n\nRequires workspace membership.",
+                "operationId": "update_campaign_api_campaigns__campaign_id__patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Campaign Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CampaignUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Delete Campaign",
+                "description": "Soft delete a campaign.\n\nRequires workspace membership.",
+                "operationId": "delete_campaign_api_campaigns__campaign_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Campaign Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/campaigns/{campaign_id}/start": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Start Campaign",
+                "description": "Start a campaign.\n\nChanges status from DRAFT/SCHEDULED to SENDING.",
+                "operationId": "start_campaign_api_campaigns__campaign_id__start_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Campaign Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/campaigns/{campaign_id}/pause": {
+            "post": {
+                "tags": [
+                    "Campaigns"
+                ],
+                "summary": "Pause Campaign",
+                "description": "Pause a sending campaign.\n\nChanges status from SENDING to SCHEDULED (paused state).\nNote: In this system, SCHEDULED also represents a paused campaign.",
+                "operationId": "pause_campaign_api_campaigns__campaign_id__pause_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "campaign_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Campaign Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CampaignResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/media": {
+            "post": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Upload Media",
+                "description": "Upload a media file to Azure Blob Storage.\n\nAccepts multipart/form-data with:\n- workspace_id: UUID of the workspace\n- file: The file to upload\n\nFile size limits:\n- Images: 16 MB (JPEG, PNG, GIF, BMP)\n- Videos: 100 MB (MP4, 3GPP, QuickTime)\n- Audio: 16 MB (AAC, MP4, MPEG, AMR, OGG)\n- Documents: 100 MB (PDF, Word, Excel, PowerPoint, Text)\n\nRequires workspace membership.",
+                "operationId": "upload_media_api_media_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_upload_media_api_media_post"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "List Media",
+                "description": "List media files for a workspace.\n\nRequires workspace membership.",
+                "operationId": "list_media_api_media_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID to filter by",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID to filter by"
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by media type",
+                            "title": "Type"
+                        },
+                        "description": "Filter by media type"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/media/{media_id}": {
+            "get": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Get Media",
+                "description": "Get media file details.\n\nRequires workspace membership.",
+                "operationId": "get_media_api_media__media_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "media_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Media Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Delete Media",
+                "description": "Soft delete a media file.\n\nRequires workspace membership.",
+                "operationId": "delete_media_api_media__media_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "media_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Media Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/media/{media_id}/download": {
+            "get": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Download Media",
+                "description": "Download a media file via redirect to SAS URL.\n\nReturns a 307 redirect to a temporary Azure SAS URL (60 min expiry).\nThis approach avoids streaming file bytes through the API server.\n\nRequires workspace membership.",
+                "operationId": "download_media_api_media__media_id__download_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "media_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Media Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/media/{media_id}/url": {
+            "get": {
+                "tags": [
+                    "Media"
+                ],
+                "summary": "Get Media Url",
+                "description": "Get a temporary signed URL for a media file.\n\nReturns a JSON response with a temporary Azure SAS URL.\nConfigurable expiry from 5 to 1440 minutes (24 hours).\n\nRequires workspace membership.",
+                "operationId": "get_media_url_api_media__media_id__url_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "media_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Media Id"
+                        }
+                    },
+                    {
+                        "name": "expiry_minutes",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 1440,
+                            "minimum": 5,
+                            "description": "URL validity in minutes",
+                            "default": 60,
+                            "title": "Expiry Minutes"
+                        },
+                        "description": "URL validity in minutes"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MediaURLResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/messages/send/text": {
+            "post": {
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send Text Message",
+                "description": "Send a text message.\n\nNOTE: This is a PLACEHOLDER endpoint for API scaffolding.\nActual implementation should:\n1. Find or create contact and conversation\n2. Create message record with conversation_id\n3. Queue message to Redis for async sending via WhatsApp API\n4. Return the queued message\n\nRequires workspace membership.",
+                "operationId": "send_text_message_api_messages_send_text_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendTextMessageRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/send/template": {
+            "post": {
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send Template Message",
+                "description": "Send a template message.\n\nNOTE: This is a PLACEHOLDER endpoint for API scaffolding.\nActual implementation should integrate with WhatsApp client,\ncreate conversation, and queue the message.\n\nRequires workspace membership.",
+                "operationId": "send_template_message_api_messages_send_template_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendTemplateMessageRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/send/media": {
+            "post": {
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send Media Message",
+                "description": "Send a media message.\n\nValidates the media file exists and has been uploaded,\nthen queues the message for async delivery.\n\nFlow:\n1. Validate workspace membership\n2. Validate phone number\n3. Validate media file exists and is ready\n4. Generate SAS URL for media delivery\n5. Queue message to outbound queue\n\nRequires workspace membership.",
+                "operationId": "send_media_message_api_messages_send_media_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendMediaMessageRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageQueuedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ]
+            }
+        },
+        "/api/messages/{message_id}/status": {
+            "get": {
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Get Message Status",
+                "description": "Get message delivery status.\n\nRequires workspace membership.",
+                "operationId": "get_message_status_api_messages__message_id__status_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "message_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Message Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageStatusResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/templates": {
+            "post": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Create Template",
+                "description": "Create a new WhatsApp message template.\n\nTemplates must be approved by Meta before they can be used.\nThe template will be created with PENDING status.\n\nRequires workspace membership.",
+                "operationId": "create_template_api_templates_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "List Templates",
+                "description": "List templates for a workspace.\n\nRequires workspace membership.",
+                "operationId": "list_templates_api_templates_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID to filter by",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID to filter by"
+                    },
+                    {
+                        "name": "phone_number_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string",
+                                    "format": "uuid"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by phone number",
+                            "title": "Phone Number Id"
+                        },
+                        "description": "Filter by phone number"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by category",
+                            "title": "Category"
+                        },
+                        "description": "Filter by category"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/templates/{template_id}": {
+            "get": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Get Template",
+                "description": "Get template details.\n\nRequires workspace membership.",
+                "operationId": "get_template_api_templates__template_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "template_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Template Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Update Template",
+                "description": "Update template.\n\nOnly components and status can be updated.\nStatus changes are typically managed by Meta webhook updates.\n\nRequires workspace membership.",
+                "operationId": "update_template_api_templates__template_id__patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "template_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Template Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TemplateUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TemplateResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Templates"
+                ],
+                "summary": "Delete Template",
+                "description": "Soft delete a template.\n\nRequires workspace membership.",
+                "operationId": "delete_template_api_templates__template_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "template_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Template Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contacts": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Create Contact",
+                "description": "Create a new contact.\n\nPhone number must be in E.164 format (e.g., +15551234567).\nRequires workspace membership.",
+                "operationId": "create_contact_api_contacts_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "List Contacts",
+                "description": "List contacts for a workspace.\n\nSupports filtering by tags, opt-in status, and search.\nRequires workspace membership.",
+                "operationId": "list_contacts_api_contacts_get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID"
+                    },
+                    {
+                        "name": "tags",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by tags (comma-separated)",
+                            "title": "Tags"
+                        },
+                        "description": "Filter by tags (comma-separated)"
+                    },
+                    {
+                        "name": "opted_in",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by opt-in status",
+                            "title": "Opted In"
+                        },
+                        "description": "Filter by opt-in status"
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Search by name or phone",
+                            "title": "Search"
+                        },
+                        "description": "Search by name or phone"
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "default": 20,
+                            "title": "Limit"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "default": 0,
+                            "title": "Offset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contacts/{contact_id}": {
+            "get": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Get Contact",
+                "description": "Get contact details.\n\nRequires workspace membership.",
+                "operationId": "get_contact_api_contacts__contact_id__get",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "contact_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Contact Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Update Contact",
+                "description": "Update a contact.\n\nRequires workspace membership.",
+                "operationId": "update_contact_api_contacts__contact_id__patch",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "contact_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Contact Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ContactUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ContactResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Delete Contact",
+                "description": "Soft delete a contact.\n\nRequires workspace membership.",
+                "operationId": "delete_contact_api_contacts__contact_id__delete",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "contact_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "title": "Contact Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successful Response"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/contacts/import": {
+            "post": {
+                "tags": [
+                    "Contacts"
+                ],
+                "summary": "Import Contacts",
+                "description": "Import contacts from CSV or Excel file.\n\nExpected columns:\n- phone (required): Phone number in E.164 format or common formats\n- name (optional): Contact name\n- labels/tags (optional): Comma or semicolon separated labels\n\nReturns per-row import status.\nRequires workspace membership.",
+                "operationId": "import_contacts_api_contacts_import_post",
+                "security": [
+                    {
+                        "HTTPBearer": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "workspace_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Workspace ID",
+                            "title": "Workspace Id"
+                        },
+                        "description": "Workspace ID"
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_import_contacts_api_contacts_import_post"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImportResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AddMemberRequest": {
+                "properties": {
+                    "user_email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "User Email"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/MemberRole",
+                        "default": "MEMBER"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_email"
+                ],
+                "title": "AddMemberRequest",
+                "description": "Request model for adding a member to a workspace"
+            },
+            "Body_import_contacts_api_contacts_import_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "title": "File",
+                        "description": "CSV or Excel file"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_import_contacts_api_contacts_import_post"
+            },
+            "Body_upload_media_api_media_post": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id",
+                        "description": "Workspace ID"
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "title": "File",
+                        "description": "File to upload"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "file"
+                ],
+                "title": "Body_upload_media_api_media_post"
+            },
+            "CampaignCreate": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "template_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Template Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "title": "Name"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "name"
+                ],
+                "title": "CampaignCreate",
+                "description": "Schema for creating a new campaign"
+            },
+            "CampaignListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/CampaignResponse"
+                        },
+                        "type": "array",
+                        "title": "Data"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "data",
+                    "total",
+                    "limit",
+                    "offset"
+                ],
+                "title": "CampaignListResponse",
+                "description": "Schema for paginated campaign list"
+            },
+            "CampaignResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "template_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Template Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "total_contacts": {
+                        "type": "integer",
+                        "title": "Total Contacts"
+                    },
+                    "sent_count": {
+                        "type": "integer",
+                        "title": "Sent Count"
+                    },
+                    "delivered_count": {
+                        "type": "integer",
+                        "title": "Delivered Count"
+                    },
+                    "read_count": {
+                        "type": "integer",
+                        "title": "Read Count"
+                    },
+                    "failed_count": {
+                        "type": "integer",
+                        "title": "Failed Count"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "phone_number_id",
+                    "template_id",
+                    "name",
+                    "total_contacts",
+                    "sent_count",
+                    "delivered_count",
+                    "read_count",
+                    "failed_count",
+                    "status"
+                ],
+                "title": "CampaignResponse",
+                "description": "Schema for campaign response"
+            },
+            "CampaignUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "title": "CampaignUpdate",
+                "description": "Schema for updating campaign"
+            },
+            "ContactCreate": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Phone Number",
+                        "description": "Phone number in E.164 format (e.g., +15551234567)"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "tags": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tags",
+                        "description": "Labels/tags for the contact"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number"
+                ],
+                "title": "ContactCreate",
+                "description": "Schema for creating a new contact"
+            },
+            "ContactListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/ContactResponse"
+                        },
+                        "type": "array",
+                        "title": "Data"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "data",
+                    "total",
+                    "limit",
+                    "offset"
+                ],
+                "title": "ContactListResponse",
+                "description": "Schema for paginated contact list"
+            },
+            "ContactResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "wa_id": {
+                        "type": "string",
+                        "title": "Wa Id"
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Phone Number"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "opted_in": {
+                        "type": "boolean",
+                        "title": "Opted In"
+                    },
+                    "tags": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tags"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "wa_id",
+                    "phone_number",
+                    "name",
+                    "opted_in",
+                    "tags",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "ContactResponse",
+                "description": "Schema for contact response"
+            },
+            "ContactUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "tags": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tags"
+                    },
+                    "opted_in": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Opted In"
+                    }
+                },
+                "type": "object",
+                "title": "ContactUpdate",
+                "description": "Schema for updating a contact"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ImportResponse": {
+                "properties": {
+                    "total_rows": {
+                        "type": "integer",
+                        "title": "Total Rows"
+                    },
+                    "imported": {
+                        "type": "integer",
+                        "title": "Imported"
+                    },
+                    "updated": {
+                        "type": "integer",
+                        "title": "Updated"
+                    },
+                    "failed": {
+                        "type": "integer",
+                        "title": "Failed"
+                    },
+                    "results": {
+                        "items": {
+                            "$ref": "#/components/schemas/ImportRowResult"
+                        },
+                        "type": "array",
+                        "title": "Results"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "total_rows",
+                    "imported",
+                    "updated",
+                    "failed",
+                    "results"
+                ],
+                "title": "ImportResponse",
+                "description": "Schema for import response"
+            },
+            "ImportRowResult": {
+                "properties": {
+                    "row_number": {
+                        "type": "integer",
+                        "title": "Row Number"
+                    },
+                    "phone_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone Number"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reason"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "row_number",
+                    "phone_number",
+                    "status"
+                ],
+                "title": "ImportRowResult",
+                "description": "Result for a single import row"
+            },
+            "MediaListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/MediaResponse"
+                        },
+                        "type": "array",
+                        "title": "Data"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "data",
+                    "total",
+                    "limit",
+                    "offset"
+                ],
+                "title": "MediaListResponse",
+                "description": "Schema for paginated media list"
+            },
+            "MediaResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "original_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Original Url"
+                    },
+                    "storage_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Storage Url"
+                    },
+                    "file_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File Name"
+                    },
+                    "file_size": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "File Size"
+                    },
+                    "mime_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Mime Type"
+                    },
+                    "uploaded_by": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Uploaded By"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "type",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "MediaResponse",
+                "description": "Schema for media file response"
+            },
+            "MediaURLResponse": {
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "title": "Url"
+                    },
+                    "expires_in_minutes": {
+                        "type": "integer",
+                        "title": "Expires In Minutes",
+                        "description": "URL validity in minutes"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Expires At",
+                        "description": "Expiration timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "url",
+                    "expires_in_minutes",
+                    "expires_at"
+                ],
+                "title": "MediaURLResponse",
+                "description": "Schema for temporary URL response"
+            },
+            "MemberRole": {
+                "type": "string",
+                "enum": [
+                    "OWNER",
+                    "ADMIN",
+                    "MEMBER",
+                    "AGENT"
+                ],
+                "title": "MemberRole"
+            },
+            "MemberStatus": {
+                "type": "string",
+                "enum": [
+                    "pending",
+                    "active",
+                    "suspended"
+                ],
+                "title": "MemberStatus"
+            },
+            "MessageQueuedResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "to_number": {
+                        "type": "string",
+                        "title": "To Number"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "media_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Media Id"
+                    },
+                    "queued": {
+                        "type": "boolean",
+                        "title": "Queued",
+                        "default": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "phone_number_id",
+                    "to_number",
+                    "type",
+                    "status"
+                ],
+                "title": "MessageQueuedResponse",
+                "description": "Response for queued message"
+            },
+            "MessageResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "wa_message_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Wa Message Id"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "title": "Direction"
+                    },
+                    "from_number": {
+                        "type": "string",
+                        "title": "From Number"
+                    },
+                    "to_number": {
+                        "type": "string",
+                        "title": "To Number"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "phone_number_id",
+                    "wa_message_id",
+                    "direction",
+                    "from_number",
+                    "to_number",
+                    "type",
+                    "status"
+                ],
+                "title": "MessageResponse",
+                "description": "Schema for message response"
+            },
+            "MessageStatusResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "wa_message_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Wa Message Id"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "delivered_at": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Delivered At"
+                    },
+                    "read_at": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Read At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "wa_message_id",
+                    "status",
+                    "delivered_at",
+                    "read_at"
+                ],
+                "title": "MessageStatusResponse",
+                "description": "Schema for message status response"
+            },
+            "PhoneNumberCreate": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id",
+                        "description": "Workspace UUID"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "title": "Phone Number Id",
+                        "description": "Meta's Phone Number ID from Business Suite"
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token",
+                        "description": "System User Access Token with whatsapp_business_messaging permission"
+                    },
+                    "display_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Display Name",
+                        "description": "Friendly name"
+                    },
+                    "business_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Business Id",
+                        "description": "WhatsApp Business Account ID (WABA ID)"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "access_token"
+                ],
+                "title": "PhoneNumberCreate",
+                "description": "Request schema for registering a new phone number."
+            },
+            "PhoneNumberListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/PhoneNumberResponse"
+                        },
+                        "type": "array",
+                        "title": "Data"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "data",
+                    "total",
+                    "limit",
+                    "offset"
+                ],
+                "title": "PhoneNumberListResponse",
+                "description": "Paginated list of phone numbers."
+            },
+            "PhoneNumberResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Phone Number"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "title": "Phone Number Id"
+                    },
+                    "display_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Display Name"
+                    },
+                    "business_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Business Id"
+                    },
+                    "quality_rating": {
+                        "type": "string",
+                        "title": "Quality Rating",
+                        "description": "GREEN/YELLOW/RED/UNKNOWN",
+                        "default": "UNKNOWN"
+                    },
+                    "message_limit": {
+                        "type": "integer",
+                        "title": "Message Limit",
+                        "default": 1000
+                    },
+                    "tier": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tier"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "default": "pending"
+                    },
+                    "verified_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Verified At"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "phone_number",
+                    "phone_number_id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "PhoneNumberResponse",
+                "description": "Response schema for full phone number details."
+            },
+            "PhoneNumberSyncResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "synced_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Synced At"
+                    },
+                    "phone_number": {
+                        "type": "string",
+                        "title": "Phone Number"
+                    },
+                    "quality_rating": {
+                        "type": "string",
+                        "title": "Quality Rating"
+                    },
+                    "message_limit": {
+                        "type": "integer",
+                        "title": "Message Limit"
+                    },
+                    "tier": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tier"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "synced_at",
+                    "phone_number",
+                    "quality_rating",
+                    "message_limit",
+                    "status"
+                ],
+                "title": "PhoneNumberSyncResponse",
+                "description": "Response for sync operation."
+            },
+            "PhoneNumberUpdate": {
+                "properties": {
+                    "display_name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Display Name",
+                        "description": "Friendly name"
+                    },
+                    "access_token": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Access Token",
+                        "description": "Will be validated if provided"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status",
+                        "description": "Status: pending, active, or disabled"
+                    }
+                },
+                "type": "object",
+                "title": "PhoneNumberUpdate",
+                "description": "Request schema for updating phone number settings."
+            },
+            "Provider": {
+                "type": "string",
+                "enum": [
+                    "Email",
+                    "Google",
+                    "GitHub"
+                ],
+                "title": "Provider",
+                "description": "Login providers"
+            },
+            "SendMediaMessageRequest": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "to": {
+                        "type": "string",
+                        "title": "To",
+                        "description": "Recipient phone number"
+                    },
+                    "media_type": {
+                        "type": "string",
+                        "title": "Media Type",
+                        "description": "Type: image, video, audio, document"
+                    },
+                    "media_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Media Id",
+                        "description": "Media file ID from /api/media"
+                    },
+                    "caption": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 3000
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Caption",
+                        "description": "Optional caption"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "to",
+                    "media_type",
+                    "media_id"
+                ],
+                "title": "SendMediaMessageRequest",
+                "description": "Schema for sending a media message"
+            },
+            "SendTemplateMessageRequest": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "to": {
+                        "type": "string",
+                        "title": "To",
+                        "description": "Recipient phone number"
+                    },
+                    "template_name": {
+                        "type": "string",
+                        "title": "Template Name"
+                    },
+                    "template_language": {
+                        "type": "string",
+                        "title": "Template Language",
+                        "default": "en"
+                    },
+                    "components": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Components"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "to",
+                    "template_name"
+                ],
+                "title": "SendTemplateMessageRequest",
+                "description": "Schema for sending a template message"
+            },
+            "SendTextMessageRequest": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "to": {
+                        "type": "string",
+                        "title": "To",
+                        "description": "Recipient phone number"
+                    },
+                    "text": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Text",
+                        "description": "Message text"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "to",
+                    "text"
+                ],
+                "title": "SendTextMessageRequest",
+                "description": "Schema for sending a text message"
+            },
+            "SigninResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "title": "Access Token"
+                    },
+                    "token_type": {
+                        "type": "string",
+                        "title": "Token Type",
+                        "default": "bearer"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "access_token"
+                ],
+                "title": "SigninResponse",
+                "description": "Response model for successful login"
+            },
+            "Signup": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    },
+                    "password": {
+                        "type": "string",
+                        "title": "Password"
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "title": "Signup",
+                "description": "Request model for Signup"
+            },
+            "SignupResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "name",
+                    "email"
+                ],
+                "title": "SignupResponse",
+                "description": "Response model for successful signup"
+            },
+            "TemplateCreate": {
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Template name (lowercase, no spaces)"
+                    },
+                    "category": {
+                        "type": "string",
+                        "title": "Category",
+                        "description": "Template category: MARKETING, UTILITY, or AUTHENTICATION"
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language",
+                        "description": "Language code (e.g., 'en', 'es', 'fr')",
+                        "default": "en"
+                    },
+                    "components": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Components",
+                        "description": "Template components (header, body, footer, buttons)"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "workspace_id",
+                    "phone_number_id",
+                    "name",
+                    "category",
+                    "components"
+                ],
+                "title": "TemplateCreate",
+                "description": "Schema for creating a new template"
+            },
+            "TemplateListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/TemplateResponse"
+                        },
+                        "type": "array",
+                        "title": "Data"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "title": "Limit"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "title": "Offset"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "data",
+                    "total",
+                    "limit",
+                    "offset"
+                ],
+                "title": "TemplateListResponse",
+                "description": "Schema for paginated template list"
+            },
+            "TemplateResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Workspace Id"
+                    },
+                    "phone_number_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Phone Number Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "category": {
+                        "type": "string",
+                        "title": "Category"
+                    },
+                    "language": {
+                        "type": "string",
+                        "title": "Language"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status"
+                    },
+                    "meta_template_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Meta Template Id"
+                    },
+                    "components": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Components"
+                    },
+                    "rejection_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Rejection Reason"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "workspace_id",
+                    "phone_number_id",
+                    "name",
+                    "category",
+                    "language",
+                    "status",
+                    "meta_template_id",
+                    "components",
+                    "rejection_reason",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "TemplateResponse",
+                "description": "Schema for template response"
+            },
+            "TemplateUpdate": {
+                "properties": {
+                    "components": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Components"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "title": "TemplateUpdate",
+                "description": "Schema for updating template"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "WorkspaceCreate": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 1,
+                        "title": "Name"
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/WorkspacePlan",
+                        "default": "free"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "WorkspaceCreate",
+                "description": "Request model for creating a workspace"
+            },
+            "WorkspaceListResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "title": "Slug"
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/WorkspacePlan"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/WorkspaceStatus"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "user_role": {
+                        "$ref": "#/components/schemas/MemberRole"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "plan",
+                    "status",
+                    "created_at",
+                    "user_role"
+                ],
+                "title": "WorkspaceListResponse",
+                "description": "Summarized workspace info with user's role"
+            },
+            "WorkspaceMemberResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "User Id"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/MemberRole"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/MemberStatus"
+                    },
+                    "joined_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Joined At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "user_id",
+                    "role",
+                    "status"
+                ],
+                "title": "WorkspaceMemberResponse",
+                "description": "Response model for workspace member"
+            },
+            "WorkspacePlan": {
+                "type": "string",
+                "enum": [
+                    "free",
+                    "pro",
+                    "enterprise"
+                ],
+                "title": "WorkspacePlan"
+            },
+            "WorkspaceResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "title": "Slug"
+                    },
+                    "api_key": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Api Key"
+                    },
+                    "webhook_secret": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Webhook Secret"
+                    },
+                    "created_by": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Created By"
+                    },
+                    "plan": {
+                        "$ref": "#/components/schemas/WorkspacePlan"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/WorkspaceStatus"
+                    },
+                    "settings": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Settings"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "slug",
+                    "api_key",
+                    "webhook_secret",
+                    "created_by",
+                    "plan",
+                    "status",
+                    "settings",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "WorkspaceResponse",
+                "description": "Full workspace response"
+            },
+            "WorkspaceStatus": {
+                "type": "string",
+                "enum": [
+                    "active",
+                    "suspended",
+                    "cancelled"
+                ],
+                "title": "WorkspaceStatus"
+            },
+            "WorkspaceUpdate": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 255,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name"
+                    },
+                    "plan": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkspacePlan"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkspaceStatus"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "settings": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Settings"
+                    }
+                },
+                "type": "object",
+                "title": "WorkspaceUpdate",
+                "description": "Request model for updating a workspace"
+            }
+        },
+        "securitySchemes": {
+            "HTTPBearer": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    }
+}
