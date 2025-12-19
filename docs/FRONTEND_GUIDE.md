@@ -6,7 +6,7 @@
 
 ```javascript
 // Store these in your environment variables
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://destined-severely-serval.ngrok-free.app';
 
 // Sign up a new user
 async function signup(email, password, name) {
@@ -45,7 +45,7 @@ async function getCurrentUser(token) {
 ```javascript
 // api-client.js
 class APIClient {
-  constructor(baseURL = 'http://localhost:8000') {
+  constructor(baseURL = 'https://destined-severely-serval.ngrok-free.app') {
     this.baseURL = baseURL;
   }
 
@@ -418,7 +418,7 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const data = await fetch('http://localhost:8000/api/auth/signin', {
+      const data = await fetch('https://destined-severely-serval.ngrok-free.app/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -605,14 +605,14 @@ function ContactList({ workspaceId }) {
 Create a `.env` file in your frontend project:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=https://destined-severely-serval.ngrok-free.app
 VITE_API_TIMEOUT=30000
 ```
 
 Use in your code:
 
 ```javascript
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://destined-severely-serval.ngrok-free.app';
 ```
 
 ## 🚨 Important Notes

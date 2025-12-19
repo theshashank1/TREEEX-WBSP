@@ -11,9 +11,8 @@ This directory contains comprehensive documentation for the TREEEX WhatsApp Busi
 ## 🚀 Quick Start
 
 ### Base URL
-```
-http://localhost:8000
-```
+- **Public:** `https://destined-severely-serval.ngrok-free.app`
+- **Local:** `http://localhost:8000`
 
 ### Authentication
 Most endpoints require Bearer token authentication:
@@ -96,7 +95,7 @@ python docs/generate_docs.py
 
 ```javascript
 // Sign Up
-const signupResponse = await fetch('http://localhost:8000/api/auth/signup', {
+const signupResponse = await fetch('https://destined-severely-serval.ngrok-free.app/api/auth/signup', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -111,7 +110,7 @@ const signupResponse = await fetch('http://localhost:8000/api/auth/signup', {
 const signupData = await signupResponse.json();
 
 // Sign In
-const signinResponse = await fetch('http://localhost:8000/api/auth/signin', {
+const signinResponse = await fetch('https://destined-severely-serval.ngrok-free.app/api/auth/signin', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
@@ -134,7 +133,7 @@ const headers = {
 ### Send Text Message Example
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/messages/send/text', {
+const response = await fetch('https://destined-severely-serval.ngrok-free.app/api/messages/send/text', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
@@ -158,7 +157,7 @@ const formData = new FormData();
 formData.append('workspace_id', '550e8400-e29b-41d4-a716-446655440000');
 formData.append('file', fileInput.files[0]);
 
-const response = await fetch('http://localhost:8000/api/media', {
+const response = await fetch('https://destined-severely-serval.ngrok-free.app/api/media', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
@@ -256,6 +255,6 @@ Rate limits vary by workspace plan:
 ## 🌐 Interactive Documentation
 
 You can also access interactive API documentation:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+- **Swagger UI**: https://destined-severely-serval.ngrok-free.app/docs
+- **ReDoc**: https://destined-severely-serval.ngrok-free.app/redoc
+- **OpenAPI JSON**: https://destined-severely-serval.ngrok-free.app/openapi.json

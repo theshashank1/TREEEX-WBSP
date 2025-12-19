@@ -331,6 +331,10 @@ The documentation is auto-generated from the OpenAPI specification:
 
 ---
 
+**Public API URL:** `https://destined-severely-serval.ngrok-free.app`
+
+---
+
 ## ✨ What's New
 
 ### Latest Update (2025-12-19)

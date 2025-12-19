@@ -1,6 +1,6 @@
 # TREEEX WhatsApp Business API Reference
 
-> **Complete API Documentation** | Version 1.0 | Base URL: `http://localhost:8000`
+> **Complete API Documentation** | Version 1.0 | Base URL: `https://destined-severely-serval.ngrok-free.app` (Local: `http://localhost:8000`)
 
 ---
 
@@ -22,11 +22,10 @@
 
 ## Getting Started
 
-### Base URL
+### Base URLs
 
-```
-http://localhost:8000
-```
+- **Public API:** `https://destined-severely-serval.ngrok-free.app`
+- **Local API:** `http://localhost:8000`
 
 ### Authentication
 
@@ -95,7 +94,7 @@ Create a new user account.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/signup \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -142,7 +141,7 @@ Authenticate and receive an access token.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/auth/signin \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/auth/signin \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -234,7 +233,7 @@ Create a new workspace for your team.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/workspaces \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/workspaces \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -434,7 +433,7 @@ Add a WhatsApp Business phone number to your workspace.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/phone-numbers \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/phone-numbers \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -560,7 +559,7 @@ Sync quality rating and message limits from Meta.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/phone-numbers/{phone_id}/sync \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/phone-numbers/{phone_id}/sync \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -632,7 +631,7 @@ Send a simple text message.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/messages/send/text \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/messages/send/text \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -725,7 +724,7 @@ Send an image, video, audio file, or document.
 # First upload the media (see Media section)
 # Then send the message
 
-curl -X POST http://localhost:8000/api/messages/send/media \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/messages/send/media \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -810,7 +809,7 @@ Upload a file to Azure Blob Storage.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/media \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/media \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "workspace_id=workspace-uuid" \
   -F "file=@/path/to/image.jpg"
@@ -823,7 +822,7 @@ const formData = new FormData();
 formData.append('workspace_id', 'workspace-uuid');
 formData.append('file', fileInput.files[0]);
 
-const response = await fetch('http://localhost:8000/api/media', {
+const response = await fetch('https://destined-severely-serval.ngrok-free.app/api/media', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
@@ -913,7 +912,7 @@ Redirects to a temporary Azure SAS URL (valid for 60 minutes).
 **Example:**
 
 ```bash
-curl -L http://localhost:8000/api/media/{media_id}/download \
+curl -L https://destined-severely-serval.ngrok-free.app/api/media/{media_id}/download \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -O
 ```
@@ -947,7 +946,7 @@ Get a temporary signed URL for a media file.
 **Example:**
 
 ```bash
-curl http://localhost:8000/api/media/{media_id}/url?expiry_minutes=120 \
+curl https://destined-severely-serval.ngrok-free.app/api/media/{media_id}/url?expiry_minutes=120 \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -1142,7 +1141,7 @@ Add a new contact to your workspace.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/contacts \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/contacts \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -1198,11 +1197,11 @@ Get all contacts in a workspace.
 
 ```bash
 # Search for contacts
-curl "http://localhost:8000/api/contacts?workspace_id=workspace-uuid&search=John" \
+curl "https://destined-severely-serval.ngrok-free.app/api/contacts?workspace_id=workspace-uuid&search=John" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 
 # Filter by tags
-curl "http://localhost:8000/api/contacts?workspace_id=workspace-uuid&tags=vip,customer" \
+curl "https://destined-severely-serval.ngrok-free.app/api/contacts?workspace_id=workspace-uuid&tags=vip,customer" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -1326,7 +1325,7 @@ phone,name,tags
 **Example:**
 
 ```bash
-curl -X POST "http://localhost:8000/api/contacts/import?workspace_id=workspace-uuid" \
+curl -X POST "https://destined-severely-serval.ngrok-free.app/api/contacts/import?workspace_id=workspace-uuid" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "file=@contacts.csv"
 ```
@@ -1485,7 +1484,7 @@ Changes status from `draft` or `scheduled` to `sending`.
 **Example:**
 
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{campaign_id}/start \
+curl -X POST https://destined-severely-serval.ngrok-free.app/api/campaigns/{campaign_id}/start \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
@@ -1788,4 +1787,5 @@ For questions or issues:
 
 **Last Updated:** 2025-12-19
 **API Version:** 1.0
-**Base URL:** `http://localhost:8000`
+**Public URL:** `https://destined-severely-serval.ngrok-free.app`
+**Local URL:** `http://localhost:8000`

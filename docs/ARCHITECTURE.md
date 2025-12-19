@@ -580,10 +580,10 @@ stateDiagram-v2
 ## Quick Reference
 
 ### Base URLs
-- **Local Development**: `http://localhost:8000`
-- **Production**: `https://your-domain.com`
-- **Interactive Docs**: `http://localhost:8000/docs`
-- **OpenAPI Spec**: `http://localhost:8000/openapi.json`
+- **Public API:** `https://destined-severely-serval.ngrok-free.app`
+- **Local Development:** `http://localhost:8000`
+- **Interactive Docs:** `http://localhost:8000/docs`
+- **OpenAPI Spec:** `http://localhost:8000/openapi.json`
 
 ### Common Headers
 ```http
