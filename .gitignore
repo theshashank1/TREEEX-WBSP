@@ -130,6 +130,13 @@ cython_debug/
 .idx/
 
 # uv
-uv.lock
+# uv.lock - Should be committed to version control
 
-*/logs
+# FastAPI / Starlette
+*.db
+.env.*
+!.env.example
+
+# OS Generated
+.DS_Store
+Thumbs.db
