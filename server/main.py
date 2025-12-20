@@ -5,6 +5,7 @@ from supabase import create_client
 
 # Import routers
 from server.api import (
+    admin,
     auth,
     campaigns,
     contacts,
@@ -50,3 +51,4 @@ app.include_router(media.router, prefix="/api")
 app.include_router(messages.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")
 app.include_router(contacts.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
