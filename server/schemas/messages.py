@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, field_validator
@@ -33,7 +33,7 @@ class SendTemplateMessageRequest(BaseModel):
     to: str = Field(..., description="Recipient phone number")
     template_name: str
     template_language: str = "en"
-    components: Optional[dict] = None
+    components: Optional[Union[dict, List[dict]]] = None
 
 
 class SendMediaMessageRequest(BaseModel):

@@ -54,7 +54,7 @@ VALID_MEDIA_TYPES = {"image", "video", "audio", "document"}
 # ============================================================================
 
 
-@router.post("/send/text", response_model=MessageResponse, status_code=201)
+@router.post("/send/text", response_model=MessageQueuedResponse, status_code=201)
 async def send_text_message(
     data: SendTextMessageRequest,
     session: SessionDep,
@@ -63,22 +63,19 @@ async def send_text_message(
     """
     Send a text message.
 
-    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
-    Actual implementation should:
-    1. Find or create contact and conversation
-    2. Create message record with conversation_id
-    3. Queue message to Redis for async sending via WhatsApp API
-    4. Return the queued message
+    Validates workspace membership and phone number,
+    then queues the message for async delivery via WhatsApp API.
 
     Requires workspace membership.
     """
     # Verify workspace membership
-    await get_workspace_member(data.workspace_id, current_user, session)
+    member = await get_workspace_member(data.workspace_id, current_user, session)
 
     # Get phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == data.phone_number_id,
+            PhoneNumber.workspace_id == data.workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -87,20 +84,62 @@ async def send_text_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # TODO: Implement actual message sending logic
-    # This would involve:
-    # - Finding or creating contact
-    # - Finding or creating conversation
-    # - Creating message with conversation_id
-    # - Queueing to Redis for sending
+    if not phone_number.access_token:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "NO_ACCESS_TOKEN",
+                "message": "Phone number has no access token configured",
+            },
+        )
 
-    raise HTTPException(
-        status_code=501,
-        detail="Message sending not yet implemented. This is a placeholder endpoint.",
+    # Create message ID
+    message_id = uuid_module.uuid4()
+
+    # Queue the message for async sending
+    job = {
+        "type": "text_message",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
+        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
+        "from_number": phone_number.phone_number,
+        "to_number": data.to,
+        "text": data.text,
+        "preview_url": False,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+
+    if not success:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "QUEUE_ERROR",
+                "message": "Failed to queue message for sending",
+            },
+        )
+
+    log_event(
+        "text_message_queued",
+        message_id=str(message_id),
+        workspace_id=str(data.workspace_id),
+        to=data.to,
+    )
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        phone_number_id=data.phone_number_id,
+        to_number=data.to,
+        type="text",
+        status=MessageStatus.PENDING.value,
+        queued=True,
     )
 
 
-@router.post("/send/template", response_model=MessageResponse, status_code=201)
+@router.post("/send/template", response_model=MessageQueuedResponse, status_code=201)
 async def send_template_message(
     data: SendTemplateMessageRequest,
     session: SessionDep,
@@ -109,19 +148,19 @@ async def send_template_message(
     """
     Send a template message.
 
-    NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
-    Actual implementation should integrate with WhatsApp client,
-    create conversation, and queue the message.
+    Validates workspace membership and phone number,
+    then queues the template message for async delivery via WhatsApp API.
 
     Requires workspace membership.
     """
     # Verify workspace membership
-    await get_workspace_member(data.workspace_id, current_user, session)
+    member = await get_workspace_member(data.workspace_id, current_user, session)
 
     # Get phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == data.phone_number_id,
+            PhoneNumber.workspace_id == data.workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -130,10 +169,91 @@ async def send_template_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # TODO: Implement actual template message sending
-    raise HTTPException(
-        status_code=501,
-        detail="Template message sending not yet implemented. This is a placeholder endpoint.",
+    if not phone_number.access_token:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "code": "NO_ACCESS_TOKEN",
+                "message": "Phone number has no access token configured",
+            },
+        )
+
+    # Create message ID
+    message_id = uuid_module.uuid4()
+
+    # Transform components from dict to list format if provided
+    # Input: {"BODY": {"text": "..."}, "HEADER": {...}}
+    # Output: [{"type": "body", "parameters": [...]}, {"type": "header", "parameters": [...]}]
+    components_list = None
+    if data.components:
+        if isinstance(data.components, list):
+            # If already a list, use as-is (standard format)
+            components_list = data.components
+        else:
+            # If dict, transform to list (simplified format)
+            # Input: {"BODY": {"text": "..."}, "HEADER": {...}}
+            # Output: [{"type": "body", "parameters": [...]}, {"type": "header", "parameters": [...]}]
+            components_list = []
+            for component_type, component_data in data.components.items():
+                # Convert component type to lowercase (BODY -> body, HEADER -> header)
+                type_lower = component_type.lower()
+
+                # Extract parameters based on component data structure
+                parameters = []
+                if isinstance(component_data, dict):
+                    # If it has a "text" field, create a text parameter
+                    if "text" in component_data:
+                        parameters.append(
+                            {"type": "text", "text": component_data["text"]}
+                        )
+                    # If it has "parameters" field already, use it directly
+                    elif "parameters" in component_data:
+                        parameters = component_data["parameters"]
+
+                components_list.append({"type": type_lower, "parameters": parameters})
+
+    # Queue the message for async sending
+    job = {
+        "type": "template_message",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
+        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
+        "from_number": phone_number.phone_number,
+        "to_number": data.to,
+        "template_name": data.template_name,
+        "language_code": data.template_language,
+        "components": components_list,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+
+    if not success:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "code": "QUEUE_ERROR",
+                "message": "Failed to queue message for sending",
+            },
+        )
+
+    log_event(
+        "template_message_queued",
+        message_id=str(message_id),
+        workspace_id=str(data.workspace_id),
+        template=data.template_name,
+        to=data.to,
+    )
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        phone_number_id=data.phone_number_id,
+        to_number=data.to,
+        type="template",
+        status=MessageStatus.PENDING.value,
+        queued=True,
     )
 
 
@@ -239,13 +359,13 @@ async def send_media_message(
         "type": "media_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": str(data.phone_number_id),
-        "meta_phone_number_id": phone_number.phone_number_id,
+        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
+        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
         "from_number": phone_number.phone_number,
         "to_number": data.to,
         "media_type": data.media_type,
         "media_id": str(data.media_id),
-        "media_url": sas_url,
+        "media_url": sas_url,  # Already a SAS URL
         "mime_type": media.mime_type,
         "caption": data.caption,
         "sent_by": str(member.id),
