@@ -1,50 +1,28 @@
-# Database Schema Changes Documentation
+# 🗄️ Database Changelog
 
-This document outlines any database schema changes made as part of the media endpoints integration.
+Chronological log of database schema changes.
 
-## Version: v1.6 (Current)
+## 🏷️ Version History
 
-### Schema Status: **NO CHANGES**
+### [1.6.0] - 2024-12-21 (Current)
+**Status**: Stable
 
-This implementation uses the existing database schema v1.6 without any modifications. All tables and relationships remain as defined in the original schema.
+#### Changes
+- **No Schema Changes**. This release focuses on Documentation standardization.
+- Full schema defined in [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
-### Tables Used
+---
 
-The following existing tables are utilized by the new API endpoints:
+### [1.5.0] - 2024-11-15
+#### Added
+- `campaigns` table foundation.
+- `campaign_messages` table for tracking individual statuses.
+- `templates` table updated with `category` constraints.
 
-#### Contacts API (`/api/contacts`)
-- Uses: `contacts` table (existing)
-- Operations: CRUD operations, import from CSV/Excel
-- No schema changes required
+---
 
-#### Media API (`/api/media`)
-- Uses: `media_files` table (existing)
-- Operations: Upload, download, SAS URL generation
-- No schema changes required
-
-#### Messages API (`/api/messages`)
-- Uses: `messages` table (existing)
-- Uses: `media_files` table for media attachments
-- Uses: `phone_numbers` table for sender information
-- No schema changes required
-
-#### Campaigns API (`/api/campaigns`)
-- Uses: `campaigns` table (existing)
-- Uses: `campaign_messages` table (existing)
-- Supports broadcast/bulk messaging functionality
-- No schema changes required
-
-### Notes
-
-1. **Broadcast Functionality**: The existing `campaigns` table already provides all the functionality needed for broadcast messaging (scheduled sends, audience tracking, delivery stats).
-
-2. **Media Storage**: The `media_files` table stores metadata; actual files are stored in Azure Blob Storage with workspace-scoped paths (`{workspace_id}/{uuid}_{filename}`).
-
-3. **Contact Import**: CSV and Excel imports are supported. Required column: `phone` (E.164 format). Optional columns: `name`, `labels/tags`.
-
-### Future Considerations
-
-If additional features are needed that require schema changes, they should be:
-1. Documented here first
-2. Added to the dbdiagram.io schema
-3. Reviewed before implementation
+### [1.0.0] - 2024-01-01
+#### Initial Release
+- Core tables: `users`, `workspaces`, `phone_numbers`.
+- Messaging tables: `conversations`, `messages`.
+- Basic RBAC structure.

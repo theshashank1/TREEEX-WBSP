@@ -505,7 +505,7 @@ def generate_mdx(spec):
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.abspath(__file__))
     input_file = os.path.join(base_dir, "openapi.json")
-    output_file = os.path.join(base_dir, "API_REFERENCE.mdx")
+    output_file = os.path.join(base_dir, "API_REFERENCE.md")
 
     if os.path.exists(input_file):
         spec = load_openapi_spec(input_file)

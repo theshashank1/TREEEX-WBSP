@@ -1,227 +1,4355 @@
-# TREEEX WhatsApp Business API Reference
-
-> **Complete API Documentation** | Version 1.0 | Base URL: `https://destined-severely-serval.ngrok-free.app` (Local: `http://localhost:8000`)
-
+---
+title: "FastAPI"
+description: "Complete API reference for FastAPI"
 ---
 
-## Table of Contents
+# FastAPI
 
-- [Getting Started](#getting-started)
-- [Authentication](#authentication)
-- [Workspaces](#workspaces)
-- [Phone Numbers](#phone-numbers)
-- [Messages](#messages)
-- [Media](#media)
-- [Templates](#templates)
-- [Contacts](#contacts)
-- [Campaigns](#campaigns)
-- [Webhooks](#webhooks)
-- [Error Handling](#error-handling)
+> **Version:** 0.1.0
 
----
+## Base URL
 
-## Getting Started
+```
+http://localhost:8000
+```
 
-### Base URLs
+## Authentication
 
-- **Public API:** `https://destined-severely-serval.ngrok-free.app`
-- **Local API:** `http://localhost:8000`
-
-### Authentication
-
-Most endpoints require a Bearer token in the Authorization header:
+Most endpoints require authentication using Bearer tokens.
 
 ```http
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-Get your access token by signing up and signing in through the authentication endpoints.
-
-### Common Response Codes
-
-| Code | Description |
-|------|-------------|
-| `200` | Success |
-| `201` | Created successfully |
-| `204` | Success with no content |
-| `400` | Bad request - check your parameters |
-| `401` | Unauthorized - invalid or missing token |
-| `403` | Forbidden - insufficient permissions |
-| `404` | Resource not found |
-| `422` | Validation error |
-| `500` | Server error |
-
----
-
 ## Authentication
 
-Manage user authentication and sessions.
+### Signup
 
-### Sign Up
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/auth/signup</code>
+</div>
 
-Create a new user account.
+#### Parameters
 
-**Endpoint:** `POST /api/auth/signup`
+**Query Parameters**
 
-**Authentication:** Not required
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `provider` | `Provider` | ❌ |  (default: `Email`) |
 
-**Request Body:**
+
+#### Request Body (`application/json`)
+
+See schema: [`Signup`](#signup)
+
+**Example:**
 
 ```json
 {
   "email": "user@example.com",
   "password": "SecurePassword123!",
-  "name": "John Doe"  // optional
+  "name": "name"
 }
 ```
 
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `provider` | string | `Email` | Authentication provider (Email, Google, GitHub) |
-
-**Response:** `200 OK`
-
-```json
-{
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "John Doe",
-  "email": "user@example.com"
-}
-```
-
-**Example:**
+#### Example Request
 
 ```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePassword123!",
-    "name": "John Doe"
-  }'
+curl -X POST 'http://localhost:8000/api/auth/signup' \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"SecurePassword123!","name":"name"}'
 ```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/auth/signup', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "email": "user@example.com",
+      "password": "SecurePassword123!",
+      "name": "name"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`SignupResponse`](#signupresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
 
 ---
 
-### Sign In
 
-Authenticate and receive an access token.
+### Signin
 
-**Endpoint:** `POST /api/auth/signin`
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/auth/signin</code>
+</div>
 
-**Authentication:** Not required
+#### Parameters
 
-**Request Body:**
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `provider` | `Provider` | ❌ |  (default: `Email`) |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`Signup`](#signup)
+
+**Example:**
 
 ```json
 {
   "email": "user@example.com",
-  "password": "SecurePassword123!"
+  "password": "SecurePassword123!",
+  "name": "name"
 }
 ```
 
-**Query Parameters:**
+#### Example Request
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `provider` | string | `Email` | Authentication provider |
-
-**Response:** `200 OK`
-
-```json
-{
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
-}
+```bash
+curl -X POST 'http://localhost:8000/api/auth/signin' \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com","password":"SecurePassword123!","name":"name"}'
 ```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/auth/signin', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "email": "user@example.com",
+      "password": "SecurePassword123!",
+      "name": "name"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`SigninResponse`](#signinresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Refresh
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/auth/refresh</code>
+</div>
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/auth/refresh'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/auth/refresh', {
+  method: 'POST',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+
+
+---
+
+
+### Me
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/auth/me</code>
+</div>
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/auth/me'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/auth/me', {
+  method: 'GET',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+
+
+---
+
+
+## Campaigns
+
+### Create Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns</code>
+</div>
+
+Create a new campaign.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`CampaignCreate`](#campaigncreate)
 
 **Example:**
 
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/auth/signin \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePassword123!"
-  }'
-```
-
----
-
-### Refresh Token
-
-Refresh your access token.
-
-**Endpoint:** `POST /api/auth/refresh`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
 ```json
 {
-  "access_token": "new_token_here",
-  "refresh_token": "new_refresh_token_here"
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "template_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name"
 }
 ```
 
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/campaigns' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","template_id":"550e8400-e29b-41d4-a716-446655440000","name":"name"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+      "template_id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "name"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
 ---
 
-### Get Current User
 
-Get information about the currently authenticated user.
+### List Campaigns
 
-**Endpoint:** `GET /api/auth/me`
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/campaigns</code>
+</div>
 
-**Authentication:** Required
+List campaigns for a workspace.
 
-**Response:** `200 OK`
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID to filter by |
+| `status` | `any` | ❌ | Filter by status |
+| `limit` | `integer` | ❌ |  (default: `20`) |
+| `offset` | `integer` | ❌ |  (default: `0`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/campaigns' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignListResponse`](#campaignlistresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/campaigns/{campaign_id}</code>
+</div>
+
+Get campaign details.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Update Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/campaigns/{campaign_id}</code>
+</div>
+
+Update campaign.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`CampaignUpdate`](#campaignupdate)
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "status": "status"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X PATCH 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"name","status":"status"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "name": "name",
+      "status": "status"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/campaigns/{campaign_id}</code>
+</div>
+
+Soft delete a campaign.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Start Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns/{campaign_id}/start</code>
+</div>
+
+Start a campaign.
+
+Changes status from DRAFT/SCHEDULED to SENDING.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Pause Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns/{campaign_id}/pause</code>
+</div>
+
+Pause a sending campaign.
+
+Changes status from SENDING to SCHEDULED (paused state).
+Note: In this system, SCHEDULED also represents a paused campaign.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/pause' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/pause', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Contacts
+
+### Create Contact
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/contacts</code>
+</div>
+
+Create a new contact.
+
+Phone number must be in E.164 format (e.g., +15551234567).
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`ContactCreate`](#contactcreate)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number": "phone_number",
+  "name": "name",
+  "tags": []
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/contacts' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number":"phone_number","name":"name","tags":[]}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number": "phone_number",
+      "name": "name",
+      "tags": []
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`ContactResponse`](#contactresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### List Contacts
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/contacts</code>
+</div>
+
+List contacts for a workspace.
+
+Supports filtering by tags, opt-in status, and search.
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `tags` | `any` | ❌ | Filter by tags (comma-separated) |
+| `opted_in` | `any` | ❌ | Filter by opt-in status |
+| `search` | `any` | ❌ | Search by name or phone |
+| `limit` | `integer` | ❌ |  (default: `20`) |
+| `offset` | `integer` | ❌ |  (default: `0`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/contacts' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`ContactListResponse`](#contactlistresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Contact
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/contacts/{contact_id}</code>
+</div>
+
+Get contact details.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `contact_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`ContactResponse`](#contactresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Update Contact
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/contacts/{contact_id}</code>
+</div>
+
+Update a contact.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `contact_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`ContactUpdate`](#contactupdate)
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "tags": [],
+  "opted_in": true
+}
+```
+
+#### Example Request
+
+```bash
+curl -X PATCH 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"name","tags":[],"opted_in":true}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "name": "name",
+      "tags": [],
+      "opted_in": true
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`ContactResponse`](#contactresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Contact
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/contacts/{contact_id}</code>
+</div>
+
+Soft delete a contact.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `contact_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Import Contacts
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/contacts/import</code>
+</div>
+
+Import contacts from CSV or Excel file.
+
+Expected columns:
+- phone (required): Phone number in E.164 format or common formats
+- name (optional): Contact name
+- labels/tags (optional): Comma or semicolon separated labels
+
+Returns per-row import status.
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+
+#### Request Body (`multipart/form-data`)
+
+See schema: [`Body_import_contacts_api_contacts_import_post`](#body_import_contacts_api_contacts_import_post)
+
+**Example:**
+
+```json
+{
+  "file": "file"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/contacts/import' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/contacts/import?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`ImportResponse`](#importresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Media
+
+### Upload Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/media</code>
+</div>
+
+Upload a media file to Azure Blob Storage.
+
+Accepts multipart/form-data with:
+- workspace_id: UUID of the workspace
+- file: The file to upload
+
+File size limits:
+- Images: 16 MB (JPEG, PNG, GIF, BMP)
+- Videos: 100 MB (MP4, 3GPP, QuickTime)
+- Audio: 16 MB (AAC, MP4, MPEG, AMR, OGG)
+- Documents: 100 MB (PDF, Word, Excel, PowerPoint, Text)
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`multipart/form-data`)
+
+See schema: [`Body_upload_media_api_media_post`](#body_upload_media_api_media_post)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "file": "file"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/media' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MediaResponse`](#mediaresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### List Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/media</code>
+</div>
+
+List media files for a workspace.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID to filter by |
+| `type` | `any` | ❌ | Filter by media type |
+| `limit` | `integer` | ❌ |  (default: `20`) |
+| `offset` | `integer` | ❌ |  (default: `0`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/media' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaListResponse`](#medialistresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/media/{media_id}</code>
+</div>
+
+Get media file details.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `media_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaResponse`](#mediaresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/media/{media_id}</code>
+</div>
+
+Soft delete a media file.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `media_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Download Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/media/{media_id}/download</code>
+</div>
+
+Download a media file via redirect to SAS URL.
+
+Returns a 307 redirect to a temporary Azure SAS URL (60 min expiry).
+This approach avoids streaming file bytes through the API server.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `media_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/download' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/download', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Media Url
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/media/{media_id}/url</code>
+</div>
+
+Get a temporary signed URL for a media file.
+
+Returns a JSON response with a temporary Azure SAS URL.
+Configurable expiry from 5 to 1440 minutes (24 hours).
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `media_id` | `string (uuid)` | ✅ |  |
+
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `expiry_minutes` | `integer` | ❌ | URL validity in minutes (default: `60`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/url' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/url', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaURLResponse`](#mediaurlresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Messages
+
+### Send Text Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/messages/send/text</code>
+</div>
+
+Send a text message.
+
+NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+Actual implementation should:
+1. Find or create contact and conversation
+2. Create message record with conversation_id
+3. Queue message to Redis for async sending via WhatsApp API
+4. Return the queued message
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`SendTextMessageRequest`](#sendtextmessagerequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "text": "text"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/messages/send/text' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","text":"text"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/messages/send/text', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+      "to": "to",
+      "text": "text"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageResponse`](#messageresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Send Template Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/messages/send/template</code>
+</div>
+
+Send a template message.
+
+NOTE: This is a PLACEHOLDER endpoint for API scaffolding.
+Actual implementation should integrate with WhatsApp client,
+create conversation, and queue the message.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`SendTemplateMessageRequest`](#sendtemplatemessagerequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "template_name": "template_name",
+  "template_language": "template_language",
+  "components": {}
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/messages/send/template' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","template_name":"template_name","template_language":"template_language","components":{}}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/messages/send/template', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+      "to": "to",
+      "template_name": "template_name",
+      "template_language": "template_language",
+      "components": {}
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageResponse`](#messageresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Send Media Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/messages/send/media</code>
+</div>
+
+Send a media message.
+
+Validates the media file exists and has been uploaded,
+then queues the message for async delivery.
+
+Flow:
+1. Validate workspace membership
+2. Validate phone number
+3. Validate media file exists and is ready
+4. Generate SAS URL for media delivery
+5. Queue message to outbound queue
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`SendMediaMessageRequest`](#sendmediamessagerequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "media_type": "media_type",
+  "media_id": "550e8400-e29b-41d4-a716-446655440000",
+  "caption": "caption"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/messages/send/media' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","media_type":"media_type","media_id":"550e8400-e29b-41d4-a716-446655440000","caption":"caption"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/messages/send/media', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+      "to": "to",
+      "media_type": "media_type",
+      "media_id": "550e8400-e29b-41d4-a716-446655440000",
+      "caption": "caption"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Message Status
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/messages/{message_id}/status</code>
+</div>
+
+Get message delivery status.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `message_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/messages/550e8400-e29b-41d4-a716-446655440000/status' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/messages/550e8400-e29b-41d4-a716-446655440000/status', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MessageStatusResponse`](#messagestatusresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Phone Numbers
+
+### Create Phone Number
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/phone-numbers</code>
+</div>
+
+Register a new WhatsApp Business phone number.
+
+Flow:
+1. Verify workspace membership (OWNER or ADMIN)
+2. Validate access_token with Meta API
+3. Fetch phone number details from Meta
+4. Check if phone_number_id already exists
+5. Create PhoneNumber record
+6. Return PhoneNumberResponse
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`PhoneNumberCreate`](#phonenumbercreate)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "phone_number_id",
+  "access_token": "access_token",
+  "display_name": "display_name",
+  "business_id": "business_id"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/phone-numbers' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"phone_number_id","access_token":"access_token","display_name":"display_name","business_id":"business_id"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "phone_number_id",
+      "access_token": "access_token",
+      "display_name": "display_name",
+      "business_id": "business_id"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`PhoneNumberResponse`](#phonenumberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### List Phone Numbers
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/phone-numbers</code>
+</div>
+
+List phone numbers for a workspace.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID to filter by |
+| `status` | `any` | ❌ | Filter by status (pending, active, disabled) |
+| `limit` | `integer` | ❌ | Results per page (default: `20`) |
+| `offset` | `integer` | ❌ | Offset for pagination (default: `0`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/phone-numbers' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`PhoneNumberListResponse`](#phonenumberlistresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Phone Number
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/phone-numbers/{phone_number_id}</code>
+</div>
+
+Get details of a specific phone number.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`PhoneNumberResponse`](#phonenumberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Update Phone Number
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/phone-numbers/{phone_number_id}</code>
+</div>
+
+Update phone number settings.
+
+Requires OWNER or ADMIN role.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`PhoneNumberUpdate`](#phonenumberupdate)
+
+**Example:**
+
+```json
+{
+  "display_name": "display_name",
+  "access_token": "access_token",
+  "status": "status"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X PATCH 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"display_name":"display_name","access_token":"access_token","status":"status"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "display_name": "display_name",
+      "access_token": "access_token",
+      "status": "status"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`PhoneNumberResponse`](#phonenumberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Phone Number
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/phone-numbers/{phone_number_id}</code>
+</div>
+
+Soft delete a phone number.
+
+Requires OWNER or ADMIN role.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Sync Phone Number
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/phone-numbers/{phone_number_id}/sync</code>
+</div>
+
+Sync phone number data from Meta API.
+
+Fetches the latest quality rating, message limit, and tier from Meta.
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`PhoneNumberSyncResponse`](#phonenumbersyncresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Exchange Token For Long Term
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/phone-numbers/{phone_number_id}/exchange-token</code>
+</div>
+
+Exchange short-lived access token for long-lived token.
+
+This endpoint attempts to exchange the current access token for a long-lived
+token (typically 60 days vs 1 hour). This is useful when you have a short-lived
+user access token and want to convert it to a long-lived one.
+
+Note: System user tokens are already long-lived and don't need exchange.
+
+Requires workspace admin access.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`PhoneNumberResponse`](#phonenumberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Templates
+
+### Create Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/templates</code>
+</div>
+
+Create a new WhatsApp message template.
+
+Templates must be approved by Meta before they can be used.
+The template will be created with PENDING status.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Request Body (`application/json`)
+
+See schema: [`TemplateCreate`](#templatecreate)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "category": "category",
+  "language": "language",
+  "components": {}
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/templates' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","name":"name","category":"category","language":"language","components":{}}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/templates', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "name",
+      "category": "category",
+      "language": "language",
+      "components": {}
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### List Templates
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/templates</code>
+</div>
+
+List templates for a workspace.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID to filter by |
+| `phone_number_id` | `any` | ❌ | Filter by phone number |
+| `status` | `any` | ❌ | Filter by status |
+| `category` | `any` | ❌ | Filter by category |
+| `limit` | `integer` | ❌ |  (default: `20`) |
+| `offset` | `integer` | ❌ |  (default: `0`) |
+
+
+#### Example Request
+
+```bash
+curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/templates' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/templates?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateListResponse`](#templatelistresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/templates/{template_id}</code>
+</div>
+
+Get template details.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `template_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Update Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/templates/{template_id}</code>
+</div>
+
+Update template.
+
+Only components and status can be updated.
+Status changes are typically managed by Meta webhook updates.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `template_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`TemplateUpdate`](#templateupdate)
+
+**Example:**
+
+```json
+{
+  "components": {},
+  "status": "status"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X PATCH 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{"components":{},"status":"status"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PATCH',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "components": {},
+      "status": "status"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/templates/{template_id}</code>
+</div>
+
+Soft delete a template.
+
+Requires workspace membership.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `template_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Webhooks
+
+### Verify Webhook
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/webhook</code>
+</div>
+
+Webhook Verification (Setup Only)
+
+Meta calls this ONCE when you first configure the webhook.
+Must return the challenge value to verify ownership.
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/webhook'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/webhook', {
+  method: 'GET',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+
+
+---
+
+
+### Receive Webhook
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/webhook</code>
+</div>
+
+Main Webhook Endpoint - Receives ALL events from Meta
+
+Flow:
+  1. Read raw body
+  2. Verify HMAC signature
+  3. Parse JSON
+  4.  Check idempotency (skip duplicates)
+  5. Route to Redis queue by event type
+  6. Return 200 OK immediately
+
+#### Parameters
+
+**Headers**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `X-Hub-Signature-256` | `any` | ❌ |  |
+
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/webhook'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/webhook', {
+  method: 'POST',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Workspaces
+
+### List Workspaces
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces</code>
+</div>
+
+List all workspaces user is a member of.
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/workspaces'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces', {
+  method: 'GET',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: Array of [`WorkspaceListResponse`](#workspacelistresponse)
+
+
+
+---
+
+
+### Create Workspace
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces</code>
+</div>
+
+Create a new workspace.
+
+#### Request Body (`application/json`)
+
+See schema: [`WorkspaceCreate`](#workspacecreate)
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "plan": "free"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/workspaces' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"name","plan":"free"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "name": "name",
+      "plan": "free"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`WorkspaceResponse`](#workspaceresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Get Workspace
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}</code>
+</div>
+
+Get specific workspace. Requires membership.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'GET',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`WorkspaceResponse`](#workspaceresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Update Workspace
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/workspaces/{workspace_id}</code>
+</div>
+
+Update workspace. Requires OWNER or ADMIN role.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`WorkspaceUpdate`](#workspaceupdate)
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "plan": "{...}",
+  "status": "{...}",
+  "settings": {}
+}
+```
+
+#### Example Request
+
+```bash
+curl -X PATCH 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"name","plan":"{...}","status":"{...}","settings":{}}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "name": "name",
+      "plan": "{...}",
+      "status": "{...}",
+      "settings": {}
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`WorkspaceResponse`](#workspaceresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Delete Workspace
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/workspaces/{workspace_id}</code>
+</div>
+
+Soft delete workspace. Requires OWNER role only.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X DELETE 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000', {
+  method: 'DELETE',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**204** - Successful Response
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### List Workspace Members
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/members</code>
+</div>
+
+List workspace members. Requires membership.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members', {
+  method: 'GET',
+
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: Array of [`WorkspaceMemberResponse`](#workspacememberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+### Add Workspace Member
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/members</code>
+</div>
+
+Add member to workspace. Requires OWNER or ADMIN role.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
+#### Request Body (`application/json`)
+
+See schema: [`AddMemberRequest`](#addmemberrequest)
+
+**Example:**
+
+```json
+{
+  "user_email": "user@example.com",
+  "role": "OWNER"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_email":"user@example.com","role":"OWNER"}'
+```
+
+```javascript
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+      "user_email": "user@example.com",
+      "role": "OWNER"
+  })
+});
+
+const data = await response.json();
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`WorkspaceMemberResponse`](#workspacememberresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
+
+
+
+---
+
+
+## Data Schemas
+
+Complete reference for all data models used in the API.
+
+
+### AddMemberRequest
+
+<a id="addmemberrequest"></a>
+
+Request model for adding a member to a workspace
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `user_email` | `string (email)` | ✅ |  |
+| `role` | `MemberRole` | ❌ |  Default: `MEMBER` |
+
+
+**Example:**
+
+```json
+{
+  "user_email": "user@example.com",
+  "role": "OWNER"
+}
+```
+
+
+
+### Body_import_contacts_api_contacts_import_post
+
+<a id="body_import_contacts_api_contacts_import_post"></a>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `file` | `string (binary)` | ✅ | CSV or Excel file |
+
+
+**Example:**
+
+```json
+{
+  "file": "file"
+}
+```
+
+
+
+### Body_upload_media_api_media_post
+
+<a id="body_upload_media_api_media_post"></a>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `file` | `string (binary)` | ✅ | File to upload |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "file": "file"
+}
+```
+
+
+
+### CampaignCreate
+
+<a id="campaigncreate"></a>
+
+Schema for creating a new campaign
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `template_id` | `string (uuid) (nullable)` | ❌ |  |
+| `name` | `string` | ✅ |  (minLength: 1, maxLength: 255) |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "template_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name"
+}
+```
+
+
+
+### CampaignListResponse
+
+<a id="campaignlistresponse"></a>
+
+Schema for paginated campaign list
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `data` | `CampaignResponse[]` | ✅ |  |
+| `total` | `integer` | ✅ |  |
+| `limit` | `integer` | ✅ |  |
+| `offset` | `integer` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "data": [],
+  "total": 0,
+  "limit": 0,
+  "offset": 0
+}
+```
+
+
+
+### CampaignResponse
+
+<a id="campaignresponse"></a>
+
+Schema for campaign response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `template_id` | `string (uuid) (nullable)` | ✅ |  |
+| `name` | `string` | ✅ |  |
+| `total_contacts` | `integer` | ✅ |  |
+| `sent_count` | `integer` | ✅ |  |
+| `delivered_count` | `integer` | ✅ |  |
+| `read_count` | `integer` | ✅ |  |
+| `failed_count` | `integer` | ✅ |  |
+| `status` | `string` | ✅ |  |
+
+
+**Example:**
 
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "template_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "total_contacts": 0,
+  "sent_count": 0,
+  "delivered_count": 0,
+  "read_count": 0,
+  "failed_count": 0,
+  "status": "status"
+}
+```
+
+
+
+### CampaignUpdate
+
+<a id="campaignupdate"></a>
+
+Schema for updating campaign
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string (nullable)` | ❌ |  |
+| `status` | `string (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "status": "status"
+}
+```
+
+
+
+### ContactCreate
+
+<a id="contactcreate"></a>
+
+Schema for creating a new contact
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number` | `string` | ✅ | Phone number in E.164 format (e.g., +15551234567) |
+| `name` | `string (nullable)` | ❌ |  |
+| `tags` | `string[] (nullable)` | ❌ | Labels/tags for the contact |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number": "phone_number",
+  "name": "name",
+  "tags": []
+}
+```
+
+
+
+### ContactListResponse
+
+<a id="contactlistresponse"></a>
+
+Schema for paginated contact list
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `data` | `ContactResponse[]` | ✅ |  |
+| `total` | `integer` | ✅ |  |
+| `limit` | `integer` | ✅ |  |
+| `offset` | `integer` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "data": [],
+  "total": 0,
+  "limit": 0,
+  "offset": 0
+}
+```
+
+
+
+### ContactResponse
+
+<a id="contactresponse"></a>
+
+Schema for contact response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `wa_id` | `string` | ✅ |  |
+| `phone_number` | `string` | ✅ |  |
+| `name` | `string (nullable)` | ✅ |  |
+| `opted_in` | `boolean` | ✅ |  |
+| `tags` | `string[] (nullable)` | ✅ |  |
+| `created_at` | `string (date-time)` | ✅ |  |
+| `updated_at` | `string (date-time)` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "wa_id": "wa_id",
+  "phone_number": "phone_number",
+  "name": "name",
+  "opted_in": true,
+  "tags": [],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+
+
+### ContactUpdate
+
+<a id="contactupdate"></a>
+
+Schema for updating a contact
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string (nullable)` | ❌ |  |
+| `tags` | `string[] (nullable)` | ❌ |  |
+| `opted_in` | `boolean (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "tags": [],
+  "opted_in": true
+}
+```
+
+
+
+### HTTPValidationError
+
+<a id="httpvalidationerror"></a>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `detail` | `ValidationError[]` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "detail": []
+}
+```
+
+
+
+### ImportResponse
+
+<a id="importresponse"></a>
+
+Schema for import response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `total_rows` | `integer` | ✅ |  |
+| `imported` | `integer` | ✅ |  |
+| `updated` | `integer` | ✅ |  |
+| `failed` | `integer` | ✅ |  |
+| `results` | `ImportRowResult[]` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "total_rows": 0,
+  "imported": 0,
+  "updated": 0,
+  "failed": 0,
+  "results": []
+}
+```
+
+
+
+### ImportRowResult
+
+<a id="importrowresult"></a>
+
+Result for a single import row
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `row_number` | `integer` | ✅ |  |
+| `phone_number` | `string (nullable)` | ✅ |  |
+| `status` | `string` | ✅ |  |
+| `reason` | `string (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "row_number": 0,
+  "phone_number": "phone_number",
+  "status": "status",
+  "reason": "reason"
+}
+```
+
+
+
+### MediaListResponse
+
+<a id="medialistresponse"></a>
+
+Schema for paginated media list
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `data` | `MediaResponse[]` | ✅ |  |
+| `total` | `integer` | ✅ |  |
+| `limit` | `integer` | ✅ |  |
+| `offset` | `integer` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "data": [],
+  "total": 0,
+  "limit": 0,
+  "offset": 0
+}
+```
+
+
+
+### MediaResponse
+
+<a id="mediaresponse"></a>
+
+Schema for media file response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `type` | `string` | ✅ |  |
+| `original_url` | `string (nullable)` | ❌ |  |
+| `storage_url` | `string (nullable)` | ❌ |  |
+| `file_name` | `string (nullable)` | ❌ |  |
+| `file_size` | `integer (nullable)` | ❌ |  |
+| `mime_type` | `string (nullable)` | ❌ |  |
+| `uploaded_by` | `string (uuid) (nullable)` | ❌ |  |
+| `created_at` | `string (date-time)` | ✅ |  |
+| `updated_at` | `string (date-time)` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "type": "type",
+  "original_url": "original_url",
+  "storage_url": "storage_url",
+  "file_name": "file_name",
+  "file_size": 0,
+  "mime_type": "mime_type",
+  "uploaded_by": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+
+
+### MediaURLResponse
+
+<a id="mediaurlresponse"></a>
+
+Schema for temporary URL response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `url` | `string` | ✅ |  |
+| `expires_in_minutes` | `integer` | ✅ | URL validity in minutes |
+| `expires_at` | `string (date-time)` | ✅ | Expiration timestamp |
+
+
+**Example:**
+
+```json
+{
+  "url": "url",
+  "expires_in_minutes": 0,
+  "expires_at": "2024-01-01T00:00:00Z"
+}
+```
+
+
+
+### MemberRole
+
+<a id="memberrole"></a>
+
+**Enum Values:** `OWNER | ADMIN | MEMBER | AGENT`
+
+
+### MemberStatus
+
+<a id="memberstatus"></a>
+
+**Enum Values:** `pending | active | suspended`
+
+
+### MessageQueuedResponse
+
+<a id="messagequeuedresponse"></a>
+
+Response for queued message
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `to_number` | `string` | ✅ |  |
+| `type` | `string` | ✅ |  |
+| `status` | `string` | ✅ |  |
+| `media_id` | `string (uuid) (nullable)` | ❌ |  |
+| `queued` | `boolean` | ❌ |  Default: `True` |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to_number": "to_number",
+  "type": "type",
+  "status": "status",
+  "media_id": "550e8400-e29b-41d4-a716-446655440000",
+  "queued": true
+}
+```
+
+
+
+### MessageResponse
+
+<a id="messageresponse"></a>
+
+Schema for message response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `wa_message_id` | `string (nullable)` | ✅ |  |
+| `direction` | `string` | ✅ |  |
+| `from_number` | `string` | ✅ |  |
+| `to_number` | `string` | ✅ |  |
+| `type` | `string` | ✅ |  |
+| `status` | `string` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "wa_message_id": "wa_message_id",
+  "direction": "direction",
+  "from_number": "from_number",
+  "to_number": "to_number",
+  "type": "type",
+  "status": "status"
+}
+```
+
+
+
+### MessageStatusResponse
+
+<a id="messagestatusresponse"></a>
+
+Schema for message status response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `wa_message_id` | `string (nullable)` | ✅ |  |
+| `status` | `string` | ✅ |  |
+| `delivered_at` | `string (nullable)` | ✅ |  |
+| `read_at` | `string (nullable)` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "wa_message_id": "wa_message_id",
+  "status": "status",
+  "delivered_at": "delivered_at",
+  "read_at": "read_at"
+}
+```
+
+
+
+### PhoneNumberCreate
+
+<a id="phonenumbercreate"></a>
+
+Request schema for registering a new phone number.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace UUID |
+| `phone_number_id` | `string` | ✅ | Meta's Phone Number ID from Business Suite |
+| `access_token` | `string` | ✅ | System User Access Token with whatsapp_business_messaging permission |
+| `display_name` | `string (nullable)` | ❌ | Friendly name |
+| `business_id` | `string (nullable)` | ❌ | WhatsApp Business Account ID (WABA ID) |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "phone_number_id",
+  "access_token": "access_token",
+  "display_name": "display_name",
+  "business_id": "business_id"
+}
+```
+
+
+
+### PhoneNumberListResponse
+
+<a id="phonenumberlistresponse"></a>
+
+Paginated list of phone numbers.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `data` | `PhoneNumberResponse[]` | ✅ |  |
+| `total` | `integer` | ✅ |  |
+| `limit` | `integer` | ✅ |  |
+| `offset` | `integer` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "data": [],
+  "total": 0,
+  "limit": 0,
+  "offset": 0
+}
+```
+
+
+
+### PhoneNumberResponse
+
+<a id="phonenumberresponse"></a>
+
+Response schema for full phone number details.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number` | `string` | ✅ |  |
+| `phone_number_id` | `string` | ✅ |  |
+| `display_name` | `string (nullable)` | ❌ |  |
+| `business_id` | `string (nullable)` | ❌ |  |
+| `quality_rating` | `string` | ❌ | GREEN/YELLOW/RED/UNKNOWN Default: `UNKNOWN` |
+| `message_limit` | `integer` | ❌ |  Default: `1000` |
+| `tier` | `string (nullable)` | ❌ |  |
+| `status` | `string` | ❌ |  Default: `pending` |
+| `verified_at` | `string (date-time) (nullable)` | ❌ |  |
+| `created_at` | `string (date-time)` | ✅ |  |
+| `updated_at` | `string (date-time)` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number": "phone_number",
+  "phone_number_id": "phone_number_id",
+  "display_name": "display_name",
+  "business_id": "business_id",
+  "quality_rating": "quality_rating",
+  "message_limit": 0,
+  "tier": "tier",
+  "status": "status",
+  "verified_at": "2024-01-01T00:00:00Z",
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+
+
+### PhoneNumberSyncResponse
+
+<a id="phonenumbersyncresponse"></a>
+
+Response for sync operation.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `synced_at` | `string (date-time)` | ✅ |  |
+| `phone_number` | `string` | ✅ |  |
+| `quality_rating` | `string` | ✅ |  |
+| `message_limit` | `integer` | ✅ |  |
+| `tier` | `string (nullable)` | ❌ |  |
+| `status` | `string` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "synced_at": "2024-01-01T00:00:00Z",
+  "phone_number": "phone_number",
+  "quality_rating": "quality_rating",
+  "message_limit": 0,
+  "tier": "tier",
+  "status": "status"
+}
+```
+
+
+
+### PhoneNumberUpdate
+
+<a id="phonenumberupdate"></a>
+
+Request schema for updating phone number settings.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `display_name` | `string (nullable)` | ❌ | Friendly name |
+| `access_token` | `string (nullable)` | ❌ | Will be validated if provided |
+| `status` | `string (nullable)` | ❌ | Status: pending, active, or disabled |
+
+
+**Example:**
+
+```json
+{
+  "display_name": "display_name",
+  "access_token": "access_token",
+  "status": "status"
+}
+```
+
+
+
+### Provider
+
+<a id="provider"></a>
+
+Login providers
+
+**Enum Values:** `Email | Google | GitHub`
+
+
+### SendMediaMessageRequest
+
+<a id="sendmediamessagerequest"></a>
+
+Schema for sending a media message
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `to` | `string` | ✅ | Recipient phone number |
+| `media_type` | `string` | ✅ | Type: image, video, audio, document |
+| `media_id` | `string (uuid)` | ✅ | Media file ID from /api/media |
+| `caption` | `string (nullable)` | ❌ | Optional caption |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "media_type": "media_type",
+  "media_id": "550e8400-e29b-41d4-a716-446655440000",
+  "caption": "caption"
+}
+```
+
+
+
+### SendTemplateMessageRequest
+
+<a id="sendtemplatemessagerequest"></a>
+
+Schema for sending a template message
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `to` | `string` | ✅ | Recipient phone number |
+| `template_name` | `string` | ✅ |  |
+| `template_language` | `string` | ❌ |  Default: `en` |
+| `components` | `object (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "template_name": "template_name",
+  "template_language": "template_language",
+  "components": {}
+}
+```
+
+
+
+### SendTextMessageRequest
+
+<a id="sendtextmessagerequest"></a>
+
+Schema for sending a text message
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `to` | `string` | ✅ | Recipient phone number |
+| `text` | `string` | ✅ | Message text (minLength: 1) |
+
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "text": "text"
+}
+```
+
+
+
+### SigninResponse
+
+<a id="signinresponse"></a>
+
+Response model for successful login
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `user_id` | `string (uuid)` | ✅ |  |
+| `access_token` | `string` | ✅ |  |
+| `token_type` | `string` | ❌ |  Default: `bearer` |
+
+
+**Example:**
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "access_token": "access_token",
+  "token_type": "token_type"
+}
+```
+
+
+
+### Signup
+
+<a id="signup"></a>
+
+Request model for Signup
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `email` | `string (email)` | ✅ |  |
+| `password` | `string` | ✅ |  |
+| `name` | `string (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
   "email": "user@example.com",
-  "name": "John Doe",
-  "email_verified": true
+  "password": "SecurePassword123!",
+  "name": "name"
 }
 ```
 
----
 
-## Workspaces
 
-Manage workspaces and team members.
+### SignupResponse
 
-### Create Workspace
+<a id="signupresponse"></a>
 
-Create a new workspace for your team.
+Response model for successful signup
 
-**Endpoint:** `POST /api/workspaces`
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `user_id` | `string (uuid)` | ✅ |  |
+| `name` | `string` | ✅ |  |
+| `email` | `string (email)` | ✅ |  |
 
-**Authentication:** Required
 
-**Request Body:**
+**Example:**
 
 ```json
 {
-  "name": "My Company",
-  "plan": "free"  // free, pro, or enterprise
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "email": "user@example.com"
 }
 ```
 
-**Response:** `201 Created`
+
+
+### TemplateCreate
+
+<a id="templatecreate"></a>
+
+Schema for creating a new template
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `name` | `string` | ✅ | Template name (lowercase, no spaces) (minLength: 1, maxLength: 255) |
+| `category` | `string` | ✅ | Template category: MARKETING, UTILITY, or AUTHENTICATION |
+| `language` | `string` | ❌ | Language code (e.g., 'en', 'es', 'fr') Default: `en` |
+| `components` | `object` | ✅ | Template components (header, body, footer, buttons) |
+
+
+**Example:**
 
 ```json
 {
-  "id": "workspace-uuid",
-  "name": "My Company",
-  "slug": "my-company",
-  "api_key": "wsk_...",
-  "webhook_secret": "whsec_...",
-  "created_by": "user-uuid",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "category": "category",
+  "language": "language",
+  "components": {}
+}
+```
+
+
+
+### TemplateListResponse
+
+<a id="templatelistresponse"></a>
+
+Schema for paginated template list
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `data` | `TemplateResponse[]` | ✅ |  |
+| `total` | `integer` | ✅ |  |
+| `limit` | `integer` | ✅ |  |
+| `offset` | `integer` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "data": [],
+  "total": 0,
+  "limit": 0,
+  "offset": 0
+}
+```
+
+
+
+### TemplateResponse
+
+<a id="templateresponse"></a>
+
+Schema for template response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `phone_number_id` | `string (uuid)` | ✅ |  |
+| `name` | `string` | ✅ |  |
+| `category` | `string` | ✅ |  |
+| `language` | `string` | ✅ |  |
+| `status` | `string` | ✅ |  |
+| `meta_template_id` | `string (nullable)` | ✅ |  |
+| `components` | `object` | ✅ |  |
+| `rejection_reason` | `string (nullable)` | ✅ |  |
+| `created_at` | `string` | ✅ |  |
+| `updated_at` | `string` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "category": "category",
+  "language": "language",
+  "status": "status",
+  "meta_template_id": "meta_template_id",
+  "components": {},
+  "rejection_reason": "rejection_reason",
+  "created_at": "created_at",
+  "updated_at": "updated_at"
+}
+```
+
+
+
+### TemplateUpdate
+
+<a id="templateupdate"></a>
+
+Schema for updating template
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `components` | `object (nullable)` | ❌ |  |
+| `status` | `string (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "components": {},
+  "status": "status"
+}
+```
+
+
+
+### ValidationError
+
+<a id="validationerror"></a>
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `loc` | `any[]` | ✅ |  |
+| `msg` | `string` | ✅ |  |
+| `type` | `string` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "loc": [],
+  "msg": "msg",
+  "type": "type"
+}
+```
+
+
+
+### WorkspaceCreate
+
+<a id="workspacecreate"></a>
+
+Request model for creating a workspace
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | ✅ |  (minLength: 1, maxLength: 255) |
+| `plan` | `WorkspacePlan` | ❌ |  Default: `free` |
+
+
+**Example:**
+
+```json
+{
+  "name": "name",
+  "plan": "free"
+}
+```
+
+
+
+### WorkspaceListResponse
+
+<a id="workspacelistresponse"></a>
+
+Summarized workspace info with user's role
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `name` | `string` | ✅ |  |
+| `slug` | `string` | ✅ |  |
+| `plan` | `WorkspacePlan` | ✅ |  |
+| `status` | `WorkspaceStatus` | ✅ |  |
+| `created_at` | `string (date-time)` | ✅ |  |
+| `user_role` | `MemberRole` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "slug": "slug",
+  "plan": "free",
+  "status": "active",
+  "created_at": "2024-01-01T00:00:00Z",
+  "user_role": "OWNER"
+}
+```
+
+
+
+### WorkspaceMemberResponse
+
+<a id="workspacememberresponse"></a>
+
+Response model for workspace member
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `user_id` | `string (uuid)` | ✅ |  |
+| `role` | `MemberRole` | ✅ |  |
+| `status` | `MemberStatus` | ✅ |  |
+| `joined_at` | `string (date-time) (nullable)` | ❌ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "role": "OWNER",
+  "status": "pending",
+  "joined_at": "2024-01-01T00:00:00Z"
+}
+```
+
+
+
+### WorkspacePlan
+
+<a id="workspaceplan"></a>
+
+**Enum Values:** `free | pro | enterprise`
+
+
+### WorkspaceResponse
+
+<a id="workspaceresponse"></a>
+
+Full workspace response
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `id` | `string (uuid)` | ✅ |  |
+| `name` | `string` | ✅ |  |
+| `slug` | `string` | ✅ |  |
+| `api_key` | `string (uuid)` | ✅ |  |
+| `webhook_secret` | `string (uuid)` | ✅ |  |
+| `created_by` | `string (uuid)` | ✅ |  |
+| `plan` | `WorkspacePlan` | ✅ |  |
+| `status` | `WorkspaceStatus` | ✅ |  |
+| `settings` | `object` | ✅ |  |
+| `created_at` | `string (date-time)` | ✅ |  |
+| `updated_at` | `string (date-time)` | ✅ |  |
+
+
+**Example:**
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "slug": "slug",
+  "api_key": "550e8400-e29b-41d4-a716-446655440000",
+  "webhook_secret": "550e8400-e29b-41d4-a716-446655440000",
+  "created_by": "550e8400-e29b-41d4-a716-446655440000",
   "plan": "free",
   "status": "active",
   "settings": {},
@@ -230,1562 +4358,36 @@ Create a new workspace for your team.
 }
 ```
 
-**Example:**
 
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/workspaces \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "My Company",
-    "plan": "free"
-  }'
-```
 
----
+### WorkspaceStatus
 
-### List Workspaces
+<a id="workspacestatus"></a>
 
-Get all workspaces you're a member of.
+**Enum Values:** `active | suspended | cancelled`
 
-**Endpoint:** `GET /api/workspaces`
 
-**Authentication:** Required
+### WorkspaceUpdate
 
-**Response:** `200 OK`
+<a id="workspaceupdate"></a>
 
-```json
-[
-  {
-    "id": "workspace-uuid",
-    "name": "My Company",
-    "slug": "my-company",
-    "plan": "free",
-    "status": "active",
-    "created_at": "2024-01-01T00:00:00Z",
-    "user_role": "OWNER"
-  }
-]
-```
+Request model for updating a workspace
 
----
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string (nullable)` | ❌ |  |
+| `plan` | `WorkspacePlan (nullable)` | ❌ |  |
+| `status` | `WorkspaceStatus (nullable)` | ❌ |  |
+| `settings` | `object (nullable)` | ❌ |  |
 
-### Get Workspace
-
-Get details of a specific workspace.
-
-**Endpoint:** `GET /api/workspaces/{workspace_id}`
-
-**Authentication:** Required
-
-**Path Parameters:**
-
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `workspace_id` | UUID | Workspace ID |
-
-**Response:** `200 OK`
-
-Returns full workspace details including API key and webhook secret.
-
----
-
-### Update Workspace
-
-Update workspace settings.
-
-**Endpoint:** `PATCH /api/workspaces/{workspace_id}`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Request Body:**
-
-```json
-{
-  "name": "Updated Company Name",
-  "plan": "pro",
-  "status": "active",
-  "settings": {
-    "feature_flags": {}
-  }
-}
-```
-
-All fields are optional.
-
-**Response:** `200 OK`
-
----
-
-### Delete Workspace
-
-Soft delete a workspace.
-
-**Endpoint:** `DELETE /api/workspaces/{workspace_id}`
-
-**Authentication:** Required (OWNER role only)
-
-**Response:** `204 No Content`
-
----
-
-### List Workspace Members
-
-Get all members of a workspace.
-
-**Endpoint:** `GET /api/workspaces/{workspace_id}/members`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
-```json
-[
-  {
-    "id": "member-uuid",
-    "user_id": "user-uuid",
-    "role": "OWNER",
-    "status": "active",
-    "joined_at": "2024-01-01T00:00:00Z"
-  }
-]
-```
-
-**Roles:**
-- `OWNER` - Full control
-- `ADMIN` - Manage resources and members
-- `MEMBER` - Read and send messages
-- `AGENT` - Customer support access
-
----
-
-### Add Workspace Member
-
-Invite a user to your workspace.
-
-**Endpoint:** `POST /api/workspaces/{workspace_id}/members`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Request Body:**
-
-```json
-{
-  "user_email": "newmember@example.com",
-  "role": "MEMBER"  // OWNER, ADMIN, MEMBER, or AGENT
-}
-```
-
-**Response:** `200 OK`
-
----
-
-## Phone Numbers
-
-Register and manage WhatsApp Business phone numbers.
-
-### Register Phone Number
-
-Add a WhatsApp Business phone number to your workspace.
-
-**Endpoint:** `POST /api/phone-numbers`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "1234567890",  // Meta's Phone Number ID
-  "access_token": "EAAxxxxxxxxx",    // Meta access token
-  "display_name": "Customer Support",  // optional
-  "business_id": "business-account-id"  // optional WABA ID
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "phone-uuid",
-  "workspace_id": "workspace-uuid",
-  "phone_number": "+1234567890",
-  "phone_number_id": "1234567890",
-  "display_name": "Customer Support",
-  "business_id": "business-account-id",
-  "quality_rating": "GREEN",
-  "message_limit": 1000,
-  "tier": "STANDARD",
-  "status": "active",
-  "verified_at": "2024-01-01T00:00:00Z",
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
-}
-```
-
-**Quality Ratings:**
-- `GREEN` - Good quality, full limits
-- `YELLOW` - Medium quality, reduced limits
-- `RED` - Poor quality, severely limited
-- `UNKNOWN` - Not yet rated
 
 **Example:**
 
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/phone-numbers \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "workspace_id": "workspace-uuid",
-    "phone_number_id": "1234567890",
-    "access_token": "EAAxxxxxxxxx",
-    "display_name": "Customer Support"
-  }'
-```
-
----
-
-### List Phone Numbers
-
-Get all phone numbers in a workspace.
-
-**Endpoint:** `GET /api/phone-numbers`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `status` | string | No | Filter by status (pending, active, disabled) |
-| `limit` | integer | No | Results per page (1-100, default: 20) |
-| `offset` | integer | No | Offset for pagination (default: 0) |
-
-**Response:** `200 OK`
-
 ```json
 {
-  "data": [
-    {
-      "id": "phone-uuid",
-      "workspace_id": "workspace-uuid",
-      "phone_number": "+1234567890",
-      "display_name": "Customer Support",
-      "quality_rating": "GREEN",
-      "message_limit": 1000,
-      "status": "active"
-    }
-  ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
+  "name": "name",
+  "plan": "{...}",
+  "status": "{...}",
+  "settings": {}
 }
 ```
-
----
-
-### Get Phone Number
-
-Get details of a specific phone number.
-
-**Endpoint:** `GET /api/phone-numbers/{phone_number_id}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
----
-
-### Update Phone Number
-
-Update phone number settings.
-
-**Endpoint:** `PATCH /api/phone-numbers/{phone_number_id}`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Request Body:**
-
-```json
-{
-  "display_name": "Sales Team",
-  "access_token": "new_token",  // optional, will be validated
-  "status": "active"  // pending, active, or disabled
-}
-```
-
-All fields are optional.
-
-**Response:** `200 OK`
-
----
-
-### Delete Phone Number
-
-Soft delete a phone number.
-
-**Endpoint:** `DELETE /api/phone-numbers/{phone_number_id}`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Response:** `204 No Content`
-
----
-
-### Sync Phone Number
-
-Sync quality rating and message limits from Meta.
-
-**Endpoint:** `POST /api/phone-numbers/{phone_number_id}/sync`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
-```json
-{
-  "id": "phone-uuid",
-  "synced_at": "2024-01-01T00:00:00Z",
-  "phone_number": "+1234567890",
-  "quality_rating": "GREEN",
-  "message_limit": 1000,
-  "tier": "STANDARD",
-  "status": "active"
-}
-```
-
-**Example:**
-
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/phone-numbers/{phone_id}/sync \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-### Exchange Token
-
-Convert short-lived access token to long-lived token.
-
-**Endpoint:** `POST /api/phone-numbers/{phone_number_id}/exchange-token`
-
-**Authentication:** Required (OWNER or ADMIN role)
-
-**Response:** `200 OK`
-
-Returns updated phone number with new long-lived token (typically 60 days vs 1 hour).
-
-> **Note:** System user tokens are already long-lived and don't need exchange.
-
----
-
-## Messages
-
-Send WhatsApp messages and track their status.
-
-### Send Text Message
-
-Send a simple text message.
-
-**Endpoint:** `POST /api/messages/send/text`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "to": "+1234567890",  // E.164 format
-  "text": "Hello! Thanks for contacting us."
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "message-uuid",
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "wa_message_id": "wamid.xxxxx",
-  "direction": "outbound",
-  "from_number": "+0987654321",
-  "to_number": "+1234567890",
-  "type": "text",
-  "status": "queued"
-}
-```
-
-**Message Statuses:**
-- `queued` - In queue, not yet sent
-- `sending` - Being sent to Meta
-- `sent` - Accepted by Meta
-- `delivered` - Delivered to recipient's device
-- `read` - Opened by recipient
-- `failed` - Delivery failed
-
-**Example:**
-
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/messages/send/text \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "workspace_id": "workspace-uuid",
-    "phone_number_id": "phone-uuid",
-    "to": "+1234567890",
-    "text": "Hello! Thanks for contacting us."
-  }'
-```
-
----
-
-### Send Template Message
-
-Send a pre-approved WhatsApp template message.
-
-**Endpoint:** `POST /api/messages/send/template`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "to": "+1234567890",
-  "template_name": "welcome_message",
-  "template_language": "en",
-  "components": {
-    "body": [
-      {
-        "type": "text",
-        "text": "John"
-      }
-    ]
-  }
-}
-```
-
-**Response:** `201 Created`
-
----
-
-### Send Media Message
-
-Send an image, video, audio file, or document.
-
-**Endpoint:** `POST /api/messages/send/media`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "to": "+1234567890",
-  "media_type": "image",  // image, video, audio, or document
-  "media_id": "media-uuid",  // from /api/media upload
-  "caption": "Check out this image!"  // optional, max 3000 chars
-}
-```
-
-**Media Types:**
-- `image` - JPEG, PNG, GIF, BMP (max 16 MB)
-- `video` - MP4, 3GPP, QuickTime (max 100 MB)
-- `audio` - AAC, MP4, MPEG, AMR, OGG (max 16 MB)
-- `document` - PDF, DOC, XLS, PPT, TXT (max 100 MB)
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "message-uuid",
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "to_number": "+1234567890",
-  "type": "image",
-  "status": "queued",
-  "media_id": "media-uuid",
-  "queued": true
-}
-```
-
-**Example:**
-
-```bash
-# First upload the media (see Media section)
-# Then send the message
-
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/messages/send/media \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "workspace_id": "workspace-uuid",
-    "phone_number_id": "phone-uuid",
-    "to": "+1234567890",
-    "media_type": "image",
-    "media_id": "media-uuid",
-    "caption": "Check this out!"
-  }'
-```
-
----
-
-### Get Message Status
-
-Check the delivery status of a message.
-
-**Endpoint:** `GET /api/messages/{message_id}/status`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
-```json
-{
-  "id": "message-uuid",
-  "wa_message_id": "wamid.xxxxx",
-  "status": "delivered",
-  "delivered_at": "2024-01-01T00:05:00Z",
-  "read_at": "2024-01-01T00:10:00Z"
-}
-```
-
----
-
-## Media
-
-Upload and manage media files for WhatsApp messages.
-
-### Upload Media
-
-Upload a file to Azure Blob Storage.
-
-**Endpoint:** `POST /api/media`
-
-**Authentication:** Required
-
-**Content-Type:** `multipart/form-data`
-
-**Form Data:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `file` | File | Yes | File to upload |
-
-**File Size Limits:**
-- Images: 16 MB
-- Videos: 100 MB
-- Audio: 16 MB
-- Documents: 100 MB
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "media-uuid",
-  "workspace_id": "workspace-uuid",
-  "type": "image",
-  "original_url": null,
-  "storage_url": "https://storage.blob.core.windows.net/...",
-  "file_name": "photo.jpg",
-  "file_size": 1024000,
-  "mime_type": "image/jpeg",
-  "uploaded_by": "user-uuid",
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
-}
-```
-
-**Example:**
-
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/media \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -F "workspace_id=workspace-uuid" \
-  -F "file=@/path/to/image.jpg"
-```
-
-**JavaScript Example:**
-
-```javascript
-const formData = new FormData();
-formData.append('workspace_id', 'workspace-uuid');
-formData.append('file', fileInput.files[0]);
-
-const response = await fetch('https://destined-severely-serval.ngrok-free.app/api/media', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
-  },
-  body: formData
-});
-```
-
----
-
-### List Media
-
-Get all media files in a workspace.
-
-**Endpoint:** `GET /api/media`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `type` | string | No | Filter by type (image, video, audio, document) |
-| `limit` | integer | No | Results per page (1-100, default: 20) |
-| `offset` | integer | No | Offset for pagination |
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "id": "media-uuid",
-      "workspace_id": "workspace-uuid",
-      "type": "image",
-      "file_name": "photo.jpg",
-      "file_size": 1024000,
-      "mime_type": "image/jpeg",
-      "created_at": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
-}
-```
-
----
-
-### Get Media Details
-
-Get information about a specific media file.
-
-**Endpoint:** `GET /api/media/{media_id}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
----
-
-### Delete Media
-
-Soft delete a media file.
-
-**Endpoint:** `DELETE /api/media/{media_id}`
-
-**Authentication:** Required
-
-**Response:** `204 No Content`
-
----
-
-### Download Media
-
-Download a media file (307 redirect to Azure SAS URL).
-
-**Endpoint:** `GET /api/media/{media_id}/download`
-
-**Authentication:** Required
-
-**Response:** `307 Temporary Redirect`
-
-Redirects to a temporary Azure SAS URL (valid for 60 minutes).
-
-**Example:**
-
-```bash
-curl -L https://destined-severely-serval.ngrok-free.app/api/media/{media_id}/download \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -O
-```
-
----
-
-### Get Media URL
-
-Get a temporary signed URL for a media file.
-
-**Endpoint:** `GET /api/media/{media_id}/url`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `expiry_minutes` | integer | 60 | URL validity in minutes (5-1440) |
-
-**Response:** `200 OK`
-
-```json
-{
-  "url": "https://storage.blob.core.windows.net/...?sas-token",
-  "expires_in_minutes": 60,
-  "expires_at": "2024-01-01T01:00:00Z"
-}
-```
-
-**Example:**
-
-```bash
-curl https://destined-severely-serval.ngrok-free.app/api/media/{media_id}/url?expiry_minutes=120 \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-## Templates
-
-Create and manage WhatsApp message templates.
-
-### Create Template
-
-Create a new WhatsApp message template.
-
-**Endpoint:** `POST /api/templates`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "name": "welcome_message",  // lowercase, no spaces
-  "category": "MARKETING",  // MARKETING, UTILITY, or AUTHENTICATION
-  "language": "en",
-  "components": {
-    "body": {
-      "text": "Hello {{1}}, welcome to our service!"
-    },
-    "footer": {
-      "text": "Reply STOP to unsubscribe"
-    }
-  }
-}
-```
-
-**Template Categories:**
-- `MARKETING` - Promotional messages
-- `UTILITY` - Account updates, order status
-- `AUTHENTICATION` - OTP and verification codes
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "template-uuid",
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "name": "welcome_message",
-  "category": "MARKETING",
-  "language": "en",
-  "status": "PENDING",  // PENDING, APPROVED, REJECTED
-  "meta_template_id": null,
-  "components": {...},
-  "rejection_reason": null,
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
-}
-```
-
-> **Note:** Templates must be approved by Meta before use. This typically takes 24-48 hours.
-
----
-
-### List Templates
-
-Get all templates in a workspace.
-
-**Endpoint:** `GET /api/templates`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `phone_number_id` | UUID | No | Filter by phone number |
-| `status` | string | No | Filter by status (PENDING, APPROVED, REJECTED) |
-| `category` | string | No | Filter by category |
-| `limit` | integer | No | Results per page (1-100, default: 20) |
-| `offset` | integer | No | Offset for pagination |
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "id": "template-uuid",
-      "name": "welcome_message",
-      "category": "MARKETING",
-      "language": "en",
-      "status": "APPROVED"
-    }
-  ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
-}
-```
-
----
-
-### Get Template
-
-Get details of a specific template.
-
-**Endpoint:** `GET /api/templates/{template_id}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
----
-
-### Update Template
-
-Update a template's components or status.
-
-**Endpoint:** `PATCH /api/templates/{template_id}`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "components": {...},
-  "status": "APPROVED"
-}
-```
-
-All fields are optional.
-
-**Response:** `200 OK`
-
----
-
-### Delete Template
-
-Soft delete a template.
-
-**Endpoint:** `DELETE /api/templates/{template_id}`
-
-**Authentication:** Required
-
-**Response:** `204 No Content`
-
----
-
-## Contacts
-
-Manage your contact list.
-
-### Create Contact
-
-Add a new contact to your workspace.
-
-**Endpoint:** `POST /api/contacts`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number": "+1234567890",  // E.164 format required
-  "name": "John Doe",  // optional
-  "tags": ["customer", "vip"]  // optional
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "contact-uuid",
-  "workspace_id": "workspace-uuid",
-  "wa_id": "1234567890",
-  "phone_number": "+1234567890",
-  "name": "John Doe",
-  "opted_in": true,
-  "tags": ["customer", "vip"],
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
-}
-```
-
-**Example:**
-
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/contacts \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "workspace_id": "workspace-uuid",
-    "phone_number": "+1234567890",
-    "name": "John Doe",
-    "tags": ["customer"]
-  }'
-```
-
----
-
-### List Contacts
-
-Get all contacts in a workspace.
-
-**Endpoint:** `GET /api/contacts`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `tags` | string | No | Filter by tags (comma-separated) |
-| `opted_in` | boolean | No | Filter by opt-in status |
-| `search` | string | No | Search by name or phone number |
-| `limit` | integer | No | Results per page (1-100, default: 20) |
-| `offset` | integer | No | Offset for pagination |
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "id": "contact-uuid",
-      "workspace_id": "workspace-uuid",
-      "phone_number": "+1234567890",
-      "name": "John Doe",
-      "opted_in": true,
-      "tags": ["customer", "vip"]
-    }
-  ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
-}
-```
-
-**Example:**
-
-```bash
-# Search for contacts
-curl "https://destined-severely-serval.ngrok-free.app/api/contacts?workspace_id=workspace-uuid&search=John" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Filter by tags
-curl "https://destined-severely-serval.ngrok-free.app/api/contacts?workspace_id=workspace-uuid&tags=vip,customer" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-### Get Contact
-
-Get details of a specific contact.
-
-**Endpoint:** `GET /api/contacts/{contact_id}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
----
-
-### Update Contact
-
-Update contact information.
-
-**Endpoint:** `PATCH /api/contacts/{contact_id}`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "name": "Jane Doe",
-  "tags": ["customer", "premium"],
-  "opted_in": true
-}
-```
-
-All fields are optional.
-
-**Response:** `200 OK`
-
----
-
-### Delete Contact
-
-Soft delete a contact.
-
-**Endpoint:** `DELETE /api/contacts/{contact_id}`
-
-**Authentication:** Required
-
-**Response:** `204 No Content`
-
----
-
-### Import Contacts
-
-Bulk import contacts from CSV or Excel file.
-
-**Endpoint:** `POST /api/contacts/import`
-
-**Authentication:** Required
-
-**Content-Type:** `multipart/form-data`
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-
-**Form Data:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | File | Yes | CSV or Excel file |
-
-**Expected CSV Columns:**
-- `phone` (required) - Phone number in E.164 format or common formats
-- `name` (optional) - Contact name
-- `labels` or `tags` (optional) - Comma or semicolon separated tags
-
-**CSV Example:**
-
-```csv
-phone,name,tags
-+1234567890,John Doe,customer;vip
-+0987654321,Jane Smith,customer
-1234567890,Bob Johnson,prospect
-```
-
-**Response:** `200 OK`
-
-```json
-{
-  "total_rows": 3,
-  "imported": 2,
-  "updated": 1,
-  "failed": 0,
-  "results": [
-    {
-      "row_number": 1,
-      "phone_number": "+1234567890",
-      "status": "imported",
-      "reason": null
-    },
-    {
-      "row_number": 2,
-      "phone_number": "+0987654321",
-      "status": "updated",
-      "reason": null
-    },
-    {
-      "row_number": 3,
-      "phone_number": "1234567890",
-      "status": "failed",
-      "reason": "Invalid phone number format"
-    }
-  ]
-}
-```
-
-**Example:**
-
-```bash
-curl -X POST "https://destined-severely-serval.ngrok-free.app/api/contacts/import?workspace_id=workspace-uuid" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -F "file=@contacts.csv"
-```
-
----
-
-## Campaigns
-
-Create and manage message campaigns.
-
-### Create Campaign
-
-Create a new message campaign.
-
-**Endpoint:** `POST /api/campaigns`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "template_id": "template-uuid",  // optional
-  "name": "Summer Sale 2024"
-}
-```
-
-**Response:** `201 Created`
-
-```json
-{
-  "id": "campaign-uuid",
-  "workspace_id": "workspace-uuid",
-  "phone_number_id": "phone-uuid",
-  "template_id": "template-uuid",
-  "name": "Summer Sale 2024",
-  "total_contacts": 0,
-  "sent_count": 0,
-  "delivered_count": 0,
-  "read_count": 0,
-  "failed_count": 0,
-  "status": "draft"
-}
-```
-
-**Campaign Statuses:**
-- `draft` - Being configured
-- `scheduled` - Scheduled for future or paused
-- `sending` - Currently sending messages
-- `completed` - All messages sent
-- `failed` - Campaign failed
-
----
-
-### List Campaigns
-
-Get all campaigns in a workspace.
-
-**Endpoint:** `GET /api/campaigns`
-
-**Authentication:** Required
-
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `workspace_id` | UUID | Yes | Workspace ID |
-| `status` | string | No | Filter by status |
-| `limit` | integer | No | Results per page (1-100, default: 20) |
-| `offset` | integer | No | Offset for pagination |
-
-**Response:** `200 OK`
-
-```json
-{
-  "data": [
-    {
-      "id": "campaign-uuid",
-      "name": "Summer Sale 2024",
-      "status": "sending",
-      "total_contacts": 1000,
-      "sent_count": 500,
-      "delivered_count": 450,
-      "read_count": 200
-    }
-  ],
-  "total": 1,
-  "limit": 20,
-  "offset": 0
-}
-```
-
----
-
-### Get Campaign
-
-Get details of a specific campaign.
-
-**Endpoint:** `GET /api/campaigns/{campaign_id}`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
----
-
-### Update Campaign
-
-Update campaign details.
-
-**Endpoint:** `PATCH /api/campaigns/{campaign_id}`
-
-**Authentication:** Required
-
-**Request Body:**
-
-```json
-{
-  "name": "Updated Campaign Name",
-  "status": "scheduled"
-}
-```
-
-All fields are optional.
-
-**Response:** `200 OK`
-
----
-
-### Delete Campaign
-
-Soft delete a campaign.
-
-**Endpoint:** `DELETE /api/campaigns/{campaign_id}`
-
-**Authentication:** Required
-
-**Response:** `204 No Content`
-
----
-
-### Start Campaign
-
-Start sending messages for a campaign.
-
-**Endpoint:** `POST /api/campaigns/{campaign_id}/start`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
-Changes status from `draft` or `scheduled` to `sending`.
-
-**Example:**
-
-```bash
-curl -X POST https://destined-severely-serval.ngrok-free.app/api/campaigns/{campaign_id}/start \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
----
-
-### Pause Campaign
-
-Pause an active campaign.
-
-**Endpoint:** `POST /api/campaigns/{campaign_id}/pause`
-
-**Authentication:** Required
-
-**Response:** `200 OK`
-
-Changes status from `sending` to `scheduled` (paused state).
-
----
-
-## Webhooks
-
-Receive WhatsApp events from Meta.
-
-### Verify Webhook
-
-Webhook verification endpoint for Meta setup.
-
-**Endpoint:** `GET /webhook`
-
-**Authentication:** Not required (Meta verification token used)
-
-**Description:** Meta calls this once when you first configure the webhook to verify ownership.
-
----
-
-### Receive Webhook
-
-Main webhook endpoint for receiving all Meta events.
-
-**Endpoint:** `POST /webhook`
-
-**Authentication:** HMAC signature verification
-
-**Headers:**
-
-| Header | Description |
-|--------|-------------|
-| `X-Hub-Signature-256` | HMAC-SHA256 signature for verification |
-
-**Flow:**
-1. Receives raw body from Meta
-2. Verifies HMAC signature
-3. Parses JSON payload
-4. Checks idempotency (skips duplicates)
-5. Routes event to Redis queue by type
-6. Returns 200 OK immediately
-
-**Event Types:**
-- Message status updates (sent, delivered, read, failed)
-- Incoming messages
-- Template status changes
-- Phone number quality updates
-
-**Example Payload (Message Status):**
-
-```json
-{
-  "entry": [
-    {
-      "changes": [
-        {
-          "value": {
-            "statuses": [
-              {
-                "id": "wamid.xxxxx",
-                "status": "delivered",
-                "timestamp": "1234567890"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-
-> **Note:** This endpoint is public but secured with HMAC signature verification. Configure your webhook URL and secret in Meta Business Suite.
-
----
-
-## Error Handling
-
-### Error Response Format
-
-All errors follow a consistent JSON structure:
-
-```json
-{
-  "detail": [
-    {
-      "loc": ["body", "email"],
-      "msg": "Invalid email format",
-      "type": "value_error"
-    }
-  ]
-}
-```
-
-For simple errors:
-
-```json
-{
-  "detail": "Resource not found"
-}
-```
-
-### Common Error Scenarios
-
-#### Authentication Errors
-
-**401 Unauthorized**
-```json
-{
-  "detail": "Invalid credentials"
-}
-```
-
-**Solution:** Check your email/password or provide a valid access token.
-
----
-
-**403 Forbidden**
-```json
-{
-  "detail": "Insufficient permissions. OWNER or ADMIN role required"
-}
-```
-
-**Solution:** Contact workspace owner to upgrade your role.
-
----
-
-#### Validation Errors
-
-**422 Unprocessable Entity**
-```json
-{
-  "detail": [
-    {
-      "loc": ["body", "phone_number"],
-      "msg": "Phone number must be in E.164 format",
-      "type": "value_error"
-    }
-  ]
-}
-```
-
-**Solution:** Fix the validation error in your request.
-
----
-
-#### Resource Errors
-
-**404 Not Found**
-```json
-{
-  "detail": "Workspace not found"
-}
-```
-
-**Solution:** Verify the resource ID exists and you have access to it.
-
----
-
-### Rate Limiting
-
-Rate limits vary by workspace plan:
-
-| Plan | Requests/Hour | Requests/Day |
-|------|---------------|--------------|
-| Free | 100 | 1,000 |
-| Pro | 1,000 | 10,000 |
-| Enterprise | Custom | Custom |
-
-**429 Too Many Requests**
-```json
-{
-  "detail": "Rate limit exceeded. Please try again later."
-}
-```
-
-**Solution:** Slow down your requests or upgrade your plan.
-
----
-
-### Phone Number Formats
-
-All phone numbers must be in E.164 format:
-
-✅ **Correct:**
-- `+1234567890`
-- `+442012345678`
-
-❌ **Incorrect:**
-- `1234567890`
-- `(123) 456-7890`
-- `+1 234-567-8900`
-
----
-
-## Best Practices
-
-### 1. Error Handling
-
-Always handle errors gracefully:
-
-```javascript
-try {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    const error = await response.json();
-    console.error('API Error:', error.detail);
-  }
-  const data = await response.json();
-} catch (error) {
-  console.error('Network Error:', error);
-}
-```
-
-### 2. Token Management
-
-- Store tokens securely (not in localStorage for sensitive apps)
-- Implement token refresh logic
-- Handle 401 errors by redirecting to login
-
-### 3. Pagination
-
-For large datasets, always use pagination:
-
-```javascript
-let offset = 0;
-const limit = 100;
-let allContacts = [];
-
-while (true) {
-  const response = await fetch(
-    `${baseUrl}/api/contacts?workspace_id=${id}&limit=${limit}&offset=${offset}`
-  );
-  const data = await response.json();
-
-  allContacts = allContacts.concat(data.data);
-
-  if (data.data.length < limit) break;
-  offset += limit;
-}
-```
-
-### 4. File Uploads
-
-Use FormData for file uploads:
-
-```javascript
-const formData = new FormData();
-formData.append('workspace_id', workspaceId);
-formData.append('file', fileInput.files[0]);
-
-const response = await fetch(`${baseUrl}/api/media`, {
-  method: 'POST',
-  headers: {
-    'Authorization': `Bearer ${token}`
-    // Don't set Content-Type, browser will set it with boundary
-  },
-  body: formData
-});
-```
-
-### 5. Phone Number Validation
-
-Always validate phone numbers before API calls:
-
-```javascript
-function isValidE164(phone) {
-  return /^\+[1-9]\d{1,14}$/.test(phone);
-}
-```
-
----
-
-## Support
-
-For questions or issues:
-- Review the error message details
-- Check your authentication and permissions
-- Verify phone number formats
-- Ensure workspace membership
-- Contact backend team for support
-
----
-
-**Last Updated:** 2025-12-19
-**API Version:** 1.0
-**Public URL:** `https://destined-severely-serval.ngrok-free.app`
-**Local URL:** `http://localhost:8000`
