@@ -1,0 +1,107 @@
+# TREEEX-WBSP Docker Compose
+# Development environment with all required services
+
+version: "3.8"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: treeex-postgres
+    environment:
+      POSTGRES_USER: treeex
+      POSTGRES_PASSWORD: treeex_dev_password
+      POSTGRES_DB: treeex_wbsp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U treeex -d treeex_wbsp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for queues and caching
+  redis:
+    image: redis:7-alpine
+    container_name: treeex-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: treeex-api
+    command: uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://treeex:treeex_dev_password@postgres:5432/treeex_wbsp
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - server/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Outbound Worker
+  outbound-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: treeex-outbound
+    command: python -m server.workers.outbound
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://treeex:treeex_dev_password@postgres:5432/treeex_wbsp
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - server/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Webhook Worker
+  webhook-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: treeex-webhook
+    command: python -m server.workers.webhook
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://treeex:treeex_dev_password@postgres:5432/treeex_wbsp
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - server/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: treeex-network
