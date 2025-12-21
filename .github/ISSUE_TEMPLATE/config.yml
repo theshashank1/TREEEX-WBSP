@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 🔐 Reporting a Security Vulnerability
+    url: ./SECURITY.md
+    about: Please report security vulnerabilities via email.
+  - name: 💬 Discussions
+    url: https://github.com/your-org/TREEEX-WBSP/discussions
+    about: Ask questions and discuss with the community.
