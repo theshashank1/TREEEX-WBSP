@@ -4,75 +4,116 @@ A robust WhatsApp Business Solution Provider (BSP) platform built with FastAPI, 
 
 ## 🚀 Features
 
-- **FastAPI Core**: High-performance asynchronous API.
-- **Supabase Integration**: Seamless authentication and database management.
-- **Meta WhatsApp Graph API**: Complete integration for messaging, templates, and webhooks.
-- **Automated Tunneling**: Built-in ngrok integration for easy local development and webhook testing.
-- **Redis Caching**: Optimized performance for message tracking and rate limiting.
-- **Azure Storage**: Scalable media handling.
+- **FastAPI Core**: High-performance asynchronous API
+- **Supabase Integration**: Seamless authentication and database management
+- **Meta WhatsApp Graph API**: Complete integration for messaging, templates, and webhooks
+- **Automated Tunneling**: Built-in ngrok integration for local development
+- **Redis Queues**: Reliable message queue with retry logic
+- **Azure Storage**: Scalable media handling
 
 ## 🛠️ Setup
 
 ### Prerequisites
 
-- [Python 3.12+](https://www.python.org/downloads/)
+- [Python 3.11+](https://www.python.org/downloads/)
 - [uv](https://docs.astral.sh/uv/) (Recommended package manager)
 - [ngrok](https://ngrok.com/) account (for webhooks)
+- Redis server
+- PostgreSQL database
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd TREEEX-WBSP
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   uv sync
-   ```
-
-3. **Configure Environment Variables:**
-   Create a `.env` file in the project root and fill in your credentials (see `server/env.txt` for a template):
-   ```bash
-   # Essential Variables
-   SUPABASE_URL=...
-   SUPABASE_SECRET_KEY=...
-   NGROK_AUTHTOKEN=...
-   DATABASE_URL=...
-   ```
-
-## 🏃 Running the Server
-
-To start the server with an automated ngrok tunnel (perfect for WhatsApp webhooks):
-
 ```bash
-python run.py
+git clone <repository-url>
+cd TREEEX-WBSP
+
+# Install dependencies
+uv sync
+
+# Install dev dependencies (for testing)
+uv pip install -e ".[dev]"
+
+# Configure environment
+cp .env.example server/.env
+# Edit server/.env with your credentials
 ```
 
-This will:
-1. Initialize a ngrok tunnel (on your static domain if configured).
-2. Start the FastAPI server with hot-reload enabled.
-3. Provide a public URL like `https://destined-severely-serval.ngrok-free.app`.
+## 🏃 Running
 
-### Monitoring
-- **API Dashboard**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **Ngrok Dashboard**: [http://localhost:4040](http://localhost:4040)
+### API Server
+
+```bash
+# With ngrok tunnel (recommended for development)
+python run.py
+
+# Without ngrok
+uvicorn server.main:app --reload
+```
+
+### Background Workers
+
+Workers are required for processing messages:
+
+```bash
+# Terminal 1: Outbound message worker
+python -m server.workers.outbound
+
+# Terminal 2: Webhook processing worker
+python -m server.workers.webhook
+```
+
+### Health Checks
+
+- **Health**: `GET /health` - Service running check
+- **Ready**: `GET /ready` - Ready to accept traffic
+- **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## 📁 Project Structure
 
-- `server/api/`: API route definitions (auth, campaigns, webhooks, etc.).
-- `server/core/`: Core configurations (database, redis, supabase).
-- `server/models/`: SQLAlchemy database models.
-- `server/schemas/`: Pydantic models for request/response validation.
-- `run.py`: Development entry point with ngrok integration.
-
-## 🗄️ Database
-
-Connect to the Azure PostgreSQL database:
-```bash
-psql "postgresql://theshashank1:<password>@treeex.postgres.database.azure.com:5432/postgres"
 ```
+TREEEX-WBSP/
+├── server/
+│   ├── api/          # API route handlers
+│   ├── core/         # Config, database, Redis
+│   ├── models/       # SQLAlchemy/SQLModel models
+│   ├── schemas/      # Pydantic request/response schemas
+│   ├── services/     # Azure storage, business logic
+│   ├── workers/      # Background job processors
+│   └── whatsapp/     # WhatsApp API client
+├── tests/            # Test suite
+├── docs/             # API documentation
+└── run.py            # Dev entry point with ngrok
+```
+
+## 🧪 Testing
+
+```bash
+python -m pytest tests/ -v
+```
+
+## 📖 Documentation
+
+- [API Reference](docs/API_REFERENCE.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Frontend Guide](docs/FRONTEND_GUIDE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Changelog](docs/CHANGELOG.md)
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**Ngrok not connecting:**
+- Ensure `NGROK_AUTHTOKEN` is set in your `.env` file
+- Check if another ngrok instance is running
+
+**Workers not processing:**
+- Verify Redis is running and `REDIS_URL` is correct
+- Check worker terminal for error messages
+
+**Database errors:**
+- Verify `DATABASE_URL` is correct
+- Ensure PostgreSQL server is accessible
 
 ---
 Built with ❤️ for the TREEEX ecosystem.

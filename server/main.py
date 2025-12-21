@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client
 
 # Import routers
@@ -39,9 +41,55 @@ async def lifespan(app: FastAPI):
     await redis_client.shutdown()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="TREEEX WhatsApp BSP",
+    description="WhatsApp Business Solution Provider API",
+    version="0.1.0",
+    lifespan=lifespan,
+)
 
-# Register Routers
+# CORS middleware for frontend integration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# =============================================================================
+# Health Check Endpoints
+# =============================================================================
+
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    """
+    Health check endpoint for container orchestration.
+    Returns 200 if the service is running.
+    """
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "0.1.0",
+    }
+
+
+@app.get("/ready", tags=["Health"])
+async def readiness_check():
+    """
+    Readiness check endpoint for load balancers.
+    Returns 200 if the service is ready to accept traffic.
+    """
+    # Could add additional checks here (DB connection, Redis, etc.)
+    return {"status": "ready"}
+
+
+# =============================================================================
+# Register API Routers
+# =============================================================================
+
 app.include_router(webhooks.router)
 app.include_router(auth.router, prefix="/api")
 app.include_router(workspaces.router, prefix="/api")

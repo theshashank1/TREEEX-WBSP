@@ -105,6 +105,10 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_MESSAGES_PER_SECOND: int = 10
 
+    # Ngrok (for development tunneling)
+    NGROK_AUTHTOKEN: Optional[str] = None
+    NGROK_DOMAIN: Optional[str] = None
+
     # Monitoring
     APPLICATIONINSIGHTS_CONNECTION_STRING: Optional[str] = None
     LOG_DIR: Optional[str] = None
