@@ -1,5 +1,5 @@
 """
-Message Sending API endpoints for WhatsApp Business.
+Message Sending API endpoints.
 """
 
 import uuid as uuid_module
@@ -35,23 +35,11 @@ from server.services import azure_storage
 
 router = APIRouter(prefix="/messages", tags=["Messages"])
 
-# Type aliases for dependencies
+# Type aliases
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
-# WorkspaceMemberDep = Annotated[WorkspaceMember, Depends(get_workspace_member)]
 
-
-# ============================================================================
-# CONSTANTS
-# ============================================================================
-
-# Valid media types
 VALID_MEDIA_TYPES = {"image", "video", "audio", "document"}
-
-
-# ============================================================================
-# ENDPOINTS
-# ============================================================================
 
 
 @router.post("/send/text", response_model=MessageQueuedResponse, status_code=201)
@@ -61,17 +49,10 @@ async def send_text_message(
     current_user: CurrentUserDep,
 ):
     """
-    Send a text message.
-
-    Validates workspace membership and phone number,
-    then queues the message for async delivery via WhatsApp API.
-
-    Requires workspace membership.
+    Send a text message asynchronously.
     """
-    # Verify workspace membership
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
-    # Get phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == data.phone_number_id,
@@ -93,16 +74,14 @@ async def send_text_message(
             },
         )
 
-    # Create message ID
     message_id = uuid_module.uuid4()
 
-    # Queue the message for async sending
     job = {
         "type": "text_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
-        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
+        "phone_number_id": phone_number.phone_number_id,
+        "db_phone_number_id": str(data.phone_number_id),
         "from_number": phone_number.phone_number,
         "to_number": data.to,
         "text": data.text,
@@ -146,17 +125,10 @@ async def send_template_message(
     current_user: CurrentUserDep,
 ):
     """
-    Send a template message.
-
-    Validates workspace membership and phone number,
-    then queues the template message for async delivery via WhatsApp API.
-
-    Requires workspace membership.
+    Send a template message asynchronously.
     """
-    # Verify workspace membership
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
-    # Get phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == data.phone_number_id,
@@ -178,47 +150,35 @@ async def send_template_message(
             },
         )
 
-    # Create message ID
     message_id = uuid_module.uuid4()
 
-    # Transform components from dict to list format if provided
-    # Input: {"BODY": {"text": "..."}, "HEADER": {...}}
-    # Output: [{"type": "body", "parameters": [...]}, {"type": "header", "parameters": [...]}]
+    # Normalize components to list format (Meta API Requirement)
     components_list = None
     if data.components:
         if isinstance(data.components, list):
-            # If already a list, use as-is (standard format)
             components_list = data.components
         else:
-            # If dict, transform to list (simplified format)
-            # Input: {"BODY": {"text": "..."}, "HEADER": {...}}
-            # Output: [{"type": "body", "parameters": [...]}, {"type": "header", "parameters": [...]}]
+            # Transform simple dict format {"BODY": {...}} -> [{"type": "body", ...}]
             components_list = []
             for component_type, component_data in data.components.items():
-                # Convert component type to lowercase (BODY -> body, HEADER -> header)
                 type_lower = component_type.lower()
-
-                # Extract parameters based on component data structure
                 parameters = []
                 if isinstance(component_data, dict):
-                    # If it has a "text" field, create a text parameter
                     if "text" in component_data:
                         parameters.append(
                             {"type": "text", "text": component_data["text"]}
                         )
-                    # If it has "parameters" field already, use it directly
                     elif "parameters" in component_data:
                         parameters = component_data["parameters"]
 
                 components_list.append({"type": type_lower, "parameters": parameters})
 
-    # Queue the message for async sending
     job = {
         "type": "template_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
-        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
+        "phone_number_id": phone_number.phone_number_id,
+        "db_phone_number_id": str(data.phone_number_id),
         "from_number": phone_number.phone_number,
         "to_number": data.to,
         "template_name": data.template_name,
@@ -264,24 +224,10 @@ async def send_media_message(
     current_user: CurrentUserDep,
 ):
     """
-    Send a media message.
-
-    Validates the media file exists and has been uploaded,
-    then queues the message for async delivery.
-
-    Flow:
-    1. Validate workspace membership
-    2. Validate phone number
-    3. Validate media file exists and is ready
-    4. Generate SAS URL for media delivery
-    5. Queue message to outbound queue
-
-    Requires workspace membership.
+    Send a media message asynchronously.
     """
-    # Verify workspace membership
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
-    # Get phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == data.phone_number_id,
@@ -294,7 +240,6 @@ async def send_media_message(
     if not phone_number:
         raise HTTPException(status_code=404, detail="Phone number not found")
 
-    # Validate media file
     result = await session.execute(
         select(MediaFile).where(
             MediaFile.id == data.media_id,
@@ -319,7 +264,6 @@ async def send_media_message(
             },
         )
 
-    # Validate media type matches
     if media.type != data.media_type:
         raise HTTPException(
             status_code=400,
@@ -329,7 +273,6 @@ async def send_media_message(
             },
         )
 
-    # Generate SAS URL for delivery (30 minute expiry for sending)
     blob_name = azure_storage.extract_blob_name_from_url(media.storage_url)
     if not blob_name:
         raise HTTPException(
@@ -350,22 +293,19 @@ async def send_media_message(
             },
         )
 
-    # Create a placeholder message record
-    # Note: In a full implementation, this would create contact/conversation first
     message_id = uuid_module.uuid4()
 
-    # Queue the message for async sending
     job = {
         "type": "media_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,  # Meta's phone number ID
-        "db_phone_number_id": str(data.phone_number_id),  # DB UUID for reference
+        "phone_number_id": phone_number.phone_number_id,
+        "db_phone_number_id": str(data.phone_number_id),
         "from_number": phone_number.phone_number,
         "to_number": data.to,
         "media_type": data.media_type,
         "media_id": str(data.media_id),
-        "media_url": sas_url,  # Already a SAS URL
+        "media_url": sas_url,
         "mime_type": media.mime_type,
         "caption": data.caption,
         "sent_by": str(member.id),
@@ -410,8 +350,6 @@ async def get_message_status(
 ):
     """
     Get message delivery status.
-
-    Requires workspace membership.
     """
     result = await session.execute(select(Message).where(Message.id == message_id))
     message = result.scalar_one_or_none()
@@ -419,7 +357,6 @@ async def get_message_status(
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    # Verify workspace membership
     await get_workspace_member(message.workspace_id, current_user, session)
 
     return MessageStatusResponse(

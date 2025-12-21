@@ -1,5 +1,7 @@
 """
-Async Database Configuration for asyncpg
+Async Database Configuration - server/core/db.py
+
+Configures SQLAlchemy asynchronous engine and session maker with SSL support.
 """
 
 import ssl
@@ -12,24 +14,16 @@ from server.core.config import settings
 
 
 def create_db_engine_and_session_factory():
-    """
-    Parses the DATABASE_URL and creates an async engine and session factory,
-    correctly handling SSL configuration for asyncpg.
-    """
-    # 1. Check if DATABASE_URL is actually set
+    """Create async engine and session factory, handling SSL for asyncpg."""
     if not settings.DATABASE_URL:
+        # Critical error if DB is missing
         print("❌ ERROR: DATABASE_URL is not configured.", file=sys.stderr)
-        print(
-            "   Please create a .env file with DATABASE_URL=postgresql://user:pass@host:port/db",
-            file=sys.stderr,
-        )
-        # We raise an error here because the app cannot function without a DB
         raise ValueError("DATABASE_URL not configured")
 
     url_str = str(settings.DATABASE_URL)
     parsed_url = urlparse(url_str)
 
-    # 2. Ensure correct async scheme (postgresql+asyncpg)
+    # Ensure correct async scheme
     scheme = parsed_url.scheme
     if scheme == "postgresql":
         scheme = "postgresql+asyncpg"
@@ -43,10 +37,8 @@ def create_db_engine_and_session_factory():
     if "sslmode" in query_params:
         del query_params["sslmode"]
 
-    # Rebuild query string without sslmode
     new_query = urlencode(query_params, doseq=True)
 
-    # Create async URL without sslmode parameter
     async_url = parsed_url._replace(
         scheme=scheme,
         query=new_query,
@@ -57,10 +49,8 @@ def create_db_engine_and_session_factory():
     # Configure SSL for asyncpg via connect_args
     if ssl_mode and ssl_mode != "disable":
         if ssl_mode in ("require", "prefer", "allow"):
-            # Simple SSL without certificate verification
             connect_args["ssl"] = True
         elif ssl_mode in ("verify-ca", "verify-full"):
-            # Full SSL verification (requires certificate paths)
             ssl_context = ssl.create_default_context()
             ssl_context.check_hostname = ssl_mode == "verify-full"
             ssl_context.verify_mode = ssl.CERT_REQUIRED
@@ -71,7 +61,7 @@ def create_db_engine_and_session_factory():
         echo=settings.DEBUG,
         pool_size=5,
         max_overflow=10,
-        pool_pre_ping=True,  # Important for connection health checks
+        pool_pre_ping=True,
         connect_args=connect_args,
     )
 
@@ -86,7 +76,7 @@ def create_db_engine_and_session_factory():
 try:
     engine, async_session_maker = create_db_engine_and_session_factory()
 except ValueError:
-    # Allow import to succeed (e.g. for tests) but engine will be None
+    # Allow import to succeed (e.g. for tests)
     engine = None
     async_session_maker = None
 

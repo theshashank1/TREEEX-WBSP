@@ -1,5 +1,5 @@
 """
-Azure Blob Storage Service for TREEEX-WBSP
+Azure Blob Storage Service - server/services/azure_storage.py
 
 Handles all Azure Blob Storage operations for WhatsApp media files.
 Provides workspace-isolated storage with SAS token generation.
@@ -25,7 +25,6 @@ from azure.storage.blob import (
 from server.core.config import settings
 from server.core.monitoring import log_event, log_exception
 
-
 # ============================================================================
 # FILENAME SANITIZATION
 # ============================================================================
@@ -35,18 +34,7 @@ def sanitize_filename(filename: str, max_length: int = 180) -> str:
     """
     Sanitize filename for safe Azure Blob storage.
 
-    - NFC normalize unicode
-    - Replace spaces and control characters with underscores
-    - Remove invalid characters (<>:"|?*)
-    - Cap length while preserving extension
-    - Add short UUID if needed to avoid collisions
-
-    Args:
-        filename: Original filename
-        max_length: Maximum length for the filename (default 180)
-
-    Returns:
-        Sanitized filename safe for Azure Blob storage
+    Normalizes unicode, removes invalid characters, and ensures unique names.
     """
     if not filename:
         return f"file_{uuid.uuid4().hex[:8]}"
@@ -88,20 +76,13 @@ def sanitize_filename(filename: str, max_length: int = 180) -> str:
 
     return name + ext
 
+
 # Cached blob service client
 _blob_service_client: Optional[BlobServiceClient] = None
 
 
 def get_blob_client() -> BlobServiceClient:
-    """
-    Get Azure Blob Storage client. Initializes connection on first call.
-
-    Returns:
-        BlobServiceClient instance
-
-    Raises:
-        RuntimeError: If Azure Storage is not configured
-    """
+    """Get Azure Blob Storage client. Initializes connection on first call."""
     global _blob_service_client
 
     if _blob_service_client is None:
@@ -125,15 +106,7 @@ async def upload_file(
     """
     Upload a file to Azure Blob Storage.
 
-    Args:
-        file_data: Raw file bytes
-        filename: Original filename
-        mime_type: MIME type of the file
-        workspace_id: Workspace UUID for isolation
-
-    Returns:
-        Tuple of (blob_url, blob_name, error). On success, error is None.
-        On failure, blob_url and blob_name are None and error contains the message.
+    Returns (blob_url, blob_name, error).
     """
     try:
         client = get_blob_client()
@@ -183,12 +156,7 @@ async def download_file(blob_name: str) -> Tuple[Optional[bytes], Optional[str]]
     """
     Download a file from Azure Blob Storage.
 
-    Args:
-        blob_name: Full blob path (e.g., "workspace_id/uuid_filename.jpg")
-
-    Returns:
-        Tuple of (file_bytes, error). On success, error is None.
-        On failure, file_bytes is None and error contains the message.
+    Returns (file_bytes, error).
     """
     try:
         client = get_blob_client()
@@ -220,15 +188,7 @@ async def download_file(blob_name: str) -> Tuple[Optional[bytes], Optional[str]]
 
 
 async def delete_file(blob_name: str) -> bool:
-    """
-    Delete a file from Azure Blob Storage.
-
-    Args:
-        blob_name: Full blob path (e.g., "workspace_id/uuid_filename.jpg")
-
-    Returns:
-        True if deleted successfully, False otherwise
-    """
+    """Delete a file from Azure Blob Storage."""
     try:
         client = get_blob_client()
         container_client = client.get_container_client(
@@ -254,6 +214,7 @@ async def delete_file(blob_name: str) -> bool:
 
 
 def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
+    """Generate a read-only SAS URL for a blob."""
     try:
         if not settings.AZURE_STORAGE_ACCOUNT_NAME:
             log_event(
@@ -274,7 +235,6 @@ def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
         start_time = datetime.now(timezone.utc) - timedelta(minutes=5)
         expiry_time = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
 
-        # Use a valid storage API version or omit to let SDK choose the latest supported
         sas_token = generate_blob_sas(
             account_name=settings.AZURE_STORAGE_ACCOUNT_NAME,
             container_name=settings.AZURE_STORAGE_CONTAINER_NAME,
@@ -283,10 +243,9 @@ def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
             permission=BlobSasPermissions(read=True),
             start=start_time,
             expiry=expiry_time,
-            version="2023-11-03",  # or remove this line to use SDK default
+            version="2023-11-03",
         )
 
-        # Encode blob name to avoid signature/path mismatches with spaces/parentheses
         encoded_blob_name = quote(blob_name, safe="/")
 
         sas_url = (
@@ -308,28 +267,16 @@ def generate_sas_url(blob_name: str, expiry_minutes: int = 60) -> Optional[str]:
 
 
 def extract_blob_name_from_url(blob_url: str) -> Optional[str]:
-    """
-    Extract blob name from a full Azure Blob Storage URL.
-
-    Args:
-        blob_url: Full Azure blob URL
-            e.g., "https://account.blob.core.windows.net/container/ws_id/file.jpg"
-
-    Returns:
-        Blob name (e.g., "ws_id/file.jpg") or None if parsing fails
-    """
+    """Extract blob name from a full Azure Blob Storage URL."""
     try:
         if not blob_url:
             return None
 
         parsed = urlparse(blob_url)
         path = parsed.path
-
-        # URL-decode the path to handle encoded characters
         path = unquote(path)
 
         # Path format: /container_name/blob_name
-        # Remove leading slash and container name
         path_parts = path.strip("/").split("/", 1)
 
         if len(path_parts) < 2:
@@ -343,7 +290,6 @@ def extract_blob_name_from_url(blob_url: str) -> Optional[str]:
 
         blob_name = path_parts[1]
 
-        # Remove query parameters (SAS token) if present
         if "?" in blob_name:
             blob_name = blob_name.split("?")[0]
 

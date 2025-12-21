@@ -47,13 +47,13 @@ class MetaAPIError:
 
         # Determine if error is retryable (rate limit or server errors)
         is_retryable = response.status_code in (429, 500, 502, 503, 504) or code in (
-            1,  # Unknown error - might be transient
+            1,  # Unknown error
             2,  # Service temporarily unavailable
             4,  # Rate limit hit
             17,  # User request limit reached
             341,  # Application limit reached
-            368,  # Temporarily blocked for policy violations
-            130429,  # Rate limit hit (Cloud API specific)
+            368,  # Temporarily blocked
+            130429,  # Cloud API rate limit
         )
 
         return cls(
@@ -79,20 +79,7 @@ class SendResult:
 class OutboundClient:
     """
     WhatsApp Cloud API client for outbound messaging.
-
-    Thread-safe async client for sending messages. Each instance is bound to a
-    specific phone_number_id and access_token.
-
-    Example:
-        client = OutboundClient(
-            access_token="EAABx...",
-            phone_number_id="123456789"
-        )
-        result = await client.send_text_message("+1234567890", "Hello!")
-        if result.success:
-            print(f"Sent: {result.wa_message_id}")
-        else:
-            print(f"Error: {result.error.message}")
+    Thread-safe and async.
     """
 
     def __init__(
@@ -101,14 +88,7 @@ class OutboundClient:
         phone_number_id: str,
         api_version: Optional[str] = None,
     ):
-        """
-        Initialize OutboundClient.
-
-        Args:
-            access_token: Meta System User Access Token
-            phone_number_id: Meta Phone Number ID to send from
-            api_version: Graph API version (default: v21.0)
-        """
+        """Initialize OutboundClient."""
         self.access_token = access_token
         self.phone_number_id = phone_number_id
         self.api_version = (
@@ -126,16 +106,7 @@ class OutboundClient:
         payload: Dict[str, Any],
         message_type: str,
     ) -> SendResult:
-        """
-        Core method to send any message type to WhatsApp API.
-
-        Args:
-            payload: Full message payload (will have messaging_product added)
-            message_type: Type for logging (text, template, image, etc.)
-
-        Returns:
-            SendResult with wa_message_id on success or error on failure
-        """
+        """Core method to send any message type to WhatsApp API."""
         # Ensure required fields
         payload["messaging_product"] = "whatsapp"
 
@@ -160,7 +131,6 @@ class OutboundClient:
                         message_type=message_type,
                         status_code=response.status_code,
                         error_code=error.code,
-                        # Don't log to_number for PII protection
                     )
                     return SendResult(error=error)
 
@@ -229,18 +199,7 @@ class OutboundClient:
         preview_url: bool = False,
         reply_to_message_id: Optional[str] = None,
     ) -> SendResult:
-        """
-        Send a text message.
-
-        Args:
-            to_number: Recipient phone number (E.164 format, e.g. "+15551234567")
-            text: Message text (max 4096 characters)
-            preview_url: Whether to show URL previews in the message
-            reply_to_message_id: Optional wa_message_id to reply to
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send a text message."""
         payload: Dict[str, Any] = {
             "to": to_number.lstrip("+"),  # Meta expects number without +
             "type": "text",
@@ -266,34 +225,7 @@ class OutboundClient:
         language_code: str = "en",
         components: Optional[List[Dict[str, Any]]] = None,
     ) -> SendResult:
-        """
-        Send a pre-approved template message.
-
-        Templates are required to initiate conversations outside the 24-hour window.
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            template_name: Approved template name
-            language_code: Template language (default: "en")
-            components: Optional template components (header, body, button parameters)
-                Example:
-                [
-                    {
-                        "type": "header",
-                        "parameters": [{"type": "image", "image": {"link": "https://..."}}]
-                    },
-                    {
-                        "type": "body",
-                        "parameters": [
-                            {"type": "text", "text": "John"},
-                            {"type": "text", "text": "Order #12345"}
-                        ]
-                    }
-                ]
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send a pre-approved template message."""
         template: Dict[str, Any] = {
             "name": template_name,
             "language": {"code": language_code},
@@ -325,21 +257,8 @@ class OutboundClient:
         reply_to_message_id: Optional[str] = None,
     ) -> SendResult:
         """
-        Send a media message (image, video, audio, document, or sticker).
-
+        Send a media message.
         Must provide either media_url OR media_id.
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            media_type: Type of media ("image", "video", "audio", "document", "sticker")
-            media_url: Public URL of the media file (HTTPS required)
-            media_id: Meta media ID (from previous upload)
-            caption: Optional caption (not supported for audio/sticker)
-            filename: Optional filename (for documents)
-            reply_to_message_id: Optional wa_message_id to reply to
-
-        Returns:
-            SendResult with wa_message_id or error
         """
         if not media_url and not media_id:
             return SendResult(
@@ -367,6 +286,7 @@ class OutboundClient:
         payload: Dict[str, Any] = {
             "to": to_number.lstrip("+"),
             "type": media_type,
+            "whatsapp": media_object,
             media_type: media_object,
         }
 
@@ -388,23 +308,7 @@ class OutboundClient:
         footer_text: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
     ) -> SendResult:
-        """
-        Send an interactive message with reply buttons (max 3).
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            body_text: Main message body (required, max 1024 chars)
-            buttons: List of buttons (max 3), each with:
-                - id: Unique button ID (max 256 chars)
-                - title: Button text (max 20 chars)
-                Example: [{"id": "yes", "title": "Yes ✓"}, {"id": "no", "title": "No ✗"}]
-            header_text: Optional header (max 60 chars)
-            footer_text: Optional footer (max 60 chars)
-            reply_to_message_id: Optional wa_message_id to reply to
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send an interactive message with reply buttons (max 3)."""
         if len(buttons) > 3:
             return SendResult(
                 error=MetaAPIError(
@@ -465,33 +369,7 @@ class OutboundClient:
         footer_text: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
     ) -> SendResult:
-        """
-        Send an interactive list message.
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            body_text: Main message body (required, max 1024 chars)
-            button_text: Text on the list button (max 20 chars)
-            sections: List of sections, each with:
-                - title: Section title (optional if only 1 section)
-                - rows: List of rows, each with id, title, and optional description
-                Example:
-                [
-                    {
-                        "title": "Products",
-                        "rows": [
-                            {"id": "prod_1", "title": "iPhone", "description": "Latest model"},
-                            {"id": "prod_2", "title": "Samsung", "description": "Galaxy series"}
-                        ]
-                    }
-                ]
-            header_text: Optional header (max 60 chars)
-            footer_text: Optional footer (max 60 chars)
-            reply_to_message_id: Optional wa_message_id to reply to
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send an interactive list message."""
         if len(sections) > 10:
             return SendResult(
                 error=MetaAPIError(
@@ -539,20 +417,7 @@ class OutboundClient:
         address: Optional[str] = None,
         reply_to_message_id: Optional[str] = None,
     ) -> SendResult:
-        """
-        Send a location pin.
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            latitude: Location latitude
-            longitude: Location longitude
-            name: Optional location name
-            address: Optional location address
-            reply_to_message_id: Optional wa_message_id to reply to
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send a location pin."""
         location: Dict[str, Any] = {
             "latitude": latitude,
             "longitude": longitude,
@@ -584,18 +449,7 @@ class OutboundClient:
         message_id: str,
         emoji: str,
     ) -> SendResult:
-        """
-        Send a reaction emoji to an existing message.
-
-        Args:
-            to_number: Recipient phone number (E.164 format)
-            message_id: wa_message_id of the message to react to
-            emoji: Emoji character (e.g., "👍", "❤️", "😂")
-                   Use empty string "" to remove reaction
-
-        Returns:
-            SendResult with wa_message_id or error
-        """
+        """Send a reaction emoji to an existing message."""
         payload = {
             "to": to_number.lstrip("+"),
             "type": "reaction",
@@ -612,15 +466,7 @@ class OutboundClient:
     # =========================================================================
 
     async def mark_as_read(self, message_id: str) -> SendResult:
-        """
-        Mark an incoming message as read (shows blue checkmarks).
-
-        Args:
-            message_id: wa_message_id of the incoming message
-
-        Returns:
-            SendResult (wa_message_id will be the input message_id on success)
-        """
+        """Mark an incoming message as read."""
         payload = {
             "messaging_product": "whatsapp",
             "status": "read",
@@ -680,20 +526,7 @@ async def send_message(
     message_type: str,
     **kwargs,
 ) -> SendResult:
-    """
-    Convenience function to send a message without creating a client instance.
-
-    Args:
-        access_token: Meta access token
-        phone_number_id: Meta phone number ID
-        to_number: Recipient phone number
-        message_type: One of: text, template, image, video, audio, document,
-                      interactive_buttons, interactive_list, location, reaction
-        **kwargs: Message-specific parameters
-
-    Returns:
-        SendResult with wa_message_id or error
-    """
+    """Convenience function to send a message without creating a client instance."""
     client = OutboundClient(access_token, phone_number_id)
 
     method_map = {

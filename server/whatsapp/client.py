@@ -1,6 +1,9 @@
 """
-WhatsApp Business API Client for interacting with Meta's Graph API.
+WhatsApp Business API Client - server/whatsapp/client.py
+
+Client for interacting with Meta's Graph API for WhatsApp Business.
 """
+
 from __future__ import annotations
 
 import re
@@ -14,27 +17,14 @@ from server.core.monitoring import log_event, log_exception
 
 # Default API version
 DEFAULT_API_VERSION = "v21.0"
-
-# Meta Graph API base URL
 META_GRAPH_API_BASE = "https://graph.facebook.com"
-
-# Timeout for HTTP requests (in seconds)
 HTTP_TIMEOUT = 10.0
 
 
 def _normalize_phone_number(phone: str) -> str:
-    """
-    Normalize a phone number by removing all non-digit characters except leading +.
-
-    Args:
-        phone: Phone number string (e.g., "+1 (555) 123-4567")
-
-    Returns:
-        Normalized phone number (e.g., "+15551234567")
-    """
+    """Normalize phone number: keep leading + and digits only."""
     if not phone:
         return ""
-    # Preserve leading + if present, then keep only digits
     has_plus = phone.startswith("+")
     digits = re.sub(r"[^\d]", "", phone)
     return f"+{digits}" if has_plus else digits
@@ -62,28 +52,21 @@ class PhoneNumberInfo:
 
 
 class WhatsAppClient:
-    """Client for interacting with Meta's Graph API for WhatsApp Business."""
+    """Client for interacting with Meta's Graph API."""
 
     def __init__(self, access_token: str, api_version: Optional[str] = None):
-        """
-        Initialize WhatsApp client.
-
-        Args:
-            access_token: System User Access Token
-            api_version: Meta Graph API version (e.g., "v21.0")
-        """
+        """Initialize with access token and API version."""
         self.access_token = access_token
-        self.api_version = api_version or settings.META_API_VERSION or DEFAULT_API_VERSION
+        self.api_version = (
+            api_version or settings.META_API_VERSION or DEFAULT_API_VERSION
+        )
         self.base_url = f"{META_GRAPH_API_BASE}/{self.api_version}"
 
     async def validate_token(self) -> tuple[bool, Optional[MetaAPIError]]:
         """
         Validate the access token with Meta API.
 
-        Returns:
-            Tuple of (is_valid, error).
-            If valid and has whatsapp_business_messaging permission, returns (True, None).
-            Otherwise returns (False, MetaAPIError).
+        Returns (True, None) if valid and has permissions, else (False, error).
         """
         try:
             async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
@@ -146,16 +129,7 @@ class WhatsAppClient:
     async def get_phone_number(
         self, phone_number_id: str
     ) -> tuple[Optional[PhoneNumberInfo], Optional[MetaAPIError]]:
-        """
-        Fetch phone number details from Meta Graph API.
-
-        Args:
-            phone_number_id: Meta's Phone Number ID
-
-        Returns:
-            Tuple of (PhoneNumberInfo, None) on success,
-            or (None, MetaAPIError) on failure.
-        """
+        """Fetch phone number details from Meta Graph API."""
         try:
             async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
                 response = await client.get(
@@ -177,12 +151,16 @@ class WhatsAppClient:
                     )
 
                 phone_info = PhoneNumberInfo(
-                    phone_number=_normalize_phone_number(data.get("display_phone_number", "")),
+                    phone_number=_normalize_phone_number(
+                        data.get("display_phone_number", "")
+                    ),
                     display_phone_number=data.get("display_phone_number", ""),
                     verified_name=data.get("verified_name"),
                     quality_rating=data.get("quality_rating"),
                     messaging_limit_tier=data.get("messaging_limit_tier"),
-                    is_official_business_account=data.get("is_official_business_account", False),
+                    is_official_business_account=data.get(
+                        "is_official_business_account", False
+                    ),
                 )
 
                 log_event(
@@ -194,13 +172,17 @@ class WhatsAppClient:
                 return phone_info, None
 
         except httpx.TimeoutException:
-            log_exception("Phone number fetch timed out", phone_number_id=phone_number_id)
+            log_exception(
+                "Phone number fetch timed out", phone_number_id=phone_number_id
+            )
             return None, MetaAPIError(
                 code=-1,
                 message="Request to Meta API timed out.",
             )
         except Exception as e:
-            log_exception("Phone number fetch failed", e, phone_number_id=phone_number_id)
+            log_exception(
+                "Phone number fetch failed", e, phone_number_id=phone_number_id
+            )
             return None, MetaAPIError(
                 code=-1,
                 message=f"Failed to fetch phone number: {str(e)}",
@@ -208,15 +190,7 @@ class WhatsAppClient:
 
     @staticmethod
     def parse_message_limit(tier: Optional[str]) -> int:
-        """
-        Convert messaging limit tier to message count.
-
-        Args:
-            tier: Messaging limit tier string (e.g., "TIER_1K")
-
-        Returns:
-            Message limit as integer
-        """
+        """Convert messaging limit tier to message count."""
         tier_mapping = {
             "TIER_50": 50,
             "TIER_250": 250,
@@ -232,16 +206,7 @@ class WhatsAppClient:
     ) -> tuple[Optional[str], Optional[MetaAPIError]]:
         """
         Exchange a short-lived access token for a long-lived access token.
-        
-        Meta provides an endpoint to exchange short-lived tokens (typically 1 hour)
-        for long-lived tokens (typically 60 days).
-        
-        Returns:
-            Tuple of (long_lived_token, None) on success,
-            or (None, MetaAPIError) on failure.
-            
-        Note: This requires the current token to be a valid short-lived user access token.
-        System user tokens are already long-lived and don't need exchange.
+        Returns (long_lived_token, None) on success.
         """
         try:
             async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
@@ -249,7 +214,11 @@ class WhatsAppClient:
                     f"{META_GRAPH_API_BASE}/oauth/access_token",
                     params={
                         "grant_type": "fb_exchange_token",
-                        "client_id": settings.META_APP_ID if hasattr(settings, 'META_APP_ID') else "",
+                        "client_id": (
+                            settings.META_APP_ID
+                            if hasattr(settings, "META_APP_ID")
+                            else ""
+                        ),
                         "client_secret": settings.META_APP_SECRET,
                         "fb_exchange_token": self.access_token,
                     },
@@ -305,19 +274,7 @@ class WhatsAppClient:
         """
         Download media file from WhatsApp.
 
-        Two-step process:
-        1. GET /{api_version}/{media_id} with access token
-           Response: {"url": "https://...", "mime_type": "...", "file_size": 123}
-        2. Download file from URL with Authorization: Bearer {token}
-
-        Args:
-            media_id: Meta's media ID (from webhook payload)
-            phone_number_id: Meta's phone number ID (for logging)
-
-        Returns:
-            Tuple of (file_bytes, mime_type, error).
-            On success: (bytes, mime_type_string, None)
-            On failure: (None, None, MetaAPIError)
+        Returns (file_bytes, mime_type, error).
         """
         try:
             # Longer timeout for media downloads (larger files)
@@ -349,10 +306,16 @@ class WhatsAppClient:
                         status_code=url_response.status_code,
                     )
 
-                    return None, None, MetaAPIError(
-                        code=error_data.get("code", url_response.status_code),
-                        message=error_data.get("message", "Failed to get media URL"),
-                        error_subcode=error_data.get("error_subcode"),
+                    return (
+                        None,
+                        None,
+                        MetaAPIError(
+                            code=error_data.get("code", url_response.status_code),
+                            message=error_data.get(
+                                "message", "Failed to get media URL"
+                            ),
+                            error_subcode=error_data.get("error_subcode"),
+                        ),
                     )
 
                 url_data = url_response.json()
@@ -366,9 +329,13 @@ class WhatsAppClient:
                         level="error",
                         media_id=media_id,
                     )
-                    return None, None, MetaAPIError(
-                        code=-1,
-                        message="No download URL in response",
+                    return (
+                        None,
+                        None,
+                        MetaAPIError(
+                            code=-1,
+                            message="No download URL in response",
+                        ),
                     )
 
                 log_event(
@@ -392,9 +359,13 @@ class WhatsAppClient:
                         media_id=media_id,
                         status_code=download_response.status_code,
                     )
-                    return None, None, MetaAPIError(
-                        code=download_response.status_code,
-                        message=f"Failed to download media: HTTP {download_response.status_code}",
+                    return (
+                        None,
+                        None,
+                        MetaAPIError(
+                            code=download_response.status_code,
+                            message=f"Failed to download media: HTTP {download_response.status_code}",
+                        ),
                     )
 
                 file_bytes = download_response.content
@@ -414,9 +385,13 @@ class WhatsAppClient:
                 e,
                 media_id=media_id,
             )
-            return None, None, MetaAPIError(
-                code=-1,
-                message="Request to Meta API timed out during media download.",
+            return (
+                None,
+                None,
+                MetaAPIError(
+                    code=-1,
+                    message="Request to Meta API timed out during media download.",
+                ),
             )
         except Exception as e:
             log_exception(
@@ -424,7 +399,11 @@ class WhatsAppClient:
                 e,
                 media_id=media_id,
             )
-            return None, None, MetaAPIError(
-                code=-1,
-                message=f"Failed to download media: {str(e)}",
+            return (
+                None,
+                None,
+                MetaAPIError(
+                    code=-1,
+                    message=f"Failed to download media: {str(e)}",
+                ),
             )

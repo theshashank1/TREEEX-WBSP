@@ -1,3 +1,9 @@
+"""
+Central Logging & Monitoring - server/core/monitoring.py
+
+Configures structured logging for events and errors, with rotation and traceback support.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -70,15 +76,11 @@ except OSError:
 
 def log_event(event: str, *, level: str = "info", **context: Any) -> None:
     """
-    Log an event to console and optionally to file (if file logging is available).
+    Log an event to console and file.
 
     Args:
-        event: Event name/description
-        level: Log level (debug, info, warning, error)
-        **context: Additional key-value pairs
-
-    Example:
-        log_event("user_login", user_id="123", workspace_id="abc")
+        level: debug, info, warning, error (default: info)
+        **context: Additional key-value pairs to log
     """
     log_func = getattr(event_logger, level.lower(), event_logger.info)
 
@@ -93,18 +95,11 @@ def log_exception(
     message: str, exc: Optional[BaseException] = None, **context: Any
 ) -> None:
     """
-    Log an exception to console and optionally to file (if file logging is available).
+    Log an exception with traceback.
 
     Args:
         message: Error description
-        exc: Exception object (uses current if None)
-        **context: Additional key-value pairs
-
-    Example:
-        try:
-            risky_operation()
-        except Exception as e:
-            log_exception("Failed to process", e, id="123")
+        exc: Exception object (if None, uses sys.exc_info)
     """
     if exc is None:
         exc = sys.exc_info()[1]

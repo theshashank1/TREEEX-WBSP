@@ -1,6 +1,7 @@
 """
-Campaign Management API endpoints for WhatsApp Business.
+Campaign Management API endpoints.
 """
+
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -17,7 +18,7 @@ from server.models.marketing import Campaign
 
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
 
-# Type aliases for dependencies
+# Type aliases
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
@@ -28,7 +29,6 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
 class CampaignCreate(BaseModel):
-    """Schema for creating a new campaign"""
     workspace_id: UUID
     phone_number_id: UUID
     template_id: Optional[UUID] = None
@@ -36,13 +36,11 @@ class CampaignCreate(BaseModel):
 
 
 class CampaignUpdate(BaseModel):
-    """Schema for updating campaign"""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     status: Optional[str] = None
 
 
 class CampaignResponse(BaseModel):
-    """Schema for campaign response"""
     id: UUID
     workspace_id: UUID
     phone_number_id: UUID
@@ -60,7 +58,6 @@ class CampaignResponse(BaseModel):
 
 
 class CampaignListResponse(BaseModel):
-    """Schema for paginated campaign list"""
     data: list[CampaignResponse]
     total: int
     limit: int
@@ -80,10 +77,7 @@ async def create_campaign(
 ):
     """
     Create a new campaign.
-    
-    Requires workspace membership.
     """
-    # Verify workspace membership
     await get_workspace_member(data.workspace_id, current_user, session)
 
     campaign = Campaign(
@@ -118,13 +112,9 @@ async def list_campaigns(
 ):
     """
     List campaigns for a workspace.
-    
-    Requires workspace membership.
     """
-    # Verify workspace membership
     await get_workspace_member(workspace_id, current_user, session)
 
-    # Build query
     query = select(Campaign).where(
         Campaign.workspace_id == workspace_id,
         Campaign.deleted_at.is_(None),
@@ -133,12 +123,10 @@ async def list_campaigns(
     if status:
         query = query.where(Campaign.status == status)
 
-    # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await session.execute(count_query)
     total = total_result.scalar() or 0
 
-    # Apply pagination
     query = query.order_by(Campaign.created_at.desc()).offset(offset).limit(limit)
     result = await session.execute(query)
     campaigns = result.scalars().all()
@@ -159,8 +147,6 @@ async def get_campaign(
 ):
     """
     Get campaign details.
-    
-    Requires workspace membership.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -173,7 +159,6 @@ async def get_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
     return campaign
@@ -188,8 +173,6 @@ async def update_campaign(
 ):
     """
     Update campaign.
-    
-    Requires workspace membership.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -202,15 +185,12 @@ async def update_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
-    # Update fields
     if data.name is not None:
         campaign.name = data.name
-    
+
     if data.status is not None:
-        # Validate status is a valid CampaignStatus enum value
         valid_statuses = [s.value for s in CampaignStatus]
         if data.status not in valid_statuses:
             raise HTTPException(
@@ -238,8 +218,6 @@ async def delete_campaign(
 ):
     """
     Soft delete a campaign.
-    
-    Requires workspace membership.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -252,10 +230,8 @@ async def delete_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
-    # Soft delete
     campaign.soft_delete()
     await session.commit()
 
@@ -275,7 +251,6 @@ async def start_campaign(
 ):
     """
     Start a campaign.
-    
     Changes status from DRAFT/SCHEDULED to SENDING.
     """
     result = await session.execute(
@@ -289,10 +264,12 @@ async def start_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
-    if campaign.status not in [CampaignStatus.DRAFT.value, CampaignStatus.SCHEDULED.value]:
+    if campaign.status not in [
+        CampaignStatus.DRAFT.value,
+        CampaignStatus.SCHEDULED.value,
+    ]:
         raise HTTPException(
             status_code=400,
             detail="Campaign must be in DRAFT or SCHEDULED status to start",
@@ -318,9 +295,7 @@ async def pause_campaign(
 ):
     """
     Pause a sending campaign.
-    
-    Changes status from SENDING to SCHEDULED (paused state).
-    Note: In this system, SCHEDULED also represents a paused campaign.
+    Changes status from SENDING to SCHEDULED.
     """
     result = await session.execute(
         select(Campaign).where(
@@ -333,7 +308,6 @@ async def pause_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    # Verify workspace membership
     await get_workspace_member(campaign.workspace_id, current_user, session)
 
     if campaign.status != CampaignStatus.SENDING.value:

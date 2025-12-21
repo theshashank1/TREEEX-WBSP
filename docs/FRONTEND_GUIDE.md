@@ -625,7 +625,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://destined-seve
 
 ## 🎯 Next Steps
 
-1. Review the complete API reference in `API_REFERENCE.mdx`
+1. Review the complete API reference in `API_REFERENCE.md`
 2. Set up error boundary in your React app
 3. Implement token refresh logic
 4. Add request/response interceptors for logging
@@ -633,6 +633,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://destined-seve
 
 ## 📞 Need Help?
 
-- Check `API_REFERENCE.mdx` for detailed endpoint documentation
+- Check `API_REFERENCE.md` for detailed endpoint documentation
 - Review `README.md` for API overview
 - Contact backend team for support

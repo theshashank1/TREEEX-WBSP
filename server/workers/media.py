@@ -41,15 +41,12 @@ from server.models.messaging import MediaFile
 from server.services import azure_storage
 from server.whatsapp.client import WhatsAppClient
 
-
 # ============================================================================
 # WORKER STATE
 # ============================================================================
 
 
 class WorkerState:
-    """Shared state for graceful shutdown"""
-
     running: bool = True
 
     @classmethod
@@ -67,24 +64,7 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
     """
     Process a single media download job.
 
-    Job format:
-    {
-        "media_id": str,          # MediaFile UUID
-        "workspace_id": str,
-        "wa_media_id": str,       # Meta media ID
-        "mime_type": str,
-        "phone_number_id": str    # Meta phone number ID for auth
-    }
-
-    Flow:
-    1. Fetch MediaFile from DB
-    2. Fetch PhoneNumber to get access_token
-    3. Download media using WhatsAppClient
-    4. Upload to Azure Blob Storage
-    5. Update MediaFile with storage_url and file_size
-
-    Returns:
-        True if processed successfully, False otherwise
+    Downloads media from WhatsApp, uploads to Azure, and updates DB.
     """
     media_id = job.get("media_id")
     workspace_id = job.get("workspace_id")
@@ -102,7 +82,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
 
     async with async_session() as session:
         try:
-            # 1. Fetch MediaFile
             result = await session.execute(
                 select(MediaFile).where(MediaFile.id == UUID(media_id))
             )
@@ -116,7 +95,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 )
                 return False
 
-            # Skip if already has storage URL
             if media.storage_url:
                 log_event(
                     "media_job_already_processed",
@@ -125,7 +103,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 )
                 return True
 
-            # 2. Fetch PhoneNumber for access token
             result = await session.execute(
                 select(PhoneNumber).where(
                     PhoneNumber.phone_number_id == phone_number_id_meta
@@ -141,7 +118,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 )
                 return False
 
-            # 3. Download media from WhatsApp
             client = WhatsAppClient(access_token=phone_number.access_token)
             file_bytes, downloaded_mime_type, error = await client.download_media(
                 media_id=wa_media_id,
@@ -171,7 +147,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
             # Use downloaded MIME type if available, otherwise use from job
             final_mime_type = downloaded_mime_type or mime_type
 
-            # 4. Upload to Azure Blob Storage
             filename = media.file_name or f"{media.type}_{wa_media_id}"
             blob_url, blob_name, upload_error = await azure_storage.upload_file(
                 file_data=file_bytes,
@@ -189,7 +164,6 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 )
                 return False
 
-            # 5. Update MediaFile record
             media.storage_url = blob_url
             media.file_size = len(file_bytes)
             media.mime_type = final_mime_type
@@ -218,11 +192,7 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
 
 
 async def worker_loop(worker_id: int = 0) -> None:
-    """
-    Main worker loop.
-
-    Continuously pulls jobs from MEDIA_DOWNLOAD queue and processes them.
-    """
+    """Main worker loop."""
     log_event("media_worker_started", worker_id=worker_id)
 
     retry_counts: Dict[str, int] = {}
@@ -232,40 +202,31 @@ async def worker_loop(worker_id: int = 0) -> None:
         job = None
 
         try:
-            # Pull job from queue
             job = await dequeue(Queue.MEDIA_DOWNLOAD, timeout=5)
 
             if not job:
-                # No jobs, small sleep to prevent tight loop
                 await asyncio.sleep(0.1)
                 continue
 
-            # Get job identifier for retry tracking
             job_id = job.get("media_id", "unknown")
 
-            # Process the job
             success = await process_media_job(job)
 
             if not success:
-                # Handle retry logic
                 retry_key = f"media:{job_id}"
                 retry_counts[retry_key] = retry_counts.get(retry_key, 0) + 1
 
                 if retry_counts[retry_key] < max_retries:
-                    # Re-queue for retry with exponential backoff
                     log_event(
                         "media_worker_job_retry",
                         level="warning",
                         job_id=job_id,
                         attempt=retry_counts[retry_key],
                     )
-                    # Add retry count to job for visibility
                     job["_retry_count"] = retry_counts[retry_key]
                     await asyncio.sleep(2 ** retry_counts[retry_key])  # Backoff
-                    # Re-enqueue by pushing back to queue
                     await enqueue(Queue.MEDIA_DOWNLOAD, job)
                 else:
-                    # Move to DLQ
                     log_event(
                         "media_worker_job_to_dlq",
                         level="error",
@@ -278,14 +239,13 @@ async def worker_loop(worker_id: int = 0) -> None:
                     )
                     del retry_counts[retry_key]
             else:
-                # Clear retry count on success
                 retry_key = f"media:{job_id}"
                 if retry_key in retry_counts:
                     del retry_counts[retry_key]
 
         except Exception as e:
             log_exception("media_worker_loop_error", e, worker_id=worker_id)
-            await asyncio.sleep(1)  # Back off on errors
+            await asyncio.sleep(1)
 
     log_event("media_worker_stopped", worker_id=worker_id)
 
@@ -293,17 +253,14 @@ async def worker_loop(worker_id: int = 0) -> None:
 async def run_workers(num_workers: int = 1) -> None:
     """Run multiple worker instances concurrently."""
 
-    # Initialize connections
     await redis_startup()
 
     log_event("media_workers_starting", num_workers=num_workers)
 
-    # Create worker tasks
     workers = [
         asyncio.create_task(worker_loop(worker_id=i)) for i in range(num_workers)
     ]
 
-    # Wait for all workers
     try:
         await asyncio.gather(*workers)
     except asyncio.CancelledError:
@@ -332,7 +289,6 @@ def main():
     )
     args = parser.parse_args()
 
-    # Setup signal handlers for graceful shutdown
     def signal_handler(sig, frame):
         log_event("media_worker_shutdown_signal_received", signal=sig)
         WorkerState.shutdown()
@@ -340,7 +296,6 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    # Run
     try:
         asyncio.run(run_workers(num_workers=args.workers))
     except KeyboardInterrupt:

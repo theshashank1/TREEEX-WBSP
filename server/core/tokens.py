@@ -1,17 +1,16 @@
 """
-Token Management Service for TREEEX-WBSP
+Token Management Service - server/core/tokens.py
 
 Manages Meta WhatsApp access tokens:
 - Retrieves long-term tokens from database
 - Caches short-term tokens in Redis
-- Handles token refresh and expiry
+- Handles token refresh
 """
 
 from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.db import async_session_maker
 from server.core.monitoring import log_event, log_exception
@@ -22,15 +21,8 @@ from server.models.contacts import PhoneNumber
 async def get_access_token(phone_number_id: UUID) -> Optional[str]:
     """
     Get access token for a phone number.
-    
-    Returns cached short-term token if available, otherwise retrieves
-    the long-term token from database.
-    
-    Args:
-        phone_number_id: UUID of the phone number
-        
-    Returns:
-        Access token string or None if not found
+
+    Returns cached short-term token if available, otherwise retrieves from database.
     """
     try:
         # Check cache first
@@ -83,21 +75,17 @@ async def get_access_token(phone_number_id: UUID) -> Optional[str]:
             return token
 
     except Exception as e:
-        log_exception("get_access_token_failed", e, phone_number_id=str(phone_number_id))
+        log_exception(
+            "get_access_token_failed", e, phone_number_id=str(phone_number_id)
+        )
         return None
 
 
 async def refresh_access_token(phone_number_id: UUID) -> Optional[str]:
     """
     Force refresh the access token from database.
-    
+
     Invalidates cache and retrieves fresh token from database.
-    
-    Args:
-        phone_number_id: UUID of the phone number
-        
-    Returns:
-        Fresh access token string or None if not found
     """
     try:
         async with async_session_maker() as session:
@@ -139,26 +127,18 @@ async def refresh_access_token(phone_number_id: UUID) -> Optional[str]:
             return token
 
     except Exception as e:
-        log_exception("refresh_access_token_failed", e, phone_number_id=str(phone_number_id))
+        log_exception(
+            "refresh_access_token_failed", e, phone_number_id=str(phone_number_id)
+        )
         return None
 
 
 async def cache_token(phone_number_id: UUID, token: str, ttl: int) -> bool:
-    """
-    Cache access token in Redis.
-    
-    Args:
-        phone_number_id: UUID of the phone number
-        token: Access token to cache
-        ttl: Time to live in seconds
-        
-    Returns:
-        True if cached successfully, False otherwise
-    """
+    """Cache access token in Redis."""
     try:
         key = key_access_token(str(phone_number_id))
         success = await cache_set(key, token, ttl=ttl, serialize=False)
-        
+
         if success:
             log_event(
                 "token_cached",
@@ -166,7 +146,7 @@ async def cache_token(phone_number_id: UUID, token: str, ttl: int) -> bool:
                 phone_number_id=str(phone_number_id),
                 ttl=ttl,
             )
-        
+
         return success
 
     except Exception as e:
@@ -175,20 +155,14 @@ async def cache_token(phone_number_id: UUID, token: str, ttl: int) -> bool:
 
 
 async def get_cached_token(phone_number_id: UUID) -> Optional[str]:
-    """
-    Get cached access token from Redis.
-    
-    Args:
-        phone_number_id: UUID of the phone number
-        
-    Returns:
-        Cached token string or None if not found/expired
-    """
+    """Get cached access token from Redis."""
     try:
         key = key_access_token(str(phone_number_id))
         token = await cache_get(key, deserialize=False)
         return token
 
     except Exception as e:
-        log_exception("get_cached_token_failed", e, phone_number_id=str(phone_number_id))
+        log_exception(
+            "get_cached_token_failed", e, phone_number_id=str(phone_number_id)
+        )
         return None

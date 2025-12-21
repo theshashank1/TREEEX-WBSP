@@ -1,12 +1,11 @@
 """
-Database Initialization Script
+Database Initialization Script - server/init_db.py
+
 Drops all existing tables and creates fresh ones.
+WARNING: This will DELETE ALL DATA. Use only for development/testing.
 
 Usage:
-    python -m server.init_db
-    python -m server.init_db --force  # Skip confirmation
-
-WARNING: This will DELETE ALL DATA.  Use only for development/testing.
+    python -m server.init_db [--force]
 """
 
 import asyncio
@@ -20,22 +19,21 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from server.core.config import settings
-from server.models.access import User, Workspace, WorkspaceMember
-from server.models.audit import WebhookLog
 
-# Import Base and ALL models to register them with Base. metadata
+# Import Base and ALL models to register them with Base.metadata
+from server.models.access import User, Workspace, WorkspaceMember  # noqa
+from server.models.audit import WebhookLog  # noqa
 from server.models.base import Base
-from server.models.contacts import Contact, PhoneNumber
-from server.models.marketing import Campaign, CampaignMessage, Template
-from server.models.messaging import Conversation, MediaFile, Message
+from server.models.contacts import Contact, PhoneNumber  # noqa
+from server.models.marketing import Campaign, CampaignMessage, Template  # noqa
+from server.models.messaging import Conversation, MediaFile, Message  # noqa
 
 
 async def init_db(drop_all: bool = True):
-    """Initialize database - drop all tables and create fresh ones"""
+    """Initialize database - drop all tables and create fresh ones."""
 
     if not settings.DATABASE_URL:
         print("❌ ERROR: DATABASE_URL is not set!")
-        print("Please check your .env file and config. py")
         sys.exit(1)
 
     # Convert postgres:// to postgresql+asyncpg:// for async support
@@ -47,62 +45,51 @@ async def init_db(drop_all: bool = True):
 
     print("=" * 60)
     print("DATABASE INITIALIZATION")
-    print("=" * 60)
     print(f"Database URL: {database_url[:50]}...")
-    print()
+    print("=" * 60)
 
     engine = create_async_engine(database_url, echo=False)
 
     async with engine.begin() as conn:
         if drop_all:
-            print("⚠️  WARNING: Dropping all existing tables...")
-            print("-" * 60)
+            print("⚠️  Dropping all existing tables...")
 
             # Drop all tables with CASCADE to handle foreign keys
             await conn.execute(text("DROP SCHEMA public CASCADE"))
             await conn.execute(text("CREATE SCHEMA public"))
             await conn.execute(text("GRANT ALL ON SCHEMA public TO public"))
 
-            print("✅ All tables dropped successfully!")
-            print()
+            print("✅ All tables dropped successfully!\n")
 
         print("📦 Creating fresh tables...")
-        print("-" * 60)
 
         # Create all tables from models
         await conn.run_sync(Base.metadata.create_all)
 
-        print()
         print("✅ All tables created successfully!")
 
     await engine.dispose()
 
-    print()
-    print("=" * 60)
+    print("\n" + "=" * 60)
     print("DATABASE INITIALIZATION COMPLETE")
     print("=" * 60)
 
     # List created tables
-    print()
-    print("📋 Tables created:")
+    print("\n📋 Tables created:")
     for table_name in Base.metadata.tables.keys():
         print(f"   • {table_name}")
-    print()
-    print(f"Total: {len(Base. metadata.tables)} tables")
+    print(f"\nTotal: {len(Base.metadata.tables)} tables")
 
 
 async def confirm_and_init():
-    """Confirm before dropping tables"""
-
-    print()
-    print("⚠️  " + "=" * 56)
+    """Confirm before dropping tables."""
+    print("\n⚠️  " + "=" * 56)
     print("⚠️  WARNING: THIS WILL DELETE ALL DATA IN THE DATABASE!")
-    print("⚠️  " + "=" * 56)
-    print()
+    print("⚠️  " + "=" * 56 + "\n")
 
     # Skip confirmation if --force flag is passed
     if "--force" in sys.argv or "-f" in sys.argv:
-        print("Force flag detected.  Proceeding without confirmation...")
+        print("Force flag detected. Proceeding without confirmation...")
         await init_db(drop_all=True)
         return
 
@@ -111,7 +98,7 @@ async def confirm_and_init():
     if response in ("yes", "y"):
         await init_db(drop_all=True)
     else:
-        print("❌ Cancelled.  No changes were made.")
+        print("❌ Cancelled. No changes were made.")
 
 
 if __name__ == "__main__":

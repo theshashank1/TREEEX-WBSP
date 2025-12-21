@@ -2,11 +2,7 @@
 Token Bucket Rate Limiter - server/core/rate_limiter.py
 
 Async token bucket rate limiter for controlling API request rates.
-Used by the outbound worker to respect WhatsApp API limits.
-
-WhatsApp Cloud API limits:
-- ~80 messages/second per phone number (tier dependent)
-- Burst capacity for short spikes
+Used by the outbound worker to respect WhatsApp API limits (approx 80 msg/sec).
 """
 
 from __future__ import annotations
@@ -37,12 +33,7 @@ class TokenBucket:
         self.last_refill = now
 
     def consume(self, tokens: float = 1) -> bool:
-        """
-        Try to consume tokens.
-
-        Returns:
-            True if tokens were consumed, False if insufficient tokens
-        """
+        """Try to consume tokens. Returns True if successful."""
         self.refill()
         if self.tokens >= tokens:
             self.tokens -= tokens
@@ -50,12 +41,7 @@ class TokenBucket:
         return False
 
     def wait_time(self, tokens: float = 1) -> float:
-        """
-        Calculate time to wait for sufficient tokens.
-
-        Returns:
-            Seconds to wait (0 if tokens available now)
-        """
+        """Calculate time to wait for sufficient tokens."""
         self.refill()
         if self.tokens >= tokens:
             return 0
@@ -64,25 +50,7 @@ class TokenBucket:
 
 
 class TokenBucketRateLimiter:
-    """
-    Async token bucket rate limiter with per-key buckets.
-
-    Usage:
-        limiter = TokenBucketRateLimiter(
-            capacity=80,  # Burst capacity
-            refill_rate=80,  # 80 tokens/second
-        )
-
-        # Non-blocking check
-        if await limiter.acquire("phone_123"):
-            # Send message
-        else:
-            # Rate limited
-
-        # Blocking wait
-        await limiter.wait_for_token("phone_123", timeout=30)
-        # Send message
-    """
+    """Async token bucket rate limiter with per-key and global buckets."""
 
     def __init__(
         self,
@@ -95,10 +63,10 @@ class TokenBucketRateLimiter:
         Initialize rate limiter.
 
         Args:
-            capacity: Per-key bucket capacity (burst limit)
-            refill_rate: Per-key token refill rate (tokens/second)
-            global_capacity: Optional global rate limit capacity
-            global_refill_rate: Optional global rate limit refill rate
+            capacity: Per-key burst limit
+            refill_rate: Per-key tokens/second
+            global_capacity: Global burst limit
+            global_refill_rate: Global tokens/second
         """
         self.capacity = capacity
         self.refill_rate = refill_rate
@@ -125,16 +93,7 @@ class TokenBucketRateLimiter:
         return self.buckets[key]
 
     async def acquire(self, key: str, tokens: float = 1) -> bool:
-        """
-        Try to acquire tokens for a key (non-blocking).
-
-        Args:
-            key: Rate limit key (e.g., phone_number_id)
-            tokens: Number of tokens to acquire
-
-        Returns:
-            True if acquired, False if rate limited
-        """
+        """Try to acquire tokens for a key (non-blocking)."""
         async with self._lock:
             bucket = self._get_bucket(key)
 
@@ -169,17 +128,7 @@ class TokenBucketRateLimiter:
         tokens: float = 1,
         timeout: float = 30.0,
     ) -> bool:
-        """
-        Wait for tokens to become available (blocking).
-
-        Args:
-            key: Rate limit key
-            tokens: Number of tokens to acquire
-            timeout: Maximum seconds to wait
-
-        Returns:
-            True if tokens acquired, False if timeout
-        """
+        """Wait for tokens to become available (blocking)."""
         start = time.monotonic()
 
         while True:

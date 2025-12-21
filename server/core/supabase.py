@@ -1,4 +1,9 @@
-import os
+"""
+Supabase Client - server/core/supabase.py
+
+Provides client initialization and user retrieval from Supabase Auth.
+"""
+
 from typing import Optional
 
 from fastapi import HTTPException
@@ -16,15 +21,7 @@ if not url or not key:
 
 
 def get_supabase_client() -> Client:
-    """
-    Get a new Supabase client.
-
-    Returns:
-        Client: Supabase client instance
-
-    Raises:
-        HTTPException: If Supabase configuration is missing
-    """
+    """Get a new Supabase client."""
     try:
         return create_client(url, key)
     except Exception as e:
@@ -37,12 +34,7 @@ def get_user(client: Client):
     """
     Get the current user from Supabase.
 
-    Returns:
-        dict: User information
-
-    Raises:
-        HTTPException: If user is not authenticated or
-        if there's an error fetching user data
+    Raises HTTPException if not authenticated.
     """
     try:
         supabase = client
@@ -58,13 +50,3 @@ def get_user(client: Client):
         raise HTTPException(
             status_code=500, detail=f"Error fetching user data: {str(e)}"
         )
-
-    """Example usage
-    from fastapi import Depends
-    from app.utils.supabase import get_user, Client
-
-    @app.get("/user/me")
-    async def get_current_user(client: Client = Depends(get_supabase_client)):
-        user = await get_user(client)
-        return user
-    """

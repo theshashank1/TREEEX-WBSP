@@ -1,22 +1,5 @@
 """
-Webhook Endpoint - server/api/webhooks.py
-
-Single entry point for all Meta WhatsApp events (Messages, Statuses, Template changes).
-
-ARCHITECTURE:
-    - Decoupled: Webhook acts as an ingestion layer only.
-    - Synchronous: Validates signature, checks idempotency, pushes to Redis (< 500ms).
-    - Asynchronous: Workers process the logic (DB writes, logic) to prevent timeouts.
-
-CRITICAL CONSTRAINTS:
-    - Must respond with 200 OK within 3 seconds to prevent Meta retries.
-    - Must return 200 OK even on processing errors (log & continue).
-    - Must handle duplicate events via Event ID (Idempotency).
-    - Must verify X-Hub-Signature-256 (Security).
-
-ENDPOINTS:
-    - GET /webhook: Meta verification challenge (Setup only).
-    - POST /webhook: Event ingestion.
+Webhook Endpoint - processing Meta WhatsApp events.
 """
 
 import hashlib
@@ -29,23 +12,15 @@ from fastapi import APIRouter, Header, HTTPException, Request, Response
 from server.core.config import settings
 from server.core.monitoring import log_event, log_exception
 from server.core.redis import Queue, enqueue, is_duplicate, key_idempotency
-from server.schemas.webhooks import *
+from server.schemas.webhooks import WebhookEventType
 
 router = APIRouter(prefix="/webhook", tags=["Webhooks"])
-
-
-# ============================================================================
-# ENDPOINTS
-# ============================================================================
 
 
 @router.get("")
 async def verify_webhook(request: Request):
     """
-    Webhook Verification (Setup Only)
-
-    Meta calls this ONCE when you first configure the webhook.
-    Must return the challenge value to verify ownership.
+    Webhook Verification (Setup Only).
     """
     mode = request.query_params.get("hub.mode")
     token = request.query_params.get("hub.verify_token")
@@ -70,114 +45,62 @@ async def receive_webhook(
     x_hub_signature_256: Optional[str] = Header(None, alias="X-Hub-Signature-256"),
 ):
     """
-    Main Webhook Endpoint - Receives ALL events from Meta
-
-    Flow:
-      1. Read raw body
-      2. V erify HMAC signature
-      3. Parse JSON
-      4.  Check idempotency (skip duplicates)
-      5. Route to Redis queue by event type
-      6. Return 200 OK immediately
+    Receives ALL events from Meta.
+    Verifies signature, checks idempotency, and queues events.
+    Always returns 200 OK.
     """
     try:
-        # Step 1: Read raw body (needed for signature verification)
         raw_body = await request.body()
 
-        # Step 2: Verify signature (CRITICAL for production security)
         if not _verify_signature(raw_body, x_hub_signature_256):
             log_event("webhook_signature_invalid", level="warning")
-            # Still return 200 to prevent Meta from disabling webhook
-            # But don't process the payload
             return {"status": "ok"}
 
-        # Step 3: Parse JSON
         try:
             payload = json.loads(raw_body)
         except json.JSONDecodeError as e:
             log_event("webhook_json_invalid", level="error", error=str(e))
             return {"status": "ok"}
 
-        # Step 4: Validate WhatsApp payload structure
         if not _is_valid_payload(payload):
             log_event("webhook_payload_invalid", level="warning")
             return {"status": "ok"}
 
-        # Step 5: Process each entry/change (Meta can batch events)
         await _process_webhook_payload(payload)
 
         return {"status": "ok"}
 
     except Exception as e:
-        # CRITICAL: Always return 200 to Meta
         log_exception("webhook_unhandled_error", e, endpoint="POST /webhook")
         return {"status": "ok"}
-
-
-# ============================================================================
-# SIGNATURE VERIFICATION
-# ============================================================================
 
 
 def _verify_signature(body: bytes, signature: Optional[str]) -> bool:
     """
     Verify webhook authenticity using HMAC-SHA256.
-
-    Meta sends: X-Hub-Signature-256: sha256=<hex_digest>
-    We compute HMAC of body using app secret and compare.
     """
-    # Skip verification in development if no secret configured
     if settings.ENV == "development" and not settings.META_APP_SECRET:
         return True
 
-    if not signature:
+    if not signature or not signature.startswith("sha256="):
         return False
 
-    if not signature.startswith("sha256="):
-        return False
-
-    # Extract the hex digest
-    expected_signature = signature[7:]  # Remove "sha256=" prefix
-
-    # Get app secret (use META_APP_SECRET for signature verification)
+    expected_signature = signature[7:]
     app_secret = settings.META_APP_SECRET
     if not app_secret:
         log_event("webhook_secret_missing", level="error")
         return False
 
-    # Compute HMAC
     computed = hmac.new(
         key=app_secret.encode("utf-8"), msg=body, digestmod=hashlib.sha256
     ).hexdigest()
 
-    # Constant-time comparison to prevent timing attacks
     return hmac.compare_digest(computed, expected_signature)
-
-
-# ============================================================================
-# PAYLOAD VALIDATION
-# ============================================================================
 
 
 def _is_valid_payload(payload: dict) -> bool:
     """
     Validate minimum WhatsApp webhook structure.
-
-    Expected structure:
-    {
-        "object": "whatsapp_business_account",
-        "entry": [
-            {
-                "id": "WABA_ID",
-                "changes": [
-                    {
-                        "field": "messages",
-                        "value": { ...  }
-                    }
-                ]
-            }
-        ]
-    }
     """
     try:
         if payload.get("object") != "whatsapp_business_account":
@@ -201,30 +124,19 @@ def _is_valid_payload(payload: dict) -> bool:
         return False
 
 
-# ============================================================================
-# EVENT PROCESSING
-# ============================================================================
-
-
 async def _process_webhook_payload(payload: dict) -> None:
     """
     Process webhook payload and route events to appropriate queues.
-
-    Meta can batch multiple events in a single webhook, so we iterate
-    through all entries and changes.
     """
     for entry in payload.get("entry", []):
-        waba_id = entry.get("id")  # WhatsApp Business Account ID
+        waba_id = entry.get("id")
 
         for change in entry.get("changes", []):
             field = change.get("field", "messages")
             value = change.get("value", {})
-
-            # Extract phone_number_id from metadata
             metadata = value.get("metadata", {})
             phone_number_id = metadata.get("phone_number_id")
 
-            # Route based on field and content
             await _route_change_to_queue(
                 waba_id=waba_id,
                 phone_number_id=phone_number_id,
@@ -243,17 +155,7 @@ async def _route_change_to_queue(
 ) -> None:
     """
     Route a single change to the appropriate Redis queue.
-
-    Event Types:
-    - messages: Incoming messages from customers
-    - statuses: Delivery/read receipts for outgoing messages
-    - errors: Message send failures
-    - template_category_update/message_template_status_update: Template changes
-    - history: Chat history migration
-    - tracking_events: Conversion tracking
     """
-
-    # Handle messages (inbound)
     if "messages" in value:
         for message in value["messages"]:
             await _queue_message_event(
@@ -264,7 +166,6 @@ async def _route_change_to_queue(
                 metadata=value.get("metadata", {}),
             )
 
-    # Handle status updates (delivery/read receipts)
     if "statuses" in value:
         for status in value["statuses"]:
             await _queue_status_event(
@@ -274,25 +175,20 @@ async def _route_change_to_queue(
                 metadata=value.get("metadata", {}),
             )
 
-    # Handle errors
     if "errors" in value:
         for error in value["errors"]:
             await _queue_error_event(
                 waba_id=waba_id, phone_number_id=phone_number_id, error=error
             )
 
-    # Handle template status updates
     if field in ("template_category_update", "message_template_status_update"):
         await _queue_template_event(waba_id=waba_id, field=field, value=value)
 
-    # Handle history migration (optional - for chat migration)
     if "history" in value:
         log_event(
             "webhook_history_received", waba_id=waba_id, phone_number_id=phone_number_id
         )
-        # History events are typically large - log but don't queue
 
-    # Handle tracking events
     if "events" in value:
         log_event(
             "webhook_tracking_received",
@@ -302,11 +198,6 @@ async def _route_change_to_queue(
         )
 
 
-# ============================================================================
-# QUEUE HELPERS
-# ============================================================================
-
-
 async def _queue_message_event(
     waba_id: str,
     phone_number_id: Optional[str],
@@ -314,19 +205,16 @@ async def _queue_message_event(
     contacts: list,
     metadata: dict,
 ) -> None:
-    """Queue incoming message for processing"""
-
+    """Queue incoming message."""
     wa_message_id = message.get("id")
     if not wa_message_id:
         return
 
-    # Idempotency check using message ID
     idempotency_key = key_idempotency(waba_id, wa_message_id)
     if await is_duplicate(idempotency_key):
         log_event("webhook_duplicate_message", wa_message_id=wa_message_id)
         return
 
-    # Extract contact info
     contact_info = contacts[0] if contacts else {}
 
     event = {
@@ -345,13 +233,10 @@ async def _queue_message_event(
         "metadata": metadata,
     }
 
-    # High priority for interactive responses (buttons, list replies)
     is_interactive = message.get("type") in ("interactive", "button")
     queue = Queue.HIGH_PRIORITY if is_interactive else Queue.INBOUND_WEBHOOKS
 
-    success = await enqueue(queue, event)
-
-    if success:
+    if await enqueue(queue, event):
         log_event(
             "webhook_message_queued",
             wa_message_id=wa_message_id,
@@ -367,15 +252,13 @@ async def _queue_message_event(
 async def _queue_status_event(
     waba_id: str, phone_number_id: Optional[str], status: dict, metadata: dict
 ) -> None:
-    """Queue message status update (sent/delivered/read/failed)"""
-
+    """Queue message status update."""
     wa_message_id = status.get("id")
     status_value = status.get("status")
 
     if not wa_message_id or not status_value:
         return
 
-    # Idempotency: Use message_id + status as key (same message can have multiple statuses)
     idempotency_key = key_idempotency(waba_id, f"{wa_message_id}:{status_value}")
     if await is_duplicate(idempotency_key):
         log_event(
@@ -397,9 +280,7 @@ async def _queue_status_event(
         "metadata": metadata,
     }
 
-    success = await enqueue(Queue.MESSAGE_STATUS, event)
-
-    if success:
+    if await enqueue(Queue.MESSAGE_STATUS, event):
         log_event(
             "webhook_status_queued", wa_message_id=wa_message_id, status=status_value
         )
@@ -408,8 +289,7 @@ async def _queue_status_event(
 async def _queue_error_event(
     waba_id: str, phone_number_id: Optional[str], error: dict
 ) -> None:
-    """Queue error event for handling"""
-
+    """Queue error event."""
     event = {
         "type": WebhookEventType.ERROR.value,
         "waba_id": waba_id,
@@ -420,7 +300,6 @@ async def _queue_error_event(
         "error_data": error.get("error_data"),
     }
 
-    # Errors go to high priority queue
     await enqueue(Queue.HIGH_PRIORITY, event)
 
     log_event(
@@ -432,8 +311,7 @@ async def _queue_error_event(
 
 
 async def _queue_template_event(waba_id: str, field: str, value: dict) -> None:
-    """Queue template status change for sync"""
-
+    """Queue template status change."""
     event = {
         "type": WebhookEventType.TEMPLATE_STATUS.value,
         "waba_id": waba_id,

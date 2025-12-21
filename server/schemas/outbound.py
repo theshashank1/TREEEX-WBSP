@@ -1,10 +1,7 @@
 """
 Outbound Message Schemas - server/schemas/outbound.py
 
-Pydantic models for validating outbound WhatsApp messages.
-These schemas are used by the outbound worker to validate queue payloads.
-
-All message types share a common base with idempotency key (message_id).
+Pydantic models for validating outbound WhatsApp messages payload.
 """
 
 from __future__ import annotations
@@ -74,15 +71,13 @@ class TemplateComponent(BaseModel):
 
 
 class BaseOutboundMessage(BaseModel):
-    """Base class for all outbound messages. Contains common fields."""
+    """Base schema for outbound messages."""
 
     type: str = Field(..., description="Message type identifier")
-    message_id: str = Field(..., description="UUID - idempotency key, must be unique")
+    message_id: str = Field(..., description="UUID - idempotency key")
     workspace_id: str = Field(..., description="Workspace UUID")
-    phone_number_id: str = Field(..., description="Meta phone_number_id to send from")
-    to_number: str = Field(
-        ..., description="Recipient E.164 phone number (e.g., +15551234567)"
-    )
+    phone_number_id: str = Field(..., description="Meta phone_number_id")
+    to_number: str = Field(..., description="Recipient E.164 phone number")
 
     # Optional fields
     reply_to_message_id: Optional[str] = Field(
@@ -98,13 +93,10 @@ class BaseOutboundMessage(BaseModel):
     @field_validator("to_number")
     @classmethod
     def validate_phone_number(cls, v: str) -> str:
-        """Ensure phone number is in E.164 format."""
-        # Basic validation - starts with + and is numeric
+        """Ensure phone number is in E.164 format and numeric."""
         cleaned = v.lstrip("+")
         if not cleaned.isdigit():
-            raise ValueError(
-                "Phone number must contain only digits (with optional leading +)"
-            )
+            raise ValueError("Phone number must contain only digits")
         if len(cleaned) < 10 or len(cleaned) > 15:
             raise ValueError("Phone number must be 10-15 digits")
         return v
@@ -147,11 +139,11 @@ class MediaMessage(BaseOutboundMessage):
     @field_validator("media_url", "media_id")
     @classmethod
     def validate_media_source(cls, v, info):
-        """At least one media source must be provided (validated in model_validator)."""
+        """At least one media source must be provided."""
         return v
 
     def model_post_init(self, __context):
-        """Validate that either media_url or media_id is provided."""
+        """Validate key presence."""
         if not self.media_url and not self.media_id:
             raise ValueError("Either media_url or media_id must be provided")
 
@@ -202,16 +194,14 @@ class ReactionMessage(BaseOutboundMessage):
 
     type: Literal["reaction_message"] = "reaction_message"
     target_message_id: str = Field(..., description="wa_message_id to react to")
-    emoji: str = Field(..., description="Emoji character (empty string to remove)")
+    emoji: str = Field(..., description="Emoji character")
 
 
 class MarkAsReadMessage(BaseOutboundMessage):
-    """Mark message as read (shows blue checkmarks)."""
+    """Mark message as read."""
 
     type: Literal["mark_as_read"] = "mark_as_read"
     target_message_id: str = Field(..., description="wa_message_id to mark as read")
-
-    # Override to_number as optional since it's not needed for mark_as_read
     to_number: Optional[str] = None  # type: ignore
 
 
@@ -235,14 +225,7 @@ def parse_outbound_message(data: Dict[str, Any]) -> OutboundMessage:
     """
     Parse a dict into the appropriate outbound message type.
 
-    Args:
-        data: Dictionary from Redis queue
-
-    Returns:
-        Validated outbound message
-
-    Raises:
-        ValueError: If message type is unknown or validation fails
+    Raises ValueError if type unknown.
     """
     message_type = data.get("type")
 

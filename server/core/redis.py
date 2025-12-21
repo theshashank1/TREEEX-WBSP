@@ -1,6 +1,7 @@
 """
-Redis Client & Queue Management for TREEEX-WBSP
-Handles connection pooling, caching, queue operations, and pub/sub
+Redis Client & Queue Management - server/core/redis.py
+
+Handles connection pooling, caching, queue operations, and pub/sub.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ T = TypeVar("T")
 
 
 class Queue(str, Enum):
-    """Queue names for async job processing"""
+    """Queue names for async job processing."""
 
     # Core messaging
     OUTBOUND_MESSAGES = "queue:outbound"
@@ -56,7 +57,7 @@ class Queue(str, Enum):
 
 
 class TTL:
-    """Cache TTL values in seconds"""
+    """Cache TTL values in seconds."""
 
     IDEMPOTENCY = 86400  # 24 hours - webhook deduplication
     SESSION = 604800  # 7 days - user sessions
@@ -74,37 +75,37 @@ class TTL:
 
 
 def key_idempotency(workspace_id: str, event_hash: str) -> str:
-    """Webhook idempotency key"""
+    """Webhook idempotency key."""
     return f"idempotency:{workspace_id}:{event_hash}"
 
 
 def key_rate_limit(phone_number_id: str) -> str:
-    """Outbound rate limit key"""
+    """Outbound rate limit key."""
     return f"ratelimit:{phone_number_id}"
 
 
 def key_api_rate_limit(workspace_id: str, endpoint: str) -> str:
-    """API rate limit key"""
+    """API rate limit key."""
     return f"ratelimit:api:{workspace_id}:{endpoint}"
 
 
 def key_session(user_id: str) -> str:
-    """User session key"""
+    """User session key."""
     return f"session:{user_id}"
 
 
 def key_conversation_window(conversation_id: str) -> str:
-    """24h conversation window tracking"""
+    """24h conversation window tracking."""
     return f"window:{conversation_id}"
 
 
 def key_realtime(workspace_id: str, event_type: str = "messages") -> str:
-    """Pub/sub channel for real-time events"""
+    """Pub/sub channel for real-time events."""
     return f"realtime:{workspace_id}:{event_type}"
 
 
 def key_access_token(phone_number_id: str) -> str:
-    """Short-term access token cache key"""
+    """Short-term access token cache key."""
     return f"token:access:{phone_number_id}"
 
 
@@ -116,13 +117,7 @@ _redis: Optional[Redis] = None
 
 
 async def get_redis() -> Redis:
-    """
-    Get Redis client.  Initializes connection on first call.
-
-    Usage:
-        redis = await get_redis()
-        await redis.set("key", "value")
-    """
+    """Get Redis client. Initializes connection on first call."""
     global _redis
 
     if _redis is None:
@@ -145,7 +140,7 @@ async def get_redis() -> Redis:
 
 
 async def close_redis() -> None:
-    """Close Redis connection.  Call on app shutdown."""
+    """Close Redis connection. Call on app shutdown."""
     global _redis
 
     if _redis is not None:
@@ -155,7 +150,7 @@ async def close_redis() -> None:
 
 
 async def redis_health() -> bool:
-    """Check Redis connection health"""
+    """Check Redis connection health."""
     try:
         r = await get_redis()
         await r.ping()
@@ -171,7 +166,7 @@ async def redis_health() -> bool:
 
 
 async def cache_get(key: str, deserialize: bool = True) -> Optional[Any]:
-    """Get value from cache"""
+    """Get value from cache."""
     try:
         r = await get_redis()
         value = await r.get(key)
@@ -186,7 +181,7 @@ async def cache_get(key: str, deserialize: bool = True) -> Optional[Any]:
 async def cache_set(
     key: str, value: Any, ttl: int = TTL.CACHE, serialize: bool = True
 ) -> bool:
-    """Set value in cache with TTL"""
+    """Set value in cache with TTL."""
     try:
         r = await get_redis()
         if serialize:
@@ -199,7 +194,7 @@ async def cache_set(
 
 
 async def cache_delete(key: str) -> bool:
-    """Delete key from cache"""
+    """Delete key from cache."""
     try:
         r = await get_redis()
         await r.delete(key)
@@ -217,12 +212,8 @@ async def cache_delete(key: str) -> bool:
 async def is_duplicate(key: str, ttl: int = TTL.IDEMPOTENCY) -> bool:
     """
     Check if operation already processed (idempotency).
-    Uses SET NX - returns True if duplicate, False if new.
 
-    Usage:
-        if await is_duplicate(key_idempotency(workspace_id, event_hash)):
-            return  # Skip duplicate
-        # Process new event...
+    Uses SET NX - returns True if duplicate, False if new.
     """
     try:
         r = await get_redis()
@@ -242,17 +233,7 @@ async def check_rate_limit(key: str, limit: int, window: int = 60) -> tuple[bool
     """
     Fixed window rate limiting.
 
-    Returns:
-        (allowed: bool, remaining: int)
-
-    Usage:
-        allowed, remaining = await check_rate_limit(
-            key_rate_limit(phone_number_id),
-            limit=settings.RATE_LIMIT_MESSAGES_PER_SECOND * 60,
-            window=60
-        )
-        if not allowed:
-            raise HTTPException(429, "Rate limit exceeded")
+    Returns (allowed: bool, remaining: int).
     """
     try:
         r = await get_redis()
@@ -279,9 +260,7 @@ async def enqueue(queue: Queue, data: dict, priority: bool = False) -> bool:
     Add job to queue.
 
     Args:
-        queue: Queue enum value
-        data: Job payload (will be JSON serialized)
-        priority: If True, adds to front of queue
+        priority: If True, adds to front of queue.
     """
     try:
         r = await get_redis()
@@ -299,16 +278,7 @@ async def enqueue(queue: Queue, data: dict, priority: bool = False) -> bool:
 
 
 async def dequeue(queue: Queue, timeout: int = 5) -> Optional[dict]:
-    """
-    Get job from queue (blocking).
-
-    Args:
-        queue: Queue enum value
-        timeout: Seconds to wait if queue empty
-
-    Returns:
-        Job data dict or None if timeout
-    """
+    """Get job from queue (blocking)."""
     try:
         r = await get_redis()
         result = await r.brpop(queue.value, timeout=timeout)
@@ -323,7 +293,7 @@ async def dequeue(queue: Queue, timeout: int = 5) -> Optional[dict]:
 
 
 async def queue_length(queue: Queue) -> int:
-    """Get number of jobs in queue"""
+    """Get number of jobs in queue."""
     try:
         r = await get_redis()
         return await r.llen(queue.value)
@@ -333,7 +303,7 @@ async def queue_length(queue: Queue) -> int:
 
 
 async def move_to_dlq(queue: Queue, data: dict, error: str) -> bool:
-    """Move failed job to dead letter queue with error info"""
+    """Move failed job to dead letter queue with error info."""
     dlq_data = {
         "original_queue": queue.value,
         "data": data,
@@ -348,15 +318,7 @@ async def move_to_dlq(queue: Queue, data: dict, error: str) -> bool:
 
 
 async def publish(channel: str, data: dict) -> bool:
-    """
-    Publish message to channel (for Socket.IO/WebSocket relay).
-
-    Usage:
-        await publish(
-            key_realtime(workspace_id, "messages"),
-            {"type": "new_message", "data": message_dict}
-        )
-    """
+    """Publish message to channel (for Socket.IO/WebSocket relay)."""
     try:
         r = await get_redis()
         await r.publish(channel, json.dumps(data))
@@ -369,12 +331,12 @@ async def publish(channel: str, data: dict) -> bool:
 @asynccontextmanager
 async def subscribe(channel: str):
     """
-    Subscribe to channel.  Use as async context manager.
+    Subscribe to channel. Use as async context manager.
 
     Usage:
-        async with subscribe(key_realtime(workspace_id)) as messages:
+        async with subscribe(key) as messages:
             async for msg in messages:
-                print(msg)
+                process(msg)
     """
     r = await get_redis()
     pubsub = r.pubsub()
@@ -398,10 +360,10 @@ async def subscribe(channel: str):
 
 
 async def startup() -> None:
-    """Call from FastAPI lifespan startup"""
+    """Call from FastAPI lifespan startup."""
     await get_redis()
 
 
 async def shutdown() -> None:
-    """Call from FastAPI lifespan shutdown"""
+    """Call from FastAPI lifespan shutdown."""
     await close_redis()

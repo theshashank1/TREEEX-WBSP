@@ -32,8 +32,6 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.config import settings
-
-# CRITICAL FIX: Import from centralized db.py instead of creating new engine
 from server.core.db import async_session_maker as async_session
 from server.core.db import engine
 from server.core.monitoring import log_event, log_exception
@@ -64,8 +62,6 @@ from server.models.messaging import Conversation, MediaFile, Message
 
 
 class WorkerState:
-    """Shared state for graceful shutdown"""
-
     running: bool = True
 
     @classmethod
@@ -80,19 +76,7 @@ class WorkerState:
 
 
 async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> bool:
-    """
-    Process incoming WhatsApp message.
-
-    Flow:
-    1. Find or create PhoneNumber (by phone_number_id)
-    2. Find or create Contact (by wa_id)
-    3. Find or create Conversation
-    4. Create Message record
-    5. Update conversation metadata
-    6. Create WebhookLog for audit
-    7. Queue media download if applicable
-    8. Publish real-time update
-    """
+    """Process incoming WhatsApp message."""
     try:
         phone_number_id_meta = event.get("phone_number_id")  # Meta's phone_number_id
         wa_message_id = event.get("wa_message_id")
@@ -106,7 +90,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             log_event("webhook_message_missing_fields", level="warning", event=event)
             return False
 
-        # 1. Find PhoneNumber by Meta's phone_number_id
         phone_number = await session.execute(
             select(PhoneNumber).where(
                 PhoneNumber.phone_number_id == phone_number_id_meta
@@ -124,7 +107,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
 
         workspace_id = phone_number.workspace_id
 
-        # 2. Find or create Contact
         contact = await _get_or_create_contact(
             session=session,
             workspace_id=workspace_id,
@@ -133,7 +115,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             name=contact_data.get("name"),
         )
 
-        # 3. Find or create Conversation
         conversation = await _get_or_create_conversation(
             session=session,
             workspace_id=workspace_id,
@@ -141,7 +122,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             phone_number_id=phone_number.id,
         )
 
-        # 4. Parse message timestamp
         message_time = utc_now()
         if timestamp:
             try:
@@ -151,7 +131,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             except (ValueError, TypeError):
                 pass
 
-        # 5. Handle media if present
         media_id = None
         message_type = message_data.get("type", "text")
 
@@ -163,10 +142,8 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
                 message_type=message_type,
             )
 
-        # 6. Build message content
         content = _extract_message_content(message_data)
 
-        # 7. Create Message record
         message = Message(
             workspace_id=workspace_id,
             conversation_id=conversation.id,
@@ -184,7 +161,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
         )
         session.add(message)
 
-        # 8. Update conversation
         conversation.last_message_at = message_time
         conversation.last_inbound_at = message_time
         conversation.window_expires_at = message_time + timedelta(hours=24)
@@ -192,7 +168,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
         conversation.status = ConversationStatus.OPEN.value
         conversation.conversation_type = ConversationType.USER_INITIATED.value
 
-        # 9. Create WebhookLog for audit
         webhook_log = WebhookLog(
             workspace_id=workspace_id,
             phone_number_id=phone_number.id,
@@ -206,8 +181,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
 
         await session.commit()
 
-        # Post-commit operations (best-effort, failures don't affect message processing)
-        # 10. Queue media download if needed (stickers excluded - they're cached by WhatsApp)
         if media_id and message_type in ("image", "video", "audio", "document"):
             await enqueue(
                 Queue.MEDIA_DOWNLOAD,
@@ -220,7 +193,6 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
                 },
             )
 
-        # 11. Publish real-time update
         await publish(
             key_realtime(str(workspace_id), "messages"),
             {
@@ -246,11 +218,7 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
 
 
 async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> bool:
-    """
-    Process message status update (sent/delivered/read/failed).
-
-    Updates the Message record with new status and timestamps.
-    """
+    """Process message status update (sent/delivered/read/failed)."""
     try:
         wa_message_id = event.get("wa_message_id")
         status = event.get("status")
@@ -262,23 +230,20 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             log_event("webhook_status_missing_fields", level="warning", event=event)
             return False
 
-        # Find the message by wa_message_id
         result = await session.execute(
             select(Message).where(Message.wa_message_id == wa_message_id)
         )
         message = result.scalar_one_or_none()
 
         if not message:
-            # Message might not exist yet if status arrives before message is processed
             log_event(
                 "webhook_status_message_not_found",
                 level="debug",
                 wa_message_id=wa_message_id,
                 status=status,
             )
-            return True  # Not an error, just timing
+            return True
 
-        # Parse timestamp
         status_time = utc_now()
         if timestamp:
             try:
@@ -288,7 +253,6 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             except (ValueError, TypeError):
                 pass
 
-        # Update message based on status
         status_map = {
             "sent": MessageStatus.SENT.value,
             "delivered": MessageStatus.DELIVERED.value,
@@ -298,7 +262,6 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
 
         new_status = status_map.get(status)
         if new_status:
-            # Only update if new status is "later" than current
             status_order = ["pending", "sent", "delivered", "read", "failed"]
             current_idx = (
                 status_order.index(message.status)
@@ -309,11 +272,9 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
                 status_order.index(new_status) if new_status in status_order else -1
             )
 
-            # Failed can override any status
             if new_status == MessageStatus.FAILED.value or new_idx > current_idx:
                 message.status = new_status
 
-        # Update timestamps
         if status == "delivered" and not message.delivered_at:
             message.delivered_at = status_time
         elif status == "read" and not message.read_at:
@@ -321,13 +282,11 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             if not message.delivered_at:
                 message.delivered_at = status_time
 
-        # Handle errors
         if status == "failed" and errors:
             error = errors[0] if isinstance(errors, list) else errors
             message.error_code = str(error.get("code", ""))
             message.error_message = error.get("message") or error.get("title")
 
-        # Create WebhookLog
         phone_number = await session.execute(
             select(PhoneNumber).where(
                 PhoneNumber.phone_number_id == phone_number_id_meta
@@ -348,7 +307,6 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
 
         await session.commit()
 
-        # Publish real-time update
         await publish(
             key_realtime(str(message.workspace_id), "status"),
             {
@@ -375,11 +333,7 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
 
 
 async def handle_error_event(session: AsyncSession, event: Dict[str, Any]) -> bool:
-    """
-    Process error event from Meta.
-
-    Logs the error for debugging and alerting.
-    """
+    """Process error event from Meta."""
     try:
         error_code = event.get("code")
         error_title = event.get("title")
@@ -396,7 +350,6 @@ async def handle_error_event(session: AsyncSession, event: Dict[str, Any]) -> bo
             phone_number_id=phone_number_id_meta,
         )
 
-        # Find workspace from phone number
         phone_number = await session.execute(
             select(PhoneNumber).where(
                 PhoneNumber.phone_number_id == phone_number_id_meta
@@ -426,11 +379,7 @@ async def handle_error_event(session: AsyncSession, event: Dict[str, Any]) -> bo
 
 
 async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) -> bool:
-    """
-    Process template status update from Meta.
-
-    Updates template status (APPROVED, REJECTED, etc.)
-    """
+    """Process template status update from Meta."""
     try:
         from server.models.marketing import Template
 
@@ -448,7 +397,6 @@ async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) ->
             reason=reason,
         )
 
-        # Find template by meta_template_id or name
         if template_id:
             result = await session.execute(
                 select(Template).where(Template.meta_template_id == template_id)
@@ -461,7 +409,6 @@ async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) ->
         template = result.scalar_one_or_none()
 
         if template:
-            # Map Meta events to our status
             status_map = {
                 "APPROVED": "APPROVED",
                 "REJECTED": "REJECTED",
@@ -479,7 +426,6 @@ async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) ->
             if template_id and not template.meta_template_id:
                 template.meta_template_id = template_id
 
-            # Log to webhook_logs
             webhook_log = WebhookLog(
                 workspace_id=template.workspace_id,
                 phone_number_id=template.phone_number_id,
@@ -531,12 +477,10 @@ async def _get_or_create_contact(
     contact = result.scalar_one_or_none()
 
     if contact:
-        # Update name if provided and different
         if name and name != contact.name:
             contact.name = name
         return contact
 
-    # Create new contact
     contact = Contact(
         workspace_id=workspace_id,
         wa_id=wa_id,
@@ -547,7 +491,7 @@ async def _get_or_create_contact(
         opt_in_date=utc_now(),
     )
     session.add(contact)
-    await session.flush()  # Get the ID
+    await session.flush()
 
     log_event("contact_created", workspace_id=str(workspace_id), wa_id=wa_id)
 
@@ -576,7 +520,6 @@ async def _get_or_create_conversation(
     if conversation:
         return conversation
 
-    # Create new conversation with initial 24-hour window
     now = utc_now()
     conversation = Conversation(
         workspace_id=workspace_id,
@@ -700,7 +643,6 @@ def _extract_message_content(message_data: Dict[str, Any]) -> Dict[str, Any]:
         content["message_id"] = reaction.get("message_id")
         content["emoji"] = reaction.get("emoji")
 
-    # Include context if replying to a message
     context = message_data.get("context")
     if context:
         content["context"] = {
@@ -717,11 +659,7 @@ def _extract_message_content(message_data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 async def process_event(event: Dict[str, Any]) -> bool:
-    """
-    Process a single event from the queue.
-
-    Routes to appropriate handler based on event type.
-    """
+    """Process a single event from the queue."""
     event_type = event.get("type")
 
     handlers: Dict[str, Callable] = {
@@ -742,15 +680,9 @@ async def process_event(event: Dict[str, Any]) -> bool:
 
 
 async def worker_loop(worker_id: int = 0) -> None:
-    """
-    Main worker loop.
-
-    Continuously pulls events from queues and processes them.
-    Priority: HIGH_PRIORITY > INBOUND_WEBHOOKS > MESSAGE_STATUS > TEMPLATE_SYNC
-    """
+    """Main worker loop."""
     log_event("worker_started", worker_id=worker_id)
 
-    # Queue priority order
     queues = [
         Queue.HIGH_PRIORITY,
         Queue.INBOUND_WEBHOOKS,
@@ -766,7 +698,6 @@ async def worker_loop(worker_id: int = 0) -> None:
         source_queue = None
 
         try:
-            # Try each queue in priority order
             for queue in queues:
                 event = await dequeue(queue, timeout=1)
                 if event:
@@ -774,11 +705,9 @@ async def worker_loop(worker_id: int = 0) -> None:
                     break
 
             if not event:
-                # No events, small sleep to prevent tight loop
                 await asyncio.sleep(0.1)
                 continue
 
-            # Process the event
             event_id = (
                 event.get("wa_message_id") or event.get("message_id") or "unknown"
             )
@@ -786,12 +715,10 @@ async def worker_loop(worker_id: int = 0) -> None:
             success = await process_event(event)
 
             if not success:
-                # Handle retry logic
                 retry_key = f"{source_queue.value}:{event_id}"
                 retry_counts[retry_key] = retry_counts.get(retry_key, 0) + 1
 
                 if retry_counts[retry_key] < max_retries:
-                    # Re-queue for retry
                     log_event(
                         "worker_event_retry",
                         level="warning",
@@ -799,43 +726,39 @@ async def worker_loop(worker_id: int = 0) -> None:
                         attempt=retry_counts[retry_key],
                     )
                     await enqueue(source_queue, event)
+                    await asyncio.sleep(1)
                 else:
-                    # Move to DLQ
-                    log_event(
-                        "worker_event_to_dlq",
-                        level="error",
-                        event_id=event_id,
-                        queue=source_queue.value,
+                    await move_to_dlq(
+                        source_queue,
+                        event,
+                        f"Max retries exceeded ({max_retries})",
                     )
-                    await move_to_dlq(source_queue, event, "Max retries exceeded")
-                    del retry_counts[retry_key]
+                    if retry_key in retry_counts:
+                        del retry_counts[retry_key]
             else:
-                # Clear retry count on success
                 retry_key = f"{source_queue.value}:{event_id}"
                 if retry_key in retry_counts:
                     del retry_counts[retry_key]
 
         except Exception as e:
-            log_exception("worker_loop_error", e, worker_id=worker_id)
-            await asyncio.sleep(1)  # Back off on errors
+            log_exception("worker_loop_error", e)
+            await asyncio.sleep(1)
 
+    await redis_shutdown()
     log_event("worker_stopped", worker_id=worker_id)
 
 
 async def run_workers(num_workers: int = 1) -> None:
     """Run multiple worker instances concurrently."""
 
-    # Initialize connections
     await redis_startup()
 
     log_event("workers_starting", num_workers=num_workers)
 
-    # Create worker tasks
     workers = [
         asyncio.create_task(worker_loop(worker_id=i)) for i in range(num_workers)
     ]
 
-    # Wait for all workers
     try:
         await asyncio.gather(*workers)
     except asyncio.CancelledError:

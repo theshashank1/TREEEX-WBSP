@@ -7,17 +7,6 @@ Handles all message types with idempotency, rate limiting, retries, and DB trans
 ARCHITECTURE:
     - Pulls messages from Redis queue (OUTBOUND_MESSAGES)
     - Validates message schema
-    - Checks idempotency to prevent duplicate sends
-    - Applies rate limiting per phone_number_id
-    - Sends via WhatsApp Cloud API
-    - Updates message status in PostgreSQL with transactions
-    - Moves permanent failures to Dead Letter Queue
-
-RUNNING:
-    python -m server.workers.outbound
-
-    Or with multiple workers:
-    python -m server.workers.outbound --workers 4
 """
 
 from __future__ import annotations
@@ -85,24 +74,18 @@ from server.whatsapp.outbound import OutboundClient, SendResult
 
 @dataclass
 class WorkerConfig:
-    """Worker configuration."""
+    rate_limit_per_phone: float = 80
+    rate_limit_global: float = 500
 
-    # Rate limiting
-    rate_limit_per_phone: float = 80  # Messages per second per phone
-    rate_limit_global: float = 500  # Total messages per second
-
-    # Retry settings
     max_retries: int = 5
-    base_delay: float = 1.0  # Base delay in seconds
-    max_delay: float = 60.0  # Max delay in seconds
-    jitter_factor: float = 0.5  # Random jitter (0.5 = ±50%)
+    base_delay: float = 1.0
+    max_delay: float = 60.0
+    jitter_factor: float = 0.5
 
-    # Worker settings
-    queue_timeout: int = 5  # Seconds to wait for queue item
-    batch_size: int = 10  # Max items to process before yielding
+    queue_timeout: int = 5
+    batch_size: int = 10
 
-    # Idempotency
-    idempotency_ttl: int = TTL.IDEMPOTENCY  # 24 hours
+    idempotency_ttl: int = TTL.IDEMPOTENCY
 
 
 # =============================================================================
@@ -112,12 +95,9 @@ class WorkerConfig:
 
 @dataclass
 class WorkerState:
-    """Shared state for graceful shutdown and metrics."""
-
     running: bool = True
     paused: bool = False
 
-    # Metrics
     messages_sent: int = 0
     messages_failed: int = 0
     messages_retried: int = 0
@@ -161,27 +141,14 @@ def calculate_backoff(
     max_delay: float = 60.0,
     jitter_factor: float = 0.5,
 ) -> float:
-    """
-    Calculate exponential backoff with jitter.
-
-    Args:
-        attempt: Current attempt number (1-based)
-        base_delay: Base delay in seconds
-        max_delay: Maximum delay in seconds
-        jitter_factor: Random jitter factor (0.5 = ±50%)
-
-    Returns:
-        Delay in seconds
-    """
-    # Exponential backoff: base * 2^(attempt-1)
+    """Calculate exponential backoff with jitter."""
     delay = base_delay * (2 ** (attempt - 1))
     delay = min(delay, max_delay)
 
-    # Add jitter
     jitter = delay * jitter_factor
     delay = delay + random.uniform(-jitter, jitter)
 
-    return max(0.1, delay)  # Minimum 100ms
+    return max(0.1, delay)
 
 
 # =============================================================================
@@ -190,23 +157,16 @@ def calculate_backoff(
 
 
 def idempotency_key(message_id: str) -> str:
-    """Generate Redis key for idempotency check."""
     return f"outbound:sent:{message_id}"
 
 
 async def check_already_sent(message_id: str) -> bool:
-    """
-    Check if message was already sent.
-
-    Returns True if already sent (duplicate), False if new.
-    """
     key = idempotency_key(message_id)
     result = await cache_get(key, deserialize=False)
     return result is not None
 
 
 async def mark_as_sent(message_id: str, wa_message_id: str) -> None:
-    """Mark message as sent in Redis for idempotency."""
     key = idempotency_key(message_id)
     await cache_set(key, wa_message_id, ttl=TTL.IDEMPOTENCY, serialize=False)
 
@@ -217,7 +177,6 @@ async def mark_as_sent(message_id: str, wa_message_id: str) -> None:
 
 
 def is_uuid(value: str) -> bool:
-    """Check if string is a valid UUID format."""
     try:
         UUID(value)
         return True
@@ -233,23 +192,8 @@ async def resolve_media_source(
 ) -> tuple[Optional[str], Optional[str], Optional[str]]:
     """
     Resolve media source for WhatsApp API.
-
-    If media_id is an internal UUID, look up the media_files table and
-    generate a SAS URL for Azure Blob Storage access.
-
-    Args:
-        session: Database session
-        media_id: Either internal UUID, Meta media ID, or None
-        media_url: Direct URL if provided
-        workspace_id: Workspace UUID for validation
-
-    Returns:
-        Tuple of (resolved_url, resolved_meta_id, error_message)
-        - On URL: (url, None, None)
-        - On Meta ID: (None, meta_id, None)
-        - On error: (None, None, error_message)
+    If media_id is an internal UUID, generate a SAS URL.
     """
-    # If URL provided directly, use it as-is
     if media_url:
         log_event(
             "media_resolved",
@@ -259,24 +203,16 @@ async def resolve_media_source(
         )
         return (media_url, None, None)
 
-    # If no media_id, error
     if not media_id:
         return (None, None, "No media source provided (need media_url or media_id)")
 
-    # Check if it's an internal UUID (vs Meta's numeric media ID)
     if is_uuid(media_id):
-        # Look up in database
         media_file = await session.get(MediaFile, UUID(media_id))
 
         if not media_file:
-            log_event(
-                "media_not_found",
-                level="warning",
-                media_id=media_id,
-            )
+            log_event("media_not_found", level="warning", media_id=media_id)
             return (None, None, f"Media file not found: {media_id}")
 
-        # Validate workspace ownership
         if str(media_file.workspace_id) != workspace_id:
             log_event(
                 "media_workspace_mismatch",
@@ -286,11 +222,9 @@ async def resolve_media_source(
             )
             return (None, None, "Media file belongs to different workspace")
 
-        # Check storage URL exists
         if not media_file.storage_url:
             return (None, None, "Media file has no storage URL (not uploaded yet)")
 
-        # Extract blob name and generate SAS URL
         blob_name = extract_blob_name_from_url(media_file.storage_url)
         if not blob_name:
             log_event(
@@ -301,7 +235,6 @@ async def resolve_media_source(
             )
             return (None, None, "Failed to parse storage URL for SAS generation")
 
-        # Generate SAS URL with 60-minute expiry (enough for WhatsApp to fetch)
         sas_url = generate_sas_url(blob_name, expiry_minutes=60)
         if not sas_url:
             return (None, None, "Failed to generate SAS URL for media access")
@@ -315,7 +248,6 @@ async def resolve_media_source(
         )
         return (sas_url, None, None)
 
-    # Not a UUID - assume it's a Meta media ID (numeric string)
     log_event(
         "media_resolved",
         level="debug",
@@ -335,11 +267,6 @@ async def get_phone_credentials(
     phone_number_id_meta: str,
     workspace_id: str,
 ) -> Optional[PhoneNumber]:
-    """
-    Get phone number record with access token.
-
-    Validates workspace ownership to prevent cross-tenant access.
-    """
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.phone_number_id == phone_number_id_meta,
@@ -359,12 +286,7 @@ async def create_or_update_message(
     error_code: Optional[str] = None,
     error_message: Optional[str] = None,
 ) -> Message:
-    """
-    Create or update message record in database.
-
-    Uses message_id as idempotency key to find existing record.
-    """
-    # Try to find existing message
+    """Create or update message record in database."""
     result = await session.execute(
         select(Message).where(
             Message.workspace_id == UUID(msg.workspace_id),
@@ -374,7 +296,6 @@ async def create_or_update_message(
     message = result.scalar_one_or_none()
 
     if message:
-        # Update existing
         message.status = status
         if wa_message_id:
             message.wa_message_id = wa_message_id
@@ -383,13 +304,9 @@ async def create_or_update_message(
         if error_message:
             message.error_message = error_message
     else:
-        # Need conversation for new message
         conversation = await get_or_create_conversation(session, msg, phone_number)
-
-        # Build content based on message type
         content = build_message_content(msg)
 
-        # Create new message
         message = Message(
             id=UUID(msg.message_id),
             workspace_id=UUID(msg.workspace_id),
@@ -417,12 +334,8 @@ async def get_or_create_conversation(
     msg: OutboundMessage,
     phone_number: PhoneNumber,
 ) -> Conversation:
-    """Get or create conversation for outbound message."""
-
-    # First, get or create contact
     contact = await get_or_create_contact(session, msg, phone_number)
 
-    # Find existing conversation
     result = await session.execute(
         select(Conversation).where(
             Conversation.workspace_id == UUID(msg.workspace_id),
@@ -433,11 +346,9 @@ async def get_or_create_conversation(
     conversation = result.scalar_one_or_none()
 
     if conversation:
-        # Update last message time
         conversation.last_message_at = utc_now()
         return conversation
 
-    # Create new conversation
     now = utc_now()
     conversation = Conversation(
         workspace_id=UUID(msg.workspace_id),
@@ -459,9 +370,6 @@ async def get_or_create_contact(
     msg: OutboundMessage,
     phone_number: PhoneNumber,
 ) -> Contact:
-    """Get or create contact for the recipient."""
-
-    # Normalize phone number to wa_id format
     wa_id = msg.to_number.lstrip("+")
 
     result = await session.execute(
@@ -476,12 +384,11 @@ async def get_or_create_contact(
     if contact:
         return contact
 
-    # Create new contact
     contact = Contact(
         workspace_id=UUID(msg.workspace_id),
         wa_id=wa_id,
         phone_number=msg.to_number,
-        opted_in=False,  # Outbound-initiated, not opted in yet
+        opted_in=False,
     )
     session.add(contact)
     await session.flush()
@@ -489,18 +396,16 @@ async def get_or_create_contact(
     log_event(
         "contact_created_outbound",
         workspace_id=msg.workspace_id,
-        # Don't log phone number for PII
     )
 
     return contact
 
 
 def get_message_type_for_db(msg: OutboundMessage) -> str:
-    """Map outbound message type to DB message type."""
     type_map = {
         "text_message": "text",
         "template_message": "template",
-        "media_message": "image",  # Will be overridden below
+        "media_message": "image",
         "interactive_buttons": "interactive",
         "interactive_list": "interactive",
         "location_message": "location",
@@ -515,7 +420,6 @@ def get_message_type_for_db(msg: OutboundMessage) -> str:
 
 
 def build_message_content(msg: OutboundMessage) -> Dict[str, Any]:
-    """Build JSON content for message record."""
     if isinstance(msg, TextMessage):
         return {"type": "text", "text": msg.text, "preview_url": msg.preview_url}
 
@@ -589,9 +493,6 @@ async def send_message(
     client: OutboundClient,
     msg: OutboundMessage,
 ) -> SendResult:
-    """
-    Send message using OutboundClient based on message type.
-    """
     if isinstance(msg, TextMessage):
         return await client.send_text_message(
             to_number=msg.to_number,
@@ -674,7 +575,6 @@ async def send_message(
     if isinstance(msg, MarkAsReadMessage):
         return await client.mark_as_read(msg.target_message_id)
 
-    # Unknown type
     return SendResult(
         error={"code": -1, "message": f"Unknown message type: {msg.type}"}
     )
@@ -692,7 +592,6 @@ async def process_outbound_message(
 ) -> bool:
     """
     Process a single outbound message from the queue.
-
     Returns True if processed successfully or permanently failed.
     Returns False if should be retried.
     """
@@ -700,7 +599,6 @@ async def process_outbound_message(
     message_id = data.get("message_id", "unknown")
 
     try:
-        # 1. Parse and validate message schema
         try:
             msg = parse_outbound_message(data)
         except (ValidationError, ValueError) as e:
@@ -710,21 +608,18 @@ async def process_outbound_message(
                 message_id=message_id,
                 error=str(e),
             )
-            # Permanent failure - bad schema
             await move_to_dlq(Queue.OUTBOUND_MESSAGES, data, f"Validation error: {e}")
             worker_state.messages_failed += 1
             return True
 
-        # 2. Check idempotency
         if await check_already_sent(msg.message_id):
             log_event(
                 "outbound_duplicate_skipped",
                 level="debug",
                 message_id=msg.message_id,
             )
-            return True  # Already sent, skip
+            return True
 
-        # 3. Get phone credentials with DB session
         async with async_session() as session:
             phone_number = await get_phone_credentials(
                 session, msg.phone_number_id, msg.workspace_id
@@ -734,7 +629,7 @@ async def process_outbound_message(
                 log_event(
                     "outbound_phone_not_found",
                     level="error",
-                    message_id=msg.message_id,
+                    message_id=message_id,
                     phone_number_id=msg.phone_number_id,
                 )
                 await move_to_dlq(
@@ -745,7 +640,6 @@ async def process_outbound_message(
                 worker_state.messages_failed += 1
                 return True
 
-            # 4. Rate limiting
             acquired = await rate_limiter.wait_for_token(
                 msg.phone_number_id,
                 timeout=30.0,
@@ -754,11 +648,10 @@ async def process_outbound_message(
                 log_event(
                     "outbound_rate_limit_timeout",
                     level="warning",
-                    message_id=msg.message_id,
+                    message_id=message_id,
                 )
-                return False  # Retry later
+                return False
 
-            # 5. Update status to "sending"
             await create_or_update_message(
                 session,
                 msg,
@@ -767,7 +660,6 @@ async def process_outbound_message(
             )
             await session.commit()
 
-            # 5.5. Resolve media source for MediaMessage (UUID → SAS URL)
             resolved_media_url = None
             resolved_media_id = None
             if isinstance(msg, MediaMessage):
@@ -780,7 +672,7 @@ async def process_outbound_message(
                     log_event(
                         "outbound_media_resolution_failed",
                         level="error",
-                        message_id=msg.message_id,
+                        message_id=message_id,
                         error=media_error,
                     )
                     await move_to_dlq(
@@ -791,117 +683,74 @@ async def process_outbound_message(
                     worker_state.messages_failed += 1
                     return True
 
-            # 6. Send via WhatsApp API
+                if resolved_media_url:
+                    msg.media_url = resolved_media_url
+                if resolved_media_id:
+                    msg.media_id = resolved_media_id
+
             client = OutboundClient(
                 access_token=phone_number.access_token,
                 phone_number_id=msg.phone_number_id,
             )
 
-            # For MediaMessage, use resolved URLs
-            if isinstance(msg, MediaMessage):
-                result = await client.send_media_message(
-                    to_number=msg.to_number,
-                    media_type=msg.media_type,
-                    media_url=resolved_media_url,
-                    media_id=resolved_media_id,
-                    caption=msg.caption,
-                    filename=msg.filename,
-                    reply_to_message_id=msg.reply_to_message_id,
+            result = await send_message(client, msg)
+
+            if result.success:
+                status = MessageStatus.SENT.value
+                wa_message_id = result.message_id
+                error_code = None
+                error_message = None
+
+                await mark_as_sent(msg.message_id, wa_message_id)
+                worker_state.messages_sent += 1
+
+                log_event(
+                    "outbound_message_sent",
+                    message_id=msg.message_id,
+                    wa_message_id=wa_message_id,
+                    type=msg.type,
                 )
             else:
-                result = await send_message(client, msg)
+                status = MessageStatus.FAILED.value
+                wa_message_id = None
+                error_code = str(result.error.get("code") or "")
+                error_message = result.error.get("message") or "Unknown error"
 
-            # 7. Handle result
-            if result.success:
-                # Success!
-                await mark_as_sent(msg.message_id, result.wa_message_id)
-
-                await create_or_update_message(
-                    session,
-                    msg,
-                    phone_number,
-                    status=MessageStatus.SENT.value,
-                    wa_message_id=result.wa_message_id,
-                )
-                await session.commit()
-
-                elapsed_ms = (time.monotonic() - start_time) * 1000
-                worker_state.messages_sent += 1
-                worker_state.total_latency_ms += elapsed_ms
-
+                worker_state.messages_failed += 1
                 log_event(
-                    "outbound_sent",
+                    "outbound_message_failed",
+                    level="error",
                     message_id=msg.message_id,
-                    wa_message_id=result.wa_message_id,
-                    latency_ms=round(elapsed_ms, 2),
+                    error=error_message,
                 )
-                return True
 
-            # Failed
-            error = result.error
-
-            if error.is_retryable:
-                # Transient error - retry
-                print(f"[OUTBOUND] ↻ Will retry (transient error)")
-                log_event(
-                    "outbound_transient_error",
-                    level="warning",
-                    message_id=msg.message_id,
-                    error_code=error.code,
-                    error_message=error.message,
-                )
-                worker_state.messages_retried += 1
-                return False  # Will be retried
-
-            # Permanent failure
             await create_or_update_message(
                 session,
                 msg,
                 phone_number,
-                status=MessageStatus.FAILED.value,
-                error_code=str(error.code),
-                error_message=error.message,
+                status=status,
+                wa_message_id=wa_message_id,
+                error_code=error_code,
+                error_message=error_message,
             )
             await session.commit()
 
-            await move_to_dlq(
-                Queue.OUTBOUND_MESSAGES,
-                data,
-                f"API error {error.code}: {error.message}",
-            )
-            worker_state.messages_failed += 1
-
-            log_event(
-                "outbound_permanent_error",
-                level="error",
-                message_id=msg.message_id,
-                error_code=error.code,
-                error_message=error.message,
-            )
+            worker_state.total_latency_ms += (time.monotonic() - start_time) * 1000
             return True
 
     except Exception as e:
-        log_exception("outbound_processing_error", e, message_id=message_id)
-        return False  # Retry on unexpected errors
+        log_exception("outbound_worker_error", e, message_id=message_id)
+        return False
 
 
-# =============================================================================
-# WORKER LOOP
-# =============================================================================
+async def worker_loop(worker_id: int = 0) -> None:
+    """Main worker loop handling Redis queue."""
+    log_event("outbound_worker_started", worker_id=worker_id)
+    config = WorkerConfig()
 
-
-async def worker_loop(
-    worker_id: int = 0,
-    config: Optional[WorkerConfig] = None,
-) -> None:
-    """
-    Main worker loop.
-
-    Continuously pulls messages from the queue and processes them.
-    """
-    config = config or WorkerConfig()
-
+    await redis_startup()
     rate_limiter = TokenBucketRateLimiter(
+        rate=config.rate_limit_per_phone,
         capacity=config.rate_limit_per_phone,
         refill_rate=config.rate_limit_per_phone,
         global_capacity=config.rate_limit_global,

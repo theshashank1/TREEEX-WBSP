@@ -1,3 +1,9 @@
+"""
+Main Application Entry Point - server/main.py
+
+Configures FastAPI application, middleware, lifecycle events, and routers.
+"""
+
 from contextlib import asynccontextmanager
 from datetime import datetime
 
@@ -27,7 +33,6 @@ from server.core.supabase import get_supabase_client
 async def lifespan(app: FastAPI):
     # --- Startup ---
     await redis_client.startup()
-    # init_db()
     app.state.supabase = get_supabase_client()
 
     # Initialize Supabase Client and store in app.state
@@ -37,7 +42,6 @@ async def lifespan(app: FastAPI):
     yield
 
     # --- Shutdown ---
-
     await redis_client.shutdown()
 
 
@@ -48,10 +52,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware for frontend integration
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],  # PROD: Restrict this
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,10 +69,7 @@ app.add_middleware(
 
 @app.get("/health", tags=["Health"])
 async def health_check():
-    """
-    Health check endpoint for container orchestration.
-    Returns 200 if the service is running.
-    """
+    """Health check endpoint. Returns 200 if running."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
@@ -78,11 +79,7 @@ async def health_check():
 
 @app.get("/ready", tags=["Health"])
 async def readiness_check():
-    """
-    Readiness check endpoint for load balancers.
-    Returns 200 if the service is ready to accept traffic.
-    """
-    # Could add additional checks here (DB connection, Redis, etc.)
+    """Readiness check endpoint. Returns 200 if ready."""
     return {"status": "ready"}
 
 

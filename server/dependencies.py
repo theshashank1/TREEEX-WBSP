@@ -1,3 +1,5 @@
+# server/dependencies.py
+
 # We use 'Any' here to avoid hard dependency on supabase-py if not installed locally during dev,
 # but normally you would import: from supabase import Client
 from typing import Any, Optional
@@ -14,10 +16,7 @@ from server.models.base import MemberRole, MemberStatus
 
 
 def get_supabase_client(request: Request) -> Any:
-    """
-    Dependency to get the Supabase client from app state.
-    Initialized in main.py lifespan.
-    """
+    """Get initialized Supabase client from app state."""
     if not hasattr(request.app.state, "supabase"):
         raise RuntimeError("Supabase client is not initialized in app.state")
     return request.app.state.supabase
@@ -35,16 +34,8 @@ async def get_current_user(
     """
     Extract and verify user from Supabase JWT.
 
-    Args:
-        request: FastAPI request
-        credentials: Bearer token credentials
-        session: Database session
-
-    Returns:
-        User model instance
-
-    Raises:
-        HTTPException: 401 if token is invalid or user not found
+    Verifies token with Supabase and fetches user from local DB.
+    Raises 401 if invalid or inactive.
     """
     supabase = get_supabase_client(request)
 
@@ -56,7 +47,10 @@ async def get_current_user(
         if not response or not response.user:
             raise HTTPException(
                 status_code=401,
-                detail={"code": "INVALID_TOKEN", "message": "Invalid or expired token."},
+                detail={
+                    "code": "INVALID_TOKEN",
+                    "message": "Invalid or expired token.",
+                },
             )
 
         user_id = response.user.id
@@ -68,13 +62,19 @@ async def get_current_user(
         if not user:
             raise HTTPException(
                 status_code=401,
-                detail={"code": "USER_NOT_FOUND", "message": "User not found in database."},
+                detail={
+                    "code": "USER_NOT_FOUND",
+                    "message": "User not found in database.",
+                },
             )
 
         if not user.is_active:
             raise HTTPException(
                 status_code=401,
-                detail={"code": "USER_INACTIVE", "message": "User account is inactive."},
+                detail={
+                    "code": "USER_INACTIVE",
+                    "message": "User account is inactive.",
+                },
             )
 
         return user
@@ -96,16 +96,7 @@ async def get_workspace_member(
     """
     Verify user is a member of the specified workspace.
 
-    Args:
-        workspace_id: Workspace UUID
-        current_user: Current authenticated user
-        session: Database session
-
-    Returns:
-        WorkspaceMember model instance
-
-    Raises:
-        HTTPException: 403 if user is not a workspace member
+    Raises 403 if access denied.
     """
     result = await session.execute(
         select(WorkspaceMember).where(
@@ -136,16 +127,7 @@ async def require_workspace_admin(
     """
     Verify user has OWNER or ADMIN role in the specified workspace.
 
-    Args:
-        workspace_id: Workspace UUID
-        current_user: Current authenticated user
-        session: Database session
-
-    Returns:
-        WorkspaceMember model instance
-
-    Raises:
-        HTTPException: 403 if user doesn't have admin privileges
+    Raises 403 if permission denied.
     """
     member = await get_workspace_member(workspace_id, current_user, session)
 
@@ -162,10 +144,7 @@ async def require_workspace_admin(
 
 
 class WorkspaceMemberDep:
-    """
-    Callable dependency for workspace member verification.
-    Used when workspace_id comes from path/query parameter.
-    """
+    """Callable dependency for workspace member verification."""
 
     def __init__(self, require_admin: bool = False):
         self.require_admin = require_admin
