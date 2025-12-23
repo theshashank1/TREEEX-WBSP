@@ -1,11 +1,11 @@
 """
 Template Management API endpoints for WhatsApp Business.
 """
+
 from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,60 +15,18 @@ from server.dependencies import User, get_current_user, get_workspace_member
 from server.models.base import TemplateCategory, TemplateStatus
 from server.models.contacts import PhoneNumber
 from server.models.marketing import Template
+from server.schemas.templates import (
+    TemplateCreate,
+    TemplateListResponse,
+    TemplateResponse,
+    TemplateUpdate,
+)
 
 router = APIRouter(prefix="/templates", tags=["Templates"])
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
-
-
-# ============================================================================
-# SCHEMAS
-# ============================================================================
-
-
-class TemplateCreate(BaseModel):
-    """Schema for creating a new template"""
-    workspace_id: UUID
-    phone_number_id: UUID
-    name: str = Field(..., min_length=1, max_length=255, description="Template name (lowercase, no spaces)")
-    category: str = Field(..., description="Template category: MARKETING, UTILITY, or AUTHENTICATION")
-    language: str = Field(default="en", description="Language code (e.g., 'en', 'es', 'fr')")
-    components: dict = Field(..., description="Template components (header, body, footer, buttons)")
-
-
-class TemplateUpdate(BaseModel):
-    """Schema for updating template"""
-    components: Optional[dict] = None
-    status: Optional[str] = None
-
-
-class TemplateResponse(BaseModel):
-    """Schema for template response"""
-    id: UUID
-    workspace_id: UUID
-    phone_number_id: UUID
-    name: str
-    category: str
-    language: str
-    status: str
-    meta_template_id: Optional[str]
-    components: dict
-    rejection_reason: Optional[str]
-    created_at: str
-    updated_at: str
-
-    class Config:
-        from_attributes = True
-
-
-class TemplateListResponse(BaseModel):
-    """Schema for paginated template list"""
-    data: list[TemplateResponse]
-    total: int
-    limit: int
-    offset: int
 
 
 # ============================================================================
@@ -84,10 +42,10 @@ async def create_template(
 ):
     """
     Create a new WhatsApp message template.
-    
+
     Templates must be approved by Meta before they can be used.
     The template will be created with PENDING status.
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -165,8 +123,8 @@ async def create_template(
         meta_template_id=template.meta_template_id,
         components=template.components,
         rejection_reason=template.rejection_reason,
-        created_at=template.created_at.isoformat(),
-        updated_at=template.updated_at.isoformat(),
+        created_at=template.created_at,
+        updated_at=template.updated_at,
     )
 
 
@@ -183,7 +141,7 @@ async def list_templates(
 ):
     """
     List templates for a workspace.
-    
+
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -227,8 +185,8 @@ async def list_templates(
                 meta_template_id=t.meta_template_id,
                 components=t.components,
                 rejection_reason=t.rejection_reason,
-                created_at=t.created_at.isoformat(),
-                updated_at=t.updated_at.isoformat(),
+                created_at=t.created_at,
+                updated_at=t.updated_at,
             )
             for t in templates
         ],
@@ -246,7 +204,7 @@ async def get_template(
 ):
     """
     Get template details.
-    
+
     Requires workspace membership.
     """
     result = await session.execute(
@@ -274,8 +232,8 @@ async def get_template(
         meta_template_id=template.meta_template_id,
         components=template.components,
         rejection_reason=template.rejection_reason,
-        created_at=template.created_at.isoformat(),
-        updated_at=template.updated_at.isoformat(),
+        created_at=template.created_at,
+        updated_at=template.updated_at,
     )
 
 
@@ -288,10 +246,10 @@ async def update_template(
 ):
     """
     Update template.
-    
+
     Only components and status can be updated.
     Status changes are typically managed by Meta webhook updates.
-    
+
     Requires workspace membership.
     """
     result = await session.execute(
@@ -341,8 +299,8 @@ async def update_template(
         meta_template_id=template.meta_template_id,
         components=template.components,
         rejection_reason=template.rejection_reason,
-        created_at=template.created_at.isoformat(),
-        updated_at=template.updated_at.isoformat(),
+        created_at=template.created_at,
+        updated_at=template.updated_at,
     )
 
 
@@ -354,7 +312,7 @@ async def delete_template(
 ):
     """
     Soft delete a template.
-    
+
     Requires workspace membership.
     """
     result = await session.execute(
