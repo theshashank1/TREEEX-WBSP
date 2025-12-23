@@ -44,6 +44,12 @@ services:
     env_file: .env.production
     restart: always
 
+  worker-campaign:
+    image: treeex-wbsp:latest
+    command: python -m server.workers.campaign
+    env_file: .env.production
+    restart: always
+
   worker-webhook:
     image: treeex-wbsp:latest
     command: python -m server.workers.webhook

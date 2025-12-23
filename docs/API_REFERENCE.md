@@ -570,16 +570,17 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 ---
 
 
-### Start Campaign
+---
+
+
+### Execute Campaign
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/campaigns/{campaign_id}/start</code>
+  <code>/api/campaigns/{campaign_id}/execute</code>
 </div>
 
-Start a campaign.
-
-Changes status from DRAFT/SCHEDULED to SENDING.
+Start campaign execution. Queues the campaign for processing.
 
 :::info Authentication Required
 
@@ -595,24 +596,35 @@ This endpoint requires authentication.
 |------|------|----------|-------------|
 | `campaign_id` | `string (uuid)` | ✅ |  |
 
+#### Responses
 
-#### Example Request
+**200** - Successful Response
 
-```bash
-curl -X POST 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start' \
-  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
-```
+Returns: [`CampaignResponse`](#campaignresponse)
 
-```javascript
-const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
-  }
-});
 
-const data = await response.json();
-```
+### Pause Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns/{campaign_id}/pause</code>
+</div>
+
+Pause a running campaign. Changes status from RUNNING to SCHEDULED.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
 
 #### Responses
 
@@ -621,10 +633,70 @@ const data = await response.json();
 Returns: [`CampaignResponse`](#campaignresponse)
 
 
+### Cancel Campaign
 
-**422** - Validation Error
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns/{campaign_id}/cancel</code>
+</div>
 
-Returns: [`HTTPValidationError`](#httpvalidationerror)
+Cancel a campaign. Irreversible.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+### Add Contacts
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/campaigns/{campaign_id}/contacts</code>
+</div>
+
+Add contacts to a draft campaign.
+
+:::info Authentication Required
+
+This endpoint requires authentication.
+
+:::
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Request Body (`application/json`)
+
+```json
+{
+  "contacts": ["string"]
+}
+```
+
+#### Responses
+
+**200** - Successful Response
 
 
 

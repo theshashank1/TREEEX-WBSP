@@ -69,6 +69,7 @@ For local development, you need to run three components: the API server (with ng
 ### Terminal 1: API Server + ngrok
 
 This custom script starts the FastAPI server and automatically opens an ngrok tunnel pointing to it.
+Using `run.py` enables **auto-reload** while keeping your ngrok URL stable!
 
 ```bash
 python run.py
@@ -82,6 +83,22 @@ Handles message sending queue.
 
 ```bash
 python -m server.workers.outbound
+```
+
+### Terminal 3: Campaign Worker
+
+Handles marketing campaign execution.
+
+```bash
+python -m server.workers.campaign
+```
+
+### Terminal 4: Webhook Worker
+
+Handles incoming message processing.
+
+```bash
+python -m server.workers.webhook
 ```
 
 ### Terminal 3: Webhook Worker

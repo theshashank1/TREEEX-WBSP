@@ -96,11 +96,12 @@ curl -X POST http://localhost:8000/api/messages/send/media \
 
 ## 📢 Campaigns
 
- campaigns allow you to send messages to thousands of contacts efficiently.
+Broadcasts allow you to send messages to thousands of contacts efficiently.
 
 ### 1. Create Campaign
 ```bash
 curl -X POST http://localhost:8000/api/campaigns/ \
+  -H "Authorization: Bearer <token>" \
   -d '{
     "name": "Summer Sale",
     "template_name": "summer_promo",
@@ -108,12 +109,35 @@ curl -X POST http://localhost:8000/api/campaigns/ \
   }'
 ```
 
-### 2. Add Recipients
-You can upload a CSV of contacts.
-
-### 3. Start Campaign
+### 2. Add Contacts
+Upload a list of contacts to the campaign.
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{id}/start
+curl -X POST http://localhost:8000/api/campaigns/{id}/contacts \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "contacts": ["+1234567890", "+9876543210"]
+  }'
+```
+
+### 3. Execute Campaign
+Starts the campaign. Status moves from `DRAFT` -> `RUNNING`.
+```bash
+curl -X POST http://localhost:8000/api/campaigns/{id}/execute \
+  -H "Authorization: Bearer <token>"
+```
+
+### 4. Pause Campaign
+Pause a running campaign (Status -> `SCHEDULED`).
+```bash
+curl -X POST http://localhost:8000/api/campaigns/{id}/pause \
+  -H "Authorization: Bearer <token>"
+```
+
+### 5. Cancel Campaign
+Permanently cancel a campaign (Status -> `CANCELLED`).
+```bash
+curl -X POST http://localhost:8000/api/campaigns/{id}/cancel \
+  -H "Authorization: Bearer <token>"
 ```
 
 ---
