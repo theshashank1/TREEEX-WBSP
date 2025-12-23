@@ -91,9 +91,7 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             return False
 
         channel_result = await session.execute(
-            select(Channel).where(
-                Channel.meta_phone_number_id == phone_number_id_meta
-            )
+            select(Channel).where(Channel.meta_phone_number_id == phone_number_id_meta)
         )
         channel = channel_result.scalar_one_or_none()
 
@@ -289,9 +287,7 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             message.error_message = error.get("message") or error.get("title")
 
         channel_result = await session.execute(
-            select(Channel).where(
-                Channel.meta_phone_number_id == phone_number_id_meta
-            )
+            select(Channel).where(Channel.meta_phone_number_id == phone_number_id_meta)
         )
         channel = channel_result.scalar_one_or_none()
 
@@ -357,9 +353,7 @@ async def handle_error_event(session: AsyncSession, event: Dict[str, Any]) -> bo
         )
 
         channel_result = await session.execute(
-            select(Channel).where(
-                Channel.meta_phone_number_id == phone_number_id_meta
-            )
+            select(Channel).where(Channel.meta_phone_number_id == phone_number_id_meta)
         )
         channel = channel_result.scalar_one_or_none()
 
