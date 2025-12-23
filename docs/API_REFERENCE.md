@@ -2761,6 +2761,186 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 ---
 
 
+## Media
+
+### Upload Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/media</code>
+</div>
+
+Upload a media file to Azure Blob Storage. Supports images, videos, audio, and documents.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+**Form Data**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `file` | `binary` | ✅ | File to upload |
+
+#### File Size Limits
+
+- **Images**: 16 MB (JPEG, PNG, GIF, BMP, WebP)
+- **Videos**: 100 MB (MP4, 3GPP, QuickTime)
+- **Audio**: 16 MB (AAC, MP4, MPEG, AMR, OGG)
+- **Documents**: 100 MB (PDF, Word, Excel, PowerPoint, Text)
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MediaResponse`](#mediaresponse)
+
+---
+
+### List Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/media</code>
+</div>
+
+List media files for a workspace.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `type` | `string` | ❌ | Filter by media type (image, video, audio, document) |
+| `limit` | `integer` | ❌ | Results per page (default: `20`) |
+| `offset` | `integer` | ❌ | Offset for pagination (default: `0`) |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaListResponse`](#medialistresponse)
+
+---
+
+### Get Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/media/{media_id}</code>
+</div>
+
+Get media file details.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `media_id` | `string (uuid)` | ✅ | Media file ID |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaResponse`](#mediaresponse)
+
+---
+
+### Download Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/media/{media_id}/download</code>
+</div>
+
+Download a media file via redirect to Azure SAS URL (60 min expiry).
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `media_id` | `string (uuid)` | ✅ | Media file ID |
+
+#### Responses
+
+**307** - Redirect to download URL
+
+---
+
+### Get Media URL
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/media/{media_id}/url</code>
+</div>
+
+Get a temporary signed URL for a media file.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `media_id` | `string (uuid)` | ✅ | Media file ID |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `expiry_minutes` | `integer` | ❌ | URL validity in minutes (5-1440, default: 60) |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`MediaURLResponse`](#mediaurlresponse)
+
+---
+
+### Delete Media
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/workspaces/{workspace_id}/media/{media_id}</code>
+</div>
+
+Soft delete a media file.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+| `media_id` | `string (uuid)` | ✅ | Media file ID |
+
+#### Responses
+
+**204** - Successful Response
+
+---
+
+
 ## Campaigns
 
 ### Create Campaign

@@ -18,7 +18,7 @@ from server.dependencies import User, get_current_user, get_workspace_member
 from server.models.messaging import MediaFile
 from server.services import azure_storage
 
-router = APIRouter(prefix="/media", tags=["Media"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/media", tags=["Media"])
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -143,16 +143,15 @@ def format_size(size_bytes: int) -> str:
 
 @router.post("", response_model=MediaResponse, status_code=201)
 async def upload_media(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Form(..., description="Workspace ID"),
     file: UploadFile = File(..., description="File to upload"),
 ):
     """
     Upload a media file to Azure Blob Storage.
 
     Accepts multipart/form-data with:
-    - workspace_id: UUID of the workspace
     - file: The file to upload
 
     File size limits:
@@ -276,9 +275,9 @@ async def upload_media(
 
 @router.get("", response_model=MediaListResponse)
 async def list_media(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID to filter by"),
     type: Optional[str] = Query(None, description="Filter by media type"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -320,6 +319,7 @@ async def list_media(
 
 @router.get("/{media_id}", response_model=MediaResponse)
 async def get_media(
+    workspace_id: UUID,
     media_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -332,6 +332,7 @@ async def get_media(
     result = await session.execute(
         select(MediaFile).where(
             MediaFile.id == media_id,
+            MediaFile.workspace_id == workspace_id,
             MediaFile.deleted_at.is_(None),
         )
     )
@@ -341,13 +342,14 @@ async def get_media(
         raise HTTPException(status_code=404, detail="Media not found")
 
     # Verify workspace membership
-    await get_workspace_member(media.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     return media
 
 
 @router.get("/{media_id}/download")
 async def download_media(
+    workspace_id: UUID,
     media_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -363,6 +365,7 @@ async def download_media(
     result = await session.execute(
         select(MediaFile).where(
             MediaFile.id == media_id,
+            MediaFile.workspace_id == workspace_id,
             MediaFile.deleted_at.is_(None),
         )
     )
@@ -372,7 +375,7 @@ async def download_media(
         raise HTTPException(status_code=404, detail="Media not found")
 
     # Verify workspace membership
-    await get_workspace_member(media.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if not media.storage_url:
         raise HTTPException(
@@ -423,6 +426,7 @@ async def download_media(
 
 @router.get("/{media_id}/url", response_model=MediaURLResponse)
 async def get_media_url(
+    workspace_id: UUID,
     media_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -441,6 +445,7 @@ async def get_media_url(
     result = await session.execute(
         select(MediaFile).where(
             MediaFile.id == media_id,
+            MediaFile.workspace_id == workspace_id,
             MediaFile.deleted_at.is_(None),
         )
     )
@@ -450,7 +455,7 @@ async def get_media_url(
         raise HTTPException(status_code=404, detail="Media not found")
 
     # Verify workspace membership
-    await get_workspace_member(media.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if not media.storage_url:
         raise HTTPException(
@@ -508,6 +513,7 @@ async def get_media_url(
 
 @router.delete("/{media_id}", status_code=204)
 async def delete_media(
+    workspace_id: UUID,
     media_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -520,6 +526,7 @@ async def delete_media(
     result = await session.execute(
         select(MediaFile).where(
             MediaFile.id == media_id,
+            MediaFile.workspace_id == workspace_id,
             MediaFile.deleted_at.is_(None),
         )
     )
@@ -529,7 +536,7 @@ async def delete_media(
         raise HTTPException(status_code=404, detail="Media not found")
 
     # Verify workspace membership
-    await get_workspace_member(media.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     # Soft delete
     media.soft_delete()
