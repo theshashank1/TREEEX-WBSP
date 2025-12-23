@@ -163,6 +163,28 @@ def generate_mdx(spec):
     mdx.append("Most endpoints require authentication using Bearer tokens.\n")
     mdx.append("```http\nAuthorization: Bearer YOUR_ACCESS_TOKEN\n```\n")
 
+    # Group by tags first to build TOC
+    paths = spec.get("paths", {})
+    tags_map = {}
+
+    for path, methods in paths.items():
+        for method, details in methods.items():
+            tags = details.get("tags", ["Uncategorized"])
+            for tag in tags:
+                if tag not in tags_map:
+                    tags_map[tag] = []
+                tags_map[tag].append(
+                    {"path": path, "method": method.upper(), "details": details}
+                )
+
+    sorted_tags = sorted(tags_map.keys())
+
+    # Generate Table of Contents
+    mdx.append("## Table of Contents\n")
+    for tag in sorted_tags:
+        mdx.append(f"- [{tag}](#{tag.lower().replace(' ', '-')})")
+    mdx.append("- [Data Schemas](#data-schemas)\n")
+
     # Group by tags
     paths = spec.get("paths", {})
     tags_map = {}
@@ -301,10 +323,7 @@ def generate_mdx(spec):
             mdx.append("#### Example Request\n")
 
             # Generate curl example
-            curl_example = f"curl -X {method} 'http://localhost:8000{path}'"
-
-            if security:
-                curl_example += " \\\n  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+            curl_example = f"curl -X {method}"
 
             # Add path params example
             example_path = path
@@ -314,36 +333,26 @@ def generate_mdx(spec):
                 example_val = get_example_value(schema, param_name).strip('"')
                 example_path = example_path.replace(f"{{{param_name}}}", example_val)
 
-            curl_example = f"curl -X {method} 'http://localhost:8000{example_path}'"
+            # Start building curl command with proper line breaks
+            curl_parts = [f"curl -X {method} 'http://localhost:8000{example_path}'"]
 
             if security:
-                curl_example += " \\\n  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'"
+                curl_parts.append("  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'")
 
             # Add query params
             query_params = [
                 p for p in params if p.get("in") == "query" and p.get("required")
             ]
-            if query_params:
-                query_parts = []
-                for p in query_params[:2]:  # Limit to 2 for readability
-                    name = p.get("name")
-                    schema = p.get("schema", {})
-                    example_val = get_example_value(schema, name).strip('"')
-                    query_parts.append(f"{name}={example_val}")
-                if query_parts:
-                    curl_example = curl_example.replace(
-                        "'", f"?{'&'.join(query_parts)}'", 1
-                    )
 
             if req_body:
-                curl_example += " \\\n  -H 'Content-Type: application/json'"
+                curl_parts.append("  -H 'Content-Type: application/json'")
                 body_example = generate_request_example(details, components)
                 if body_example and isinstance(body_example, dict):
-                    curl_example += (
-                        " \\\n  -d '"
-                        + json.dumps(body_example, separators=(",", ":"))
-                        + "'"
-                    )
+                    # Format JSON nicely for readability
+                    formatted_json = json.dumps(body_example, indent=2)
+                    curl_parts.append(f"  -d '{formatted_json}'")
+
+            curl_example = " \\\n".join(curl_parts)
 
             mdx.append("```bash")
             mdx.append(curl_example)
@@ -351,10 +360,9 @@ def generate_mdx(spec):
 
             # JavaScript/Fetch example
             mdx.append("```javascript")
-            js_example = (
-                f"const response = await fetch('http://localhost:8000{example_path}"
-            )
 
+            # Build fetch URL
+            fetch_url = f"http://localhost:8000{example_path}"
             if query_params:
                 query_parts = []
                 for p in query_params[:2]:
@@ -363,37 +371,48 @@ def generate_mdx(spec):
                     example_val = get_example_value(schema, name).strip('"')
                     query_parts.append(f"{name}={example_val}")
                 if query_parts:
-                    js_example += f"?{'&'.join(query_parts)}"
+                    fetch_url += f"?{'&'.join(query_parts)}"
 
-            js_example += "', {\n"
-            js_example += f"  method: '{method}',\n"
+            js_lines = [f"const response = await fetch('{fetch_url}', {{"]
+            js_lines.append(f"  method: '{method}',")
 
+            # Build headers
             headers = []
             if security:
-                headers.append("    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'")
+                headers.append("Authorization: 'Bearer YOUR_ACCESS_TOKEN'")
             if req_body:
-                headers.append("    'Content-Type': 'application/json'")
+                headers.append("'Content-Type': 'application/json'")
 
             if headers:
-                js_example += "  headers: {\n"
-                js_example += ",\n".join(headers)
-                js_example += "\n  }"
+                js_lines.append("  headers: {")
+                for i, header in enumerate(headers):
+                    comma = "," if i < len(headers) - 1 else ""
+                    js_lines.append(f"    {header}{comma}")
+                js_lines.append("  }")
 
+            # Add body if needed
             if req_body:
                 body_example = generate_request_example(details, components)
                 if body_example and isinstance(body_example, dict):
                     if headers:
-                        js_example += ",\n"
-                    js_example += (
-                        "  body: JSON.stringify("
-                        + json.dumps(body_example, indent=4).replace("\n", "\n  ")
-                        + ")"
-                    )
+                        js_lines[-1] = js_lines[-1] + ","
+                    js_lines.append("  body: JSON.stringify({")
+                    body_items = list(body_example.items())
+                    for i, (key, val) in enumerate(body_items):
+                        comma = "," if i < len(body_items) - 1 else ""
+                        if isinstance(val, str):
+                            js_lines.append(f'    {key}: "{val}"{comma}')
+                        elif isinstance(val, (int, float, bool)):
+                            js_lines.append(f"    {key}: {str(val).lower()}{comma}")
+                        else:
+                            js_lines.append(f"    {key}: {json.dumps(val)}{comma}")
+                    js_lines.append("  })")
 
-            js_example += "\n});\n\n"
-            js_example += "const data = await response.json();"
+            js_lines.append("});")
+            js_lines.append("")
+            js_lines.append("const data = await response.json();")
 
-            mdx.append(js_example)
+            mdx.append("\n".join(js_lines))
             mdx.append("```\n")
 
             # Responses

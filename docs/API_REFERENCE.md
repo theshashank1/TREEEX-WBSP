@@ -21,6 +21,19 @@ Most endpoints require authentication using Bearer tokens.
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
+## Table of Contents
+
+- [Authentication](#authentication)
+- [Campaigns](#campaigns)
+- [Contacts](#contacts)
+- [Media](#media)
+- [Messages](#messages)
+- [Phone Numbers](#phone-numbers)
+- [Templates](#templates)
+- [Webhooks](#webhooks)
+- [Workspaces](#workspaces)
+- [Data Schemas](#data-schemas)
+
 ## Authentication
 
 ### Signup
@@ -58,7 +71,11 @@ See schema: [`Signup`](#signup)
 ```bash
 curl -X POST 'http://localhost:8000/api/auth/signup' \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"SecurePassword123!","name":"name"}'
+  -d '{
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "name": "name"
+}'
 ```
 
 ```javascript
@@ -68,9 +85,9 @@ const response = await fetch('http://localhost:8000/api/auth/signup', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "email": "user@example.com",
-      "password": "SecurePassword123!",
-      "name": "name"
+    email: "user@example.com",
+    password: "SecurePassword123!",
+    name: "name"
   })
 });
 
@@ -112,7 +129,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 #### Request Body (`application/json`)
 
-See schema: [`Signin`](#signin)
+See schema: [`Signup`](#signup)
 
 **Example:**
 
@@ -120,7 +137,7 @@ See schema: [`Signin`](#signin)
 {
   "email": "user@example.com",
   "password": "SecurePassword123!",
-
+  "name": "name"
 }
 ```
 
@@ -129,7 +146,11 @@ See schema: [`Signin`](#signin)
 ```bash
 curl -X POST 'http://localhost:8000/api/auth/signin' \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"SecurePassword123!"}'
+  -d '{
+  "email": "user@example.com",
+  "password": "SecurePassword123!",
+  "name": "name"
+}'
 ```
 
 ```javascript
@@ -139,8 +160,9 @@ const response = await fetch('http://localhost:8000/api/auth/signin', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "email": "user@example.com",
-      "password": "SecurePassword123!"
+    email: "user@example.com",
+    password: "SecurePassword123!",
+    name: "name"
   })
 });
 
@@ -174,20 +196,12 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/auth/refresh' \
-  -H 'Content-Type: application/json' \
-  -d '{"refresh_token": "your_refresh_token"}'
+curl -X POST 'http://localhost:8000/api/auth/refresh'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/auth/refresh', {
   method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    "refresh_token": "your_refresh_token"
-  })
 });
 
 const data = await response.json();
@@ -218,7 +232,6 @@ curl -X GET 'http://localhost:8000/api/auth/me'
 ```javascript
 const response = await fetch('http://localhost:8000/api/auth/me', {
   method: 'GET',
-
 });
 
 const data = await response.json();
@@ -273,21 +286,26 @@ See schema: [`CampaignCreate`](#campaigncreate)
 curl -X POST 'http://localhost:8000/api/campaigns' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","template_id":"550e8400-e29b-41d4-a716-446655440000","name":"name"}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "template_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/campaigns', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-      "template_id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "name"
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
+    template_id: "550e8400-e29b-41d4-a716-446655440000",
+    name: "name"
   })
 });
 
@@ -343,7 +361,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/campaigns' \
+curl -X GET 'http://localhost:8000/api/campaigns' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -351,7 +369,7 @@ curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:
 const response = await fetch('http://localhost:8000/api/campaigns?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -412,7 +430,7 @@ curl -X GET 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-4466554
 const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -481,19 +499,22 @@ See schema: [`CampaignUpdate`](#campaignupdate)
 curl -X PATCH 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"name":"name","status":"status"}'
+  -d '{
+  "name": "name",
+  "status": "status"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "name": "name",
-      "status": "status"
+    name: "name",
+    status: "status"
   })
 });
 
@@ -554,7 +575,7 @@ curl -X DELETE 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-4466
 const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -576,17 +597,16 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 ---
 
 
----
-
-
-### Execute Campaign
+### Start Campaign
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/campaigns/{campaign_id}/execute</code>
+  <code>/api/campaigns/{campaign_id}/start</code>
 </div>
 
-Start campaign execution. Queues the campaign for processing.
+Start a campaign.
+
+Changes status from DRAFT/SCHEDULED to SENDING.
 
 :::info Authentication Required
 
@@ -602,107 +622,36 @@ This endpoint requires authentication.
 |------|------|----------|-------------|
 | `campaign_id` | `string (uuid)` | ✅ |  |
 
-#### Responses
 
-**200** - Successful Response
+#### Example Request
 
-Returns: [`CampaignResponse`](#campaignresponse)
+```bash
+curl -X POST 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
 
+```javascript
+const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/start', {
+  method: 'POST',
+  headers: {
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
+  }
+});
 
-### Pause Campaign
-
-<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
-  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/campaigns/{campaign_id}/pause</code>
-</div>
-
-Pause a running campaign. Changes status from RUNNING to SCHEDULED.
-
-:::info Authentication Required
-
-This endpoint requires authentication.
-
-:::
-
-#### Parameters
-
-**Path Parameters**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `campaign_id` | `string (uuid)` | ✅ |  |
-
-#### Responses
-
-**200** - Successful Response
-
-Returns: [`CampaignResponse`](#campaignresponse)
-
-
-### Cancel Campaign
-
-<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
-  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/campaigns/{campaign_id}/cancel</code>
-</div>
-
-Cancel a campaign. Irreversible.
-
-:::info Authentication Required
-
-This endpoint requires authentication.
-
-:::
-
-#### Parameters
-
-**Path Parameters**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `campaign_id` | `string (uuid)` | ✅ |  |
-
-#### Responses
-
-**200** - Successful Response
-
-Returns: [`CampaignResponse`](#campaignresponse)
-
-
-### Add Contacts
-
-<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
-  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/campaigns/{campaign_id}/contacts</code>
-</div>
-
-Add contacts to a draft campaign.
-
-:::info Authentication Required
-
-This endpoint requires authentication.
-
-:::
-
-#### Parameters
-
-**Path Parameters**
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `campaign_id` | `string (uuid)` | ✅ |  |
-
-#### Request Body (`application/json`)
-
-```json
-{
-  "contacts": ["string"]
-}
+const data = await response.json();
 ```
 
 #### Responses
 
 **200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+
+
+**422** - Validation Error
+
+Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 
 
@@ -747,7 +696,7 @@ curl -X POST 'http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655
 const response = await fetch('http://localhost:8000/api/campaigns/550e8400-e29b-41d4-a716-446655440000/pause', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -812,21 +761,26 @@ See schema: [`ContactCreate`](#contactcreate)
 curl -X POST 'http://localhost:8000/api/contacts' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number":"phone_number","name":"name","tags":[]}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number": "phone_number",
+  "name": "name",
+  "tags": []
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/contacts', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number": "phone_number",
-      "name": "name",
-      "tags": []
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number: "phone_number",
+    name: "name",
+    tags: []
   })
 });
 
@@ -885,7 +839,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/contacts' \
+curl -X GET 'http://localhost:8000/api/contacts' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -893,7 +847,7 @@ curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:
 const response = await fetch('http://localhost:8000/api/contacts?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -954,7 +908,7 @@ curl -X GET 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-44665544
 const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1024,20 +978,24 @@ See schema: [`ContactUpdate`](#contactupdate)
 curl -X PATCH 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"name":"name","tags":[],"opted_in":true}'
+  -d '{
+  "name": "name",
+  "tags": [],
+  "opted_in": true
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "name": "name",
-      "tags": [],
-      "opted_in": true
+    name: "name",
+    tags: [],
+    opted_in: true
   })
 });
 
@@ -1098,7 +1056,7 @@ curl -X DELETE 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-44665
 const response = await fetch('http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1167,7 +1125,7 @@ See schema: [`Body_import_contacts_api_contacts_import_post`](#body_import_conta
 #### Example Request
 
 ```bash
-curl -X POST ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/contacts/import' \
+curl -X POST 'http://localhost:8000/api/contacts/import' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json'
 ```
@@ -1176,7 +1134,7 @@ curl -X POST ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost
 const response = await fetch('http://localhost:8000/api/contacts/import?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   }
 });
@@ -1255,7 +1213,7 @@ curl -X POST 'http://localhost:8000/api/media' \
 const response = await fetch('http://localhost:8000/api/media', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   }
 });
@@ -1312,7 +1270,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/media' \
+curl -X GET 'http://localhost:8000/api/media' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -1320,7 +1278,7 @@ curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:
 const response = await fetch('http://localhost:8000/api/media?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1381,7 +1339,7 @@ curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-44665544000
 const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1442,7 +1400,7 @@ curl -X DELETE 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-44665544
 const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1504,7 +1462,7 @@ curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-44665544000
 const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/download', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1573,7 +1531,7 @@ curl -X GET 'http://localhost:8000/api/media/550e8400-e29b-41d4-a716-44665544000
 const response = await fetch('http://localhost:8000/api/media/550e8400-e29b-41d4-a716-446655440000/url', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1644,21 +1602,26 @@ See schema: [`SendTextMessageRequest`](#sendtextmessagerequest)
 curl -X POST 'http://localhost:8000/api/messages/send/text' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","text":"text"}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "text": "text"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/messages/send/text', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-      "to": "to",
-      "text": "text"
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "to",
+    text: "text"
   })
 });
 
@@ -1726,23 +1689,30 @@ See schema: [`SendTemplateMessageRequest`](#sendtemplatemessagerequest)
 curl -X POST 'http://localhost:8000/api/messages/send/template' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","template_name":"template_name","template_language":"template_language","components":{}}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "template_name": "template_name",
+  "template_language": "template_language",
+  "components": {}
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/messages/send/template', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-      "to": "to",
-      "template_name": "template_name",
-      "template_language": "template_language",
-      "components": {}
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "to",
+    template_name: "template_name",
+    template_language: "template_language",
+    components: {}
   })
 });
 
@@ -1816,23 +1786,30 @@ See schema: [`SendMediaMessageRequest`](#sendmediamessagerequest)
 curl -X POST 'http://localhost:8000/api/messages/send/media' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","to":"to","media_type":"media_type","media_id":"550e8400-e29b-41d4-a716-446655440000","caption":"caption"}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "to",
+  "media_type": "media_type",
+  "media_id": "550e8400-e29b-41d4-a716-446655440000",
+  "caption": "caption"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/messages/send/media', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-      "to": "to",
-      "media_type": "media_type",
-      "media_id": "550e8400-e29b-41d4-a716-446655440000",
-      "caption": "caption"
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "to",
+    media_type: "media_type",
+    media_id: "550e8400-e29b-41d4-a716-446655440000",
+    caption: "caption"
   })
 });
 
@@ -1893,7 +1870,7 @@ curl -X GET 'http://localhost:8000/api/messages/550e8400-e29b-41d4-a716-44665544
 const response = await fetch('http://localhost:8000/api/messages/550e8400-e29b-41d4-a716-446655440000/status', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -1964,22 +1941,28 @@ See schema: [`PhoneNumberCreate`](#phonenumbercreate)
 curl -X POST 'http://localhost:8000/api/phone-numbers' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"phone_number_id","access_token":"access_token","display_name":"display_name","business_id":"business_id"}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "phone_number_id",
+  "access_token": "access_token",
+  "display_name": "display_name",
+  "business_id": "business_id"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/phone-numbers', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "phone_number_id",
-      "access_token": "access_token",
-      "display_name": "display_name",
-      "business_id": "business_id"
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "phone_number_id",
+    access_token: "access_token",
+    display_name: "display_name",
+    business_id: "business_id"
   })
 });
 
@@ -2035,7 +2018,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/phone-numbers' \
+curl -X GET 'http://localhost:8000/api/phone-numbers' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -2043,7 +2026,7 @@ curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:
 const response = await fetch('http://localhost:8000/api/phone-numbers?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2104,7 +2087,7 @@ curl -X GET 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446
 const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2174,20 +2157,24 @@ See schema: [`PhoneNumberUpdate`](#phonenumberupdate)
 curl -X PATCH 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"display_name":"display_name","access_token":"access_token","status":"status"}'
+  -d '{
+  "display_name": "display_name",
+  "access_token": "access_token",
+  "status": "status"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "display_name": "display_name",
-      "access_token": "access_token",
-      "status": "status"
+    display_name: "display_name",
+    access_token: "access_token",
+    status: "status"
   })
 });
 
@@ -2248,7 +2235,7 @@ curl -X DELETE 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-
 const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2308,7 +2295,7 @@ curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-44
 const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2375,7 +2362,7 @@ curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-44
 const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2444,23 +2431,30 @@ See schema: [`TemplateCreate`](#templatecreate)
 curl -X POST 'http://localhost:8000/api/templates' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"workspace_id":"550e8400-e29b-41d4-a716-446655440000","phone_number_id":"550e8400-e29b-41d4-a716-446655440000","name":"name","category":"category","language":"language","components":{}}'
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "name",
+  "category": "category",
+  "language": "language",
+  "components": {}
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/templates', {
   method: 'POST',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-      "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-      "name": "name",
-      "category": "category",
-      "language": "language",
-      "components": {}
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
+    name: "name",
+    category: "category",
+    language: "language",
+    components: {}
   })
 });
 
@@ -2518,7 +2512,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:8000/api/templates' \
+curl -X GET 'http://localhost:8000/api/templates' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -2526,7 +2520,7 @@ curl -X GET ?workspace_id=550e8400-e29b-41d4-a716-446655440000'http://localhost:
 const response = await fetch('http://localhost:8000/api/templates?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2587,7 +2581,7 @@ curl -X GET 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-4466554
 const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2659,19 +2653,22 @@ See schema: [`TemplateUpdate`](#templateupdate)
 curl -X PATCH 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"components":{},"status":"status"}'
+  -d '{
+  "components": {},
+  "status": "status"
+}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN',
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "components": {},
-      "status": "status"
+    components: {},
+    status: "status"
   })
 });
 
@@ -2732,7 +2729,7 @@ curl -X DELETE 'http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-4466
 const response = await fetch('http://localhost:8000/api/templates/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
-    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+    Authorization: 'Bearer YOUR_ACCESS_TOKEN'
   }
 });
 
@@ -2777,7 +2774,6 @@ curl -X GET 'http://localhost:8000/webhook'
 ```javascript
 const response = await fetch('http://localhost:8000/webhook', {
   method: 'GET',
-
 });
 
 const data = await response.json();
@@ -2827,7 +2823,6 @@ curl -X POST 'http://localhost:8000/webhook'
 ```javascript
 const response = await fetch('http://localhost:8000/webhook', {
   method: 'POST',
-
 });
 
 const data = await response.json();
@@ -2868,7 +2863,6 @@ curl -X GET 'http://localhost:8000/api/workspaces'
 ```javascript
 const response = await fetch('http://localhost:8000/api/workspaces', {
   method: 'GET',
-
 });
 
 const data = await response.json();
@@ -2912,7 +2906,10 @@ See schema: [`WorkspaceCreate`](#workspacecreate)
 ```bash
 curl -X POST 'http://localhost:8000/api/workspaces' \
   -H 'Content-Type: application/json' \
-  -d '{"name":"name","plan":"free"}'
+  -d '{
+  "name": "name",
+  "plan": "free"
+}'
 ```
 
 ```javascript
@@ -2922,8 +2919,8 @@ const response = await fetch('http://localhost:8000/api/workspaces', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "name": "name",
-      "plan": "free"
+    name: "name",
+    plan: "free"
   })
 });
 
@@ -2974,7 +2971,6 @@ curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655
 ```javascript
 const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
-
 });
 
 const data = await response.json();
@@ -3035,7 +3031,12 @@ See schema: [`WorkspaceUpdate`](#workspaceupdate)
 ```bash
 curl -X PATCH 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Content-Type: application/json' \
-  -d '{"name":"name","plan":"{...}","status":"{...}","settings":{}}'
+  -d '{
+  "name": "name",
+  "plan": "{...}",
+  "status": "{...}",
+  "settings": {}
+}'
 ```
 
 ```javascript
@@ -3045,10 +3046,10 @@ const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "name": "name",
-      "plan": "{...}",
-      "status": "{...}",
-      "settings": {}
+    name: "name",
+    plan: "{...}",
+    status: "{...}",
+    settings: {}
   })
 });
 
@@ -3099,7 +3100,6 @@ curl -X DELETE 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446
 ```javascript
 const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
-
 });
 
 const data = await response.json();
@@ -3147,7 +3147,6 @@ curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655
 ```javascript
 const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members', {
   method: 'GET',
-
 });
 
 const data = await response.json();
@@ -3206,7 +3205,10 @@ See schema: [`AddMemberRequest`](#addmemberrequest)
 ```bash
 curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/members' \
   -H 'Content-Type: application/json' \
-  -d '{"user_email":"user@example.com","role":"OWNER"}'
+  -d '{
+  "user_email": "user@example.com",
+  "role": "OWNER"
+}'
 ```
 
 ```javascript
@@ -3216,8 +3218,8 @@ const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-      "user_email": "user@example.com",
-      "role": "OWNER"
+    user_email: "user@example.com",
+    role: "OWNER"
   })
 });
 
