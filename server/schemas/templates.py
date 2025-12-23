@@ -13,7 +13,7 @@ class TemplateCreate(BaseModel):
     """Schema for creating a new template"""
 
     workspace_id: Optional[UUID] = None  # Populated from path parameter
-    phone_number_id: UUID
+    channel_id: UUID
     name: str = Field(
         ...,
         min_length=1,
@@ -43,7 +43,7 @@ class TemplateResponse(BaseModel):
 
     id: UUID
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     name: str
     category: str
     language: str

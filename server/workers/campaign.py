@@ -33,7 +33,7 @@ from server.core.redis import Queue, dequeue, enqueue
 from server.core.redis import shutdown as redis_shutdown
 from server.core.redis import startup as redis_startup
 from server.models.base import CampaignStatus, MessageStatus
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.marketing import Campaign, CampaignMessage
 
 # =============================================================================
@@ -109,27 +109,27 @@ async def process_campaign_job(job_data: dict) -> bool:
             await session.commit()
             return False
 
-        # 3. Fetch phone number to get Meta ID
+        # 3. Fetch channel to get Meta ID
         phone_result = await session.execute(
-            select(PhoneNumber).where(
-                PhoneNumber.id == campaign.phone_number_id,
-                PhoneNumber.deleted_at.is_(None),
+            select(Channel).where(
+                Channel.id == campaign.channel_id,
+                Channel.deleted_at.is_(None),
             )
         )
-        phone_number = phone_result.scalar_one_or_none()
+        channel = phone_result.scalar_one_or_none()
 
-        if not phone_number:
+        if not channel:
             log_event(
-                "campaign_phone_not_found",
+                "campaign_channel_not_found",
                 campaign_id=campaign_id,
-                phone_number_id=str(campaign.phone_number_id),
+                channel_id=str(campaign.channel_id),
                 level="error",
             )
             campaign.status = CampaignStatus.DRAFT.value
             await session.commit()
             return False
 
-        meta_phone_number_id = phone_number.phone_number_id  # Meta's ID
+        meta_phone_number_id = channel.meta_phone_number_id  # Meta's ID
 
         # 4. Mark campaign start time
         if not campaign.started_at:

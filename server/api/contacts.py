@@ -117,16 +117,14 @@ async def create_contact(
             },
         )
 
-    # Create contact
+    # Create contact (identity only - no opt-in status at workspace level)
     contact = Contact(
         workspace_id=data.workspace_id,
         wa_id=wa_id,
         phone_number=data.phone_number,
         name=data.name,
+        source_channel_id=data.source_channel_id,
         tags=data.tags or [],
-        opted_in=True,
-        opt_in_source="api",
-        opt_in_date=datetime.now(timezone.utc).replace(tzinfo=None),
     )
 
     session.add(contact)
@@ -148,7 +146,6 @@ async def list_contacts(
     current_user: CurrentUserDep,
     workspace_id: UUID = Query(..., description="Workspace ID"),
     tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
-    opted_in: Optional[bool] = Query(None, description="Filter by opt-in status"),
     search: Optional[str] = Query(None, description="Search by name or phone"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -156,7 +153,8 @@ async def list_contacts(
     """
     List contacts for a workspace.
 
-    Supports filtering by tags, opt-in status, and search.
+    Returns workspace contact directory (all contacts visible to all phone numbers).
+    Supports filtering by tags and search.
     Requires workspace membership.
     """
     # Verify workspace membership
@@ -174,10 +172,6 @@ async def list_contacts(
         if tag_list:
             # Use overlap operator for array intersection
             query = query.where(Contact.tags.overlap(tag_list))
-
-    # Filter by opt-in status
-    if opted_in is not None:
-        query = query.where(Contact.opted_in == opted_in)
 
     # Search filter
     if search:
@@ -261,15 +255,12 @@ async def update_contact(
     # Verify workspace membership
     await get_workspace_member(contact.workspace_id, current_user, session)
 
-    # Update fields
+    # Update fields (identity only - opt-in managed per phone via ContactPhoneState)
     if data.name is not None:
         contact.name = data.name
 
     if data.tags is not None:
         contact.tags = data.tags
-
-    if data.opted_in is not None:
-        contact.opted_in = data.opted_in
 
     await session.commit()
     await session.refresh(contact)
@@ -525,16 +516,13 @@ async def import_contacts(
                 )
                 updated += 1
             else:
-                # Create new contact
+                # Create new contact (identity only - opt-in managed per phone)
                 contact = Contact(
                     workspace_id=workspace_id,
                     wa_id=wa_id,
                     phone_number=phone,
                     name=name,
                     tags=labels,
-                    opted_in=True,
-                    opt_in_source="import",
-                    opt_in_date=datetime.now(timezone.utc).replace(tzinfo=None),
                 )
                 session.add(contact)
 

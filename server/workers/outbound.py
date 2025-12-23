@@ -51,7 +51,7 @@ from server.models.base import (
     MessageStatus,
     utc_now,
 )
-from server.models.contacts import Contact, PhoneNumber
+from server.models.contacts import Channel, Contact
 from server.models.messaging import Conversation, MediaFile, Message
 from server.schemas.outbound import (
     InteractiveButtonsMessage,
@@ -263,16 +263,16 @@ async def resolve_media_source(
 # =============================================================================
 
 
-async def get_phone_credentials(
+async def get_channel_credentials(
     session: AsyncSession,
-    phone_number_id_meta: str,
+    meta_phone_number_id: str,
     workspace_id: str,
-) -> Optional[PhoneNumber]:
+) -> Optional[Channel]:
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.phone_number_id == phone_number_id_meta,
-            PhoneNumber.workspace_id == UUID(workspace_id),
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.meta_phone_number_id == meta_phone_number_id,
+            Channel.workspace_id == UUID(workspace_id),
+            Channel.deleted_at.is_(None),
         )
     )
     return result.scalar_one_or_none()
@@ -281,7 +281,7 @@ async def get_phone_credentials(
 async def create_or_update_message(
     session: AsyncSession,
     msg: OutboundMessage,
-    phone_number: PhoneNumber,
+    channel: Channel,
     status: str,
     wa_message_id: Optional[str] = None,
     error_code: Optional[str] = None,
@@ -305,17 +305,17 @@ async def create_or_update_message(
         if error_message:
             message.error_message = error_message
     else:
-        conversation = await get_or_create_conversation(session, msg, phone_number)
+        conversation = await get_or_create_conversation(session, msg, channel)
         content = build_message_content(msg)
 
         message = Message(
             id=UUID(msg.message_id),
             workspace_id=UUID(msg.workspace_id),
             conversation_id=conversation.id,
-            phone_number_id=phone_number.id,
+            channel_id=channel.id,
             wa_message_id=wa_message_id,
             direction=MessageDirection.OUTGOING.value,
-            from_number=phone_number.phone_number,
+            from_number=channel.phone_number,
             to_number=msg.to_number,
             type=get_message_type_for_db(msg),
             content=content,
@@ -333,15 +333,15 @@ async def create_or_update_message(
 async def get_or_create_conversation(
     session: AsyncSession,
     msg: OutboundMessage,
-    phone_number: PhoneNumber,
+    channel: Channel,
 ) -> Conversation:
-    contact = await get_or_create_contact(session, msg, phone_number)
+    contact = await get_or_create_contact(session, msg, channel)
 
     result = await session.execute(
         select(Conversation).where(
             Conversation.workspace_id == UUID(msg.workspace_id),
             Conversation.contact_id == contact.id,
-            Conversation.phone_number_id == phone_number.id,
+            Conversation.channel_id == channel.id,
         )
     )
     conversation = result.scalar_one_or_none()
@@ -354,7 +354,7 @@ async def get_or_create_conversation(
     conversation = Conversation(
         workspace_id=UUID(msg.workspace_id),
         contact_id=contact.id,
-        phone_number_id=phone_number.id,
+        channel_id=channel.id,
         status=ConversationStatus.OPEN.value,
         conversation_type=ConversationType.BUSINESS_INITIATED.value,
         last_message_at=now,
@@ -369,8 +369,9 @@ async def get_or_create_conversation(
 async def get_or_create_contact(
     session: AsyncSession,
     msg: OutboundMessage,
-    phone_number: PhoneNumber,
+    channel: Channel,
 ) -> Contact:
+    """Get or create contact identity (workspace-level)."""
     wa_id = msg.to_number.lstrip("+")
 
     result = await session.execute(
@@ -385,11 +386,12 @@ async def get_or_create_contact(
     if contact:
         return contact
 
+    # Create contact identity only - no opt-in status (managed per phone)
     contact = Contact(
         workspace_id=UUID(msg.workspace_id),
         wa_id=wa_id,
         phone_number=msg.to_number,
-        opted_in=False,
+        source_channel_id=channel.id,  # First channel to contact = source
     )
     session.add(contact)
     await session.flush()
@@ -622,13 +624,13 @@ async def process_outbound_message(
             return True
 
         async with async_session() as session:
-            phone_number = await get_phone_credentials(
+            channel = await get_channel_credentials(
                 session, msg.phone_number_id, msg.workspace_id
             )
 
-            if not phone_number:
+            if not channel:
                 log_event(
-                    "outbound_phone_not_found",
+                    "outbound_channel_not_found",
                     level="error",
                     message_id=message_id,
                     phone_number_id=msg.phone_number_id,
@@ -636,7 +638,7 @@ async def process_outbound_message(
                 await move_to_dlq(
                     Queue.OUTBOUND_MESSAGES,
                     data,
-                    f"Phone number not found: {msg.phone_number_id}",
+                    f"Channel not found: {msg.phone_number_id}",
                 )
                 worker_state.messages_failed += 1
                 return True
@@ -653,10 +655,57 @@ async def process_outbound_message(
                 )
                 return False
 
+            # Get or create contact identity
+            contact = await get_or_create_contact(session, msg, channel)
+
+            # Check per-channel opt-in permission
+            from server.models.contacts import ContactChannelState
+
+            state_result = await session.execute(
+                select(ContactChannelState).where(
+                    ContactChannelState.contact_id == contact.id,
+                    ContactChannelState.channel_id == channel.id,
+                )
+            )
+            channel_state = state_result.scalar_one_or_none()
+
+            # Enforce opt-in (skip for template messages which can be used for initial outreach)
+            if not isinstance(msg, TemplateMessage):
+                if not channel_state or not channel_state.opt_in_status:
+                    log_event(
+                        "outbound_blocked_no_optin",
+                        level="warning",
+                        message_id=message_id,
+                        contact_id=str(contact.id),
+                        channel_id=str(channel.id),
+                    )
+                    await move_to_dlq(
+                        Queue.OUTBOUND_MESSAGES,
+                        data,
+                        "Contact has not opted in for this channel",
+                    )
+                    worker_state.messages_failed += 1
+                    return True
+
+            # Check if blocked
+            if channel_state and channel_state.blocked:
+                log_event(
+                    "outbound_blocked_by_contact",
+                    level="warning",
+                    message_id=message_id,
+                )
+                await move_to_dlq(
+                    Queue.OUTBOUND_MESSAGES,
+                    data,
+                    "Contact has blocked this channel",
+                )
+                worker_state.messages_failed += 1
+                return True
+
             await create_or_update_message(
                 session,
                 msg,
-                phone_number,
+                channel,
                 status=MessageStatus.PENDING.value,
             )
             await session.commit()
@@ -690,7 +739,7 @@ async def process_outbound_message(
                     msg.media_id = resolved_media_id
 
             client = OutboundClient(
-                access_token=phone_number.access_token,
+                access_token=channel.access_token,
                 phone_number_id=msg.phone_number_id,
             )
 

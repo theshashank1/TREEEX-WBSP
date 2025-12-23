@@ -28,7 +28,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - [Contacts](#contacts)
 - [Media](#media)
 - [Messages](#messages)
-- [Phone Numbers](#phone-numbers)
+- [Channels](#channels)
 - [Templates](#templates)
 - [Webhooks](#webhooks)
 - [Workspaces](#workspaces)

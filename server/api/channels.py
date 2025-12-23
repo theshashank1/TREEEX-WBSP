@@ -1,5 +1,5 @@
 """
-Phone Number API endpoints for WhatsApp Business.
+Channel API endpoints for WhatsApp Business.
 """
 
 from datetime import datetime
@@ -25,19 +25,19 @@ from server.models.base import (
     PhoneNumberStatus,
     utc_now,
 )
-from server.models.contacts import PhoneNumber
-from server.schemas.phone_numbers import (
+from server.models.contacts import Channel
+from server.schemas.channels import (
     ErrorDetail,
-    PhoneNumberCreate,
-    PhoneNumberListResponse,
-    PhoneNumberResponse,
-    PhoneNumberSyncResponse,
-    PhoneNumberUpdate,
+    ChannelCreate,
+    ChannelListResponse,
+    ChannelResponse,
+    ChannelSyncResponse,
+    ChannelUpdate,
 )
 from server.whatsapp.client import WhatsAppClient
 
 router = APIRouter(
-    prefix="/workspaces/{workspace_id}/phone-numbers", tags=["Phone Numbers"]
+    prefix="/workspaces/{workspace_id}/channels", tags=["Channels"]
 )
 
 # Type aliases for dependencies
@@ -45,42 +45,42 @@ SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
-def _phone_number_to_response(phone: PhoneNumber) -> PhoneNumberResponse:
-    """Convert PhoneNumber model to response schema."""
-    return PhoneNumberResponse(
-        id=phone.id,
-        workspace_id=phone.workspace_id,
-        phone_number=phone.phone_number,
-        phone_number_id=phone.phone_number_id,
-        display_name=phone.display_name,
-        business_id=phone.business_id,
-        quality_rating=phone.quality_rating,
-        message_limit=phone.message_limit,
-        tier=phone.tier,
-        status=phone.status,
-        verified_at=phone.verified_at,
-        created_at=phone.created_at,
-        updated_at=phone.updated_at,
+def _channel_to_response(channel: Channel) -> ChannelResponse:
+    """Convert Channel model to response schema."""
+    return ChannelResponse(
+        id=channel.id,
+        workspace_id=channel.workspace_id,
+        phone_number=channel.phone_number,
+        meta_phone_number_id=channel.meta_phone_number_id,
+        display_name=channel.display_name,
+        meta_business_id=channel.meta_business_id,
+        quality_rating=channel.quality_rating,
+        message_limit=channel.message_limit,
+        tier=channel.tier,
+        status=channel.status,
+        verified_at=channel.verified_at,
+        created_at=channel.created_at,
+        updated_at=channel.updated_at,
     )
 
 
-@router.post("", response_model=PhoneNumberResponse, status_code=201)
-async def create_phone_number(
+@router.post("", response_model=ChannelResponse, status_code=201)
+async def create_channel(
     workspace_id: UUID,
-    data: PhoneNumberCreate,
+    data: ChannelCreate,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
-    Register a new WhatsApp Business phone number.
+    Register a new WhatsApp Channel.
 
     Flow:
     1. Verify workspace membership (OWNER or ADMIN)
     2. Validate access_token with Meta API
     3. Fetch phone number details from Meta
-    4. Check if phone_number_id already exists
-    5. Create PhoneNumber record
-    6. Return PhoneNumberResponse
+    4. Check if meta_phone_number_id already exists
+    5. Create Channel record
+    6. Return ChannelResponse
     """
     # Verify user has admin access to workspace
     member = await require_workspace_admin(workspace_id, current_user, session)
@@ -95,7 +95,7 @@ async def create_phone_number(
     is_valid, token_error = await wa_client.validate_token()
     if not is_valid:
         log_event(
-            "phone_number_create_failed",
+            "channel_create_failed",
             level="warning",
             workspace_id=str(workspace_id),
             error_code=token_error.code if token_error else "unknown",
@@ -120,13 +120,14 @@ async def create_phone_number(
         )
 
     # Fetch phone number details from Meta
-    phone_info, phone_error = await wa_client.get_phone_number(data.phone_number_id)
+    # Note: wa_client.get_phone_number expects meta_phone_number_id string
+    phone_info, phone_error = await wa_client.get_phone_number(data.meta_phone_number_id)
     if not phone_info:
         log_event(
-            "phone_number_create_failed",
+            "channel_create_failed",
             level="warning",
             workspace_id=str(workspace_id),
-            phone_number_id=data.phone_number_id,
+            meta_phone_number_id=data.meta_phone_number_id,
             error_code=phone_error.code if phone_error else "unknown",
         )
         raise HTTPException(
@@ -141,31 +142,31 @@ async def create_phone_number(
             },
         )
 
-    # Check if phone_number_id already exists
+    # Check if meta_phone_number_id already exists
     existing = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.phone_number_id == data.phone_number_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.meta_phone_number_id == data.meta_phone_number_id,
+            Channel.deleted_at.is_(None),
         )
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
             detail={
-                "code": "PHONE_NUMBER_EXISTS",
-                "message": "This phone number is already registered.",
+                "code": "CHANNEL_EXISTS",
+                "message": "This phone number/channel is already registered.",
             },
         )
 
-    # Create PhoneNumber record
+    # Create Channel record
     now = utc_now()
-    phone_number = PhoneNumber(
+    channel = Channel(
         workspace_id=workspace_id,
         phone_number=phone_info.phone_number,
-        phone_number_id=data.phone_number_id,
+        meta_phone_number_id=data.meta_phone_number_id,
         display_name=data.display_name or phone_info.verified_name,
         access_token=data.access_token,
-        business_id=data.business_id,
+        meta_business_id=data.meta_business_id,
         quality_rating=phone_info.quality_rating or PhoneNumberQuality.UNKNOWN.value,
         message_limit=WhatsAppClient.parse_message_limit(
             phone_info.messaging_limit_tier
@@ -175,23 +176,23 @@ async def create_phone_number(
         verified_at=now,
     )
 
-    session.add(phone_number)
+    session.add(channel)
     await session.commit()
-    await session.refresh(phone_number)
+    await session.refresh(channel)
 
     log_event(
-        "phone_number_created",
+        "channel_created",
         level="info",
         workspace_id=str(workspace_id),
-        phone_number_id=data.phone_number_id,
+        meta_phone_number_id=data.meta_phone_number_id,
         phone_number=phone_info.phone_number,
     )
 
-    return _phone_number_to_response(phone_number)
+    return _channel_to_response(channel)
 
 
-@router.get("", response_model=PhoneNumberListResponse)
-async def list_phone_numbers(
+@router.get("", response_model=ChannelListResponse)
+async def list_channels(
     workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -202,7 +203,7 @@ async def list_phone_numbers(
     offset: int = Query(0, ge=0, description="Offset for pagination"),
 ):
     """
-    List phone numbers for a workspace.
+    List channels for a workspace.
 
     Requires workspace membership.
     """
@@ -210,13 +211,13 @@ async def list_phone_numbers(
     await get_workspace_member(workspace_id, current_user, session)
 
     # Build query
-    query = select(PhoneNumber).where(
-        PhoneNumber.workspace_id == workspace_id,
-        PhoneNumber.deleted_at.is_(None),
+    query = select(Channel).where(
+        Channel.workspace_id == workspace_id,
+        Channel.deleted_at.is_(None),
     )
 
     if status:
-        query = query.where(PhoneNumber.status == status)
+        query = query.where(Channel.status == status)
 
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
@@ -224,79 +225,79 @@ async def list_phone_numbers(
     total = total_result.scalar() or 0
 
     # Apply pagination
-    query = query.order_by(PhoneNumber.created_at.desc()).offset(offset).limit(limit)
+    query = query.order_by(Channel.created_at.desc()).offset(offset).limit(limit)
     result = await session.execute(query)
-    phone_numbers = result.scalars().all()
+    channels = result.scalars().all()
 
-    return PhoneNumberListResponse(
-        data=[_phone_number_to_response(p) for p in phone_numbers],
+    return ChannelListResponse(
+        data=[_channel_to_response(p) for p in channels],
         total=total,
         limit=limit,
         offset=offset,
     )
 
 
-@router.get("/{phone_number_id}", response_model=PhoneNumberResponse)
-async def get_phone_number(
+@router.get("/{channel_id}", response_model=ChannelResponse)
+async def get_channel(
     workspace_id: UUID,
-    phone_number_id: UUID,
+    channel_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
-    Get details of a specific phone number.
+    Get details of a specific channel.
 
     Requires workspace membership.
     """
-    # Fetch phone number
+    # Fetch channel
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == phone_number_id,
-            PhoneNumber.workspace_id == workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+            detail={"code": "NOT_FOUND", "message": "Channel not found."},
         )
 
     # Verify workspace membership
     await get_workspace_member(workspace_id, current_user, session)
 
-    return _phone_number_to_response(phone_number)
+    return _channel_to_response(channel)
 
 
-@router.patch("/{phone_number_id}", response_model=PhoneNumberResponse)
-async def update_phone_number(
+@router.patch("/{channel_id}", response_model=ChannelResponse)
+async def update_channel(
     workspace_id: UUID,
-    phone_number_id: UUID,
-    data: PhoneNumberUpdate,
+    channel_id: UUID,
+    data: ChannelUpdate,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
-    Update phone number settings.
+    Update channel settings.
 
     Requires OWNER or ADMIN role.
     """
-    # Fetch phone number
+    # Fetch channel
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == phone_number_id,
-            PhoneNumber.workspace_id == workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+            detail={"code": "NOT_FOUND", "message": "Channel not found."},
         )
 
     # Verify admin access
@@ -321,11 +322,11 @@ async def update_phone_number(
                     ),
                 },
             )
-        phone_number.access_token = data.access_token
+        channel.access_token = data.access_token
 
     # Update fields
     if data.display_name is not None:
-        phone_number.display_name = data.display_name
+        channel.display_name = data.display_name
 
     if data.status is not None:
         if data.status not in [s.value for s in PhoneNumberStatus]:
@@ -336,102 +337,102 @@ async def update_phone_number(
                     "message": f"Invalid status. Must be one of: {', '.join(s.value for s in PhoneNumberStatus)}",
                 },
             )
-        phone_number.status = data.status
+        channel.status = data.status
 
     await session.commit()
-    await session.refresh(phone_number)
+    await session.refresh(channel)
 
     log_event(
-        "phone_number_updated",
+        "channel_updated",
         level="info",
-        phone_number_id=str(phone_number_id),
-        workspace_id=str(phone_number.workspace_id),
+        channel_id=str(channel_id),
+        workspace_id=str(channel.workspace_id),
     )
 
-    return _phone_number_to_response(phone_number)
+    return _channel_to_response(channel)
 
 
-@router.delete("/{phone_number_id}", status_code=204)
-async def delete_phone_number(
+@router.delete("/{channel_id}", status_code=204)
+async def delete_channel(
     workspace_id: UUID,
-    phone_number_id: UUID,
+    channel_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
-    Soft delete a phone number.
+    Soft delete a channel.
 
     Requires OWNER or ADMIN role.
     """
-    # Fetch phone number
+    # Fetch channel
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == phone_number_id,
-            PhoneNumber.workspace_id == workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+            detail={"code": "NOT_FOUND", "message": "Channel not found."},
         )
 
     # Verify admin access
     await require_workspace_admin(workspace_id, current_user, session)
 
     # Soft delete
-    phone_number.soft_delete()
+    channel.soft_delete()
     await session.commit()
 
     log_event(
-        "phone_number_deleted",
+        "channel_deleted",
         level="info",
-        phone_number_id=str(phone_number_id),
-        workspace_id=str(phone_number.workspace_id),
+        channel_id=str(channel_id),
+        workspace_id=str(channel.workspace_id),
     )
 
     return None
 
 
-@router.post("/{phone_number_id}/sync", response_model=PhoneNumberSyncResponse)
-async def sync_phone_number(
+@router.post("/{channel_id}/sync", response_model=ChannelSyncResponse)
+async def sync_channel(
     workspace_id: UUID,
-    phone_number_id: UUID,
+    channel_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
-    Sync phone number data from Meta API.
+    Sync channel data from Meta API.
 
     Fetches the latest quality rating, message limit, and tier from Meta.
     Requires workspace membership.
     """
-    # Fetch phone number
+    # Fetch channel
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == phone_number_id,
-            PhoneNumber.workspace_id == workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+            detail={"code": "NOT_FOUND", "message": "Channel not found."},
         )
 
     # Verify workspace membership
     await get_workspace_member(workspace_id, current_user, session)
 
     # Fetch from Meta API
-    wa_client = WhatsAppClient(access_token=phone_number.access_token)
+    wa_client = WhatsAppClient(access_token=channel.access_token)
     phone_info, phone_error = await wa_client.get_phone_number(
-        phone_number.phone_number_id
+        channel.meta_phone_number_id
     )
 
     if not phone_info:
@@ -447,83 +448,78 @@ async def sync_phone_number(
             },
         )
 
-    # Update phone number with fresh data
-    phone_number.quality_rating = (
+    # Update channel with fresh data
+    channel.quality_rating = (
         phone_info.quality_rating or PhoneNumberQuality.UNKNOWN.value
     )
-    phone_number.tier = phone_info.messaging_limit_tier
-    phone_number.message_limit = WhatsAppClient.parse_message_limit(
+    channel.tier = phone_info.messaging_limit_tier
+    channel.message_limit = WhatsAppClient.parse_message_limit(
         phone_info.messaging_limit_tier
     )
 
     now = utc_now()
     await session.commit()
-    await session.refresh(phone_number)
+    await session.refresh(channel)
 
     log_event(
-        "phone_number_synced",
+        "channel_synced",
         level="info",
-        phone_number_id=str(phone_number_id),
-        quality_rating=phone_number.quality_rating,
+        channel_id=str(channel_id),
+        quality_rating=channel.quality_rating,
     )
 
-    return PhoneNumberSyncResponse(
-        id=phone_number.id,
+    return ChannelSyncResponse(
+        id=channel.id,
         synced_at=now,
-        phone_number=phone_number.phone_number,
-        quality_rating=phone_number.quality_rating,
-        message_limit=phone_number.message_limit,
-        tier=phone_number.tier,
-        status=phone_number.status,
+        phone_number=channel.phone_number,
+        quality_rating=channel.quality_rating,
+        message_limit=channel.message_limit,
+        tier=channel.tier,
+        status=channel.status,
     )
 
 
-@router.post("/{phone_number_id}/exchange-token", response_model=PhoneNumberResponse)
+@router.post("/{channel_id}/exchange-token", response_model=ChannelResponse)
 async def exchange_token_for_long_term(
     workspace_id: UUID,
-    phone_number_id: UUID,
+    channel_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
     Exchange short-lived access token for long-lived token.
 
-    This endpoint attempts to exchange the current access token for a long-lived
-    token (typically 60 days vs 1 hour). This is useful when you have a short-lived
-    user access token and want to convert it to a long-lived one.
-
-    Note: System user tokens are already long-lived and don't need exchange.
-
+    Expires in ~60 days. System user tokens don't need this.
     Requires workspace admin access.
     """
-    # Fetch phone number
+    # Fetch channel
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == phone_number_id,
-            PhoneNumber.workspace_id == workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail={"code": "NOT_FOUND", "message": "Phone number not found."},
+            detail={"code": "NOT_FOUND", "message": "Channel not found."},
         )
 
     # Verify admin access
     await require_workspace_admin(workspace_id, current_user, session)
 
     # Exchange token
-    wa_client = WhatsAppClient(access_token=phone_number.access_token)
+    wa_client = WhatsAppClient(access_token=channel.access_token)
     long_lived_token, error = await wa_client.exchange_token_for_long_term()
 
     if not long_lived_token:
         log_event(
             "token_exchange_failed",
             level="warning",
-            phone_number_id=str(phone_number_id),
+            channel_id=str(channel_id),
             error_code=error.code if error else "unknown",
         )
         raise HTTPException(
@@ -538,15 +534,15 @@ async def exchange_token_for_long_term(
             },
         )
 
-    # Update phone number with new long-lived token
-    phone_number.access_token = long_lived_token
+    # Update channel with new long-lived token
+    channel.access_token = long_lived_token
     await session.commit()
-    await session.refresh(phone_number)
+    await session.refresh(channel)
 
     log_event(
         "token_exchanged",
         level="info",
-        phone_number_id=str(phone_number_id),
+        channel_id=str(channel_id),
     )
 
-    return _phone_number_to_response(phone_number)
+    return _channel_to_response(channel)

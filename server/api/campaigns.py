@@ -40,7 +40,7 @@ class CampaignExecutionRequest(BaseModel):
 
 class CampaignCreate(BaseModel):
     workspace_id: Optional[UUID] = None  # Optional, overridden by path
-    phone_number_id: UUID
+    channel_id: UUID
     template_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
 
@@ -53,7 +53,7 @@ class CampaignUpdate(BaseModel):
 class CampaignResponse(BaseModel):
     id: UUID
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     template_id: Optional[UUID]
     name: str
     total_contacts: int
@@ -98,7 +98,7 @@ async def create_campaign(
 
     campaign = Campaign(
         workspace_id=workspace_id,
-        phone_number_id=data.phone_number_id,
+        channel_id=data.channel_id,
         template_id=data.template_id,
         name=data.name,
         status=CampaignStatus.DRAFT.value,
@@ -123,7 +123,7 @@ async def list_campaigns(
     session: SessionDep,
     current_user: CurrentUserDep,
     status: Optional[str] = Query(None, description="Filter by status"),
-    phone_number_id: Optional[UUID] = Query(None, description="Filter by phone number"),
+    channel_id: Optional[UUID] = Query(None, description="Filter by channel"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -137,8 +137,8 @@ async def list_campaigns(
         Campaign.deleted_at.is_(None),
     )
 
-    if phone_number_id:
-        query = query.where(Campaign.phone_number_id == phone_number_id)
+    if channel_id:
+        query = query.where(Campaign.channel_id == channel_id)
 
     if status:
         query = query.where(Campaign.status == status)
@@ -364,13 +364,23 @@ async def add_campaign_contacts(
             status_code=400, detail="Contacts can only be added to DRAFT campaigns"
         )
 
-    # Resolve contacts
-    from server.models.contacts import Contact
+    # Resolve contacts with per-channel opt-in validation
+    from server.models.contacts import Contact, ContactChannelState
 
-    query = select(Contact).where(
-        Contact.workspace_id == campaign.workspace_id,
-        Contact.deleted_at.is_(None),
-        Contact.opted_in.is_(True),  # Mandatory opt-in check
+    # Get contacts that are opted-in for THIS channel
+    query = (
+        select(Contact)
+        .join(
+            ContactChannelState,
+            (ContactChannelState.contact_id == Contact.id)
+            & (ContactChannelState.channel_id == campaign.channel_id),
+        )
+        .where(
+            Contact.workspace_id == campaign.workspace_id,
+            Contact.deleted_at.is_(None),
+            ContactChannelState.opt_in_status.is_(True),  # Per-channel opt-in check
+            ContactChannelState.blocked.is_(False),  # Not blocked
+        )
     )
 
     if data.contact_ids:
@@ -404,7 +414,7 @@ async def add_campaign_contacts(
             workspace_id=campaign.workspace_id,
             campaign_id=campaign_id,
             contact_id=contact.id,
-            phone_number_id=campaign.phone_number_id,
+            channel_id=campaign.channel_id,
             status=MessageStatus.PENDING.value,
         )
         session.add(msg)

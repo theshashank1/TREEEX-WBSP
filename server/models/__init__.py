@@ -2,7 +2,7 @@
 from .access import User, Workspace, WorkspaceMember
 from .audit import WebhookLog
 from .base import Base
-from .contacts import Contact, PhoneNumber
+from .contacts import Channel, Contact, ContactChannelState
 from .marketing import Campaign, CampaignMessage, Template
 from .messaging import Conversation, MediaFile, Message
 
@@ -12,7 +12,8 @@ __all__ = [
     "Workspace",
     "WorkspaceMember",
     "Contact",
-    "PhoneNumber",
+    "Channel",
+    "ContactChannelState",
     "Conversation",
     "Message",
     "MediaFile",

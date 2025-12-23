@@ -21,7 +21,7 @@ from server.dependencies import (
     get_workspace_member,
 )
 from server.models.base import MessageDirection, MessageStatus
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.messaging import MediaFile, Message
 from server.schemas.messages import (
     MessageQueuedResponse,
@@ -54,23 +54,23 @@ async def send_text_message(
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == data.phone_number_id,
-            PhoneNumber.workspace_id == data.workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == data.workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
-        raise HTTPException(status_code=404, detail="Phone number not found")
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
 
-    if not phone_number.access_token:
+    if not channel.access_token:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "NO_ACCESS_TOKEN",
-                "message": "Phone number has no access token configured",
+                "message": "Channel has no access token configured",
             },
         )
 
@@ -80,9 +80,9 @@ async def send_text_message(
         "type": "text_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,
-        "db_phone_number_id": str(data.phone_number_id),
-        "from_number": phone_number.phone_number,
+        "phone_number_id": channel.meta_phone_number_id,
+        "db_phone_number_id": str(data.channel_id),
+        "from_number": channel.phone_number,
         "to_number": data.to,
         "text": data.text,
         "preview_url": False,
@@ -110,7 +110,7 @@ async def send_text_message(
     return MessageQueuedResponse(
         id=message_id,
         workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
+        channel_id=data.channel_id,
         to_number=data.to,
         type="text",
         status=MessageStatus.PENDING.value,
@@ -130,18 +130,18 @@ async def send_template_message(
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == data.phone_number_id,
-            PhoneNumber.workspace_id == data.workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == data.workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
-        raise HTTPException(status_code=404, detail="Phone number not found")
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
 
-    if not phone_number.access_token:
+    if not channel.access_token:
         raise HTTPException(
             status_code=400,
             detail={
@@ -177,9 +177,9 @@ async def send_template_message(
         "type": "template_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,
-        "db_phone_number_id": str(data.phone_number_id),
-        "from_number": phone_number.phone_number,
+        "phone_number_id": channel.meta_phone_number_id,
+        "db_phone_number_id": str(data.channel_id),
+        "from_number": channel.phone_number,
         "to_number": data.to,
         "template_name": data.template_name,
         "language_code": data.template_language,
@@ -209,7 +209,7 @@ async def send_template_message(
     return MessageQueuedResponse(
         id=message_id,
         workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
+        channel_id=data.channel_id,
         to_number=data.to,
         type="template",
         status=MessageStatus.PENDING.value,
@@ -229,16 +229,16 @@ async def send_media_message(
     member = await get_workspace_member(data.workspace_id, current_user, session)
 
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == data.phone_number_id,
-            PhoneNumber.workspace_id == data.workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == data.workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
-        raise HTTPException(status_code=404, detail="Phone number not found")
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
 
     result = await session.execute(
         select(MediaFile).where(
@@ -299,9 +299,9 @@ async def send_media_message(
         "type": "media_message",
         "message_id": str(message_id),
         "workspace_id": str(data.workspace_id),
-        "phone_number_id": phone_number.phone_number_id,
-        "db_phone_number_id": str(data.phone_number_id),
-        "from_number": phone_number.phone_number,
+        "phone_number_id": channel.meta_phone_number_id,
+        "db_phone_number_id": str(data.channel_id),
+        "from_number": channel.phone_number,
         "to_number": data.to,
         "media_type": data.media_type,
         "media_id": str(data.media_id),
@@ -333,7 +333,7 @@ async def send_media_message(
     return MessageQueuedResponse(
         id=message_id,
         workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
+        channel_id=data.channel_id,
         to_number=data.to,
         type=data.media_type,
         status=MessageStatus.PENDING.value,

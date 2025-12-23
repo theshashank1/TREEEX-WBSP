@@ -20,7 +20,7 @@ class SendTextMessageRequest(BaseModel):
     """Schema for sending a text message"""
 
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     to: str = Field(..., description="Recipient phone number")
     text: str = Field(..., min_length=1, description="Message text")
 
@@ -29,7 +29,7 @@ class SendTemplateMessageRequest(BaseModel):
     """Schema for sending a template message"""
 
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     to: str = Field(..., description="Recipient phone number")
     template_name: str
     template_language: str = "en"
@@ -40,7 +40,7 @@ class SendMediaMessageRequest(BaseModel):
     """Schema for sending a media message"""
 
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     to: str = Field(..., description="Recipient phone number")
     media_type: str = Field(..., description="Type: image, video, audio, document")
     media_id: UUID = Field(..., description="Media file ID from /api/media")
@@ -64,7 +64,7 @@ class MessageResponse(BaseModel):
 
     id: UUID
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     wa_message_id: Optional[str]
     direction: str
     from_number: str
@@ -91,7 +91,7 @@ class MessageQueuedResponse(BaseModel):
 
     id: UUID
     workspace_id: UUID
-    phone_number_id: UUID
+    channel_id: UUID
     to_number: str
     type: str
     status: str

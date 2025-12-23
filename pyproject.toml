@@ -11,6 +11,7 @@ authors = [
 keywords = ["whatsapp", "business", "api", "messaging", "fastapi"]
 dependencies = [
     "aioredis>=2.0.1",
+    "alembic>=1.17.2",
     "asyncpg>=0.31.0",
     "azure-storage-blob>=12.19.0",
     "fastapi[standard]>=0.123.2",

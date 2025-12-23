@@ -41,8 +41,8 @@ class Conversation(TimestampMixin, Base):
     contact_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
+    channel_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("channels.id", ondelete="CASCADE"), nullable=False
     )
     status: Mapped[str] = mapped_column(
         String(20), default=ConversationStatus.OPEN.value, nullable=False
@@ -63,9 +63,7 @@ class Conversation(TimestampMixin, Base):
         "Workspace", back_populates="conversations"
     )
     contact: Mapped["Contact"] = relationship("Contact", back_populates="conversations")
-    phone_number: Mapped["PhoneNumber"] = relationship(
-        "PhoneNumber", back_populates="conversations"
-    )
+    channel: Mapped["Channel"] = relationship("Channel", back_populates="conversations")
     assignee: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="assigned_conversations"
     )
@@ -78,7 +76,7 @@ class Conversation(TimestampMixin, Base):
             "idx_conv_workspace_contact_phone",
             "workspace_id",
             "contact_id",
-            "phone_number_id",
+            "channel_id",
             unique=True,
         ),
         Index("idx_conv_workspace_status", "workspace_id", "status"),
@@ -142,8 +140,8 @@ class Message(Base):
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
+    channel_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("channels.id", ondelete="CASCADE"), nullable=False
     )
     wa_message_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     direction: Mapped[str] = mapped_column(String(10), nullable=False)
@@ -176,9 +174,7 @@ class Message(Base):
     conversation: Mapped["Conversation"] = relationship(
         "Conversation", back_populates="messages"
     )
-    phone_number: Mapped["PhoneNumber"] = relationship(
-        "PhoneNumber", back_populates="messages"
-    )
+    channel: Mapped["Channel"] = relationship("Channel", back_populates="messages")
     media: Mapped[Optional["MediaFile"]] = relationship(
         "MediaFile", back_populates="messages"
     )
@@ -196,7 +192,7 @@ class Message(Base):
         ),
         Index("idx_msg_wa_id", "wa_message_id"),
         Index("idx_msg_workspace_time", "workspace_id", "created_at"),
-        Index("idx_msg_phone_time", "phone_number_id", "created_at"),
+        Index("idx_msg_channel_time", "channel_id", "created_at"),
         Index("idx_msg_status", "status"),
         Index("idx_msg_direction", "direction"),
         Index("idx_msg_type", "type"),

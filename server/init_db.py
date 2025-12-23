@@ -24,7 +24,7 @@ from server.core.config import settings
 from server.models.access import User, Workspace, WorkspaceMember  # noqa
 from server.models.audit import WebhookLog  # noqa
 from server.models.base import Base
-from server.models.contacts import Contact, PhoneNumber  # noqa
+from server.models.contacts import Channel, Contact, ContactChannelState  # noqa
 from server.models.marketing import Campaign, CampaignMessage, Template  # noqa
 from server.models.messaging import Conversation, MediaFile, Message  # noqa
 

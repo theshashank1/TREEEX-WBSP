@@ -20,8 +20,8 @@ class WebhookLog(Base):
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True
+    channel_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("channels.id", ondelete="SET NULL"), nullable=True
     )
     event_type: Mapped[str] = mapped_column(String(50), nullable=False)
     event_id_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -40,14 +40,14 @@ class WebhookLog(Base):
     workspace: Mapped["Workspace"] = relationship(
         "Workspace", back_populates="webhook_logs"
     )
-    phone_number: Mapped[Optional["PhoneNumber"]] = relationship("PhoneNumber")
+    channel: Mapped[Optional["Channel"]] = relationship("Channel")
 
     __table_args__ = (
         Index(
             "idx_webhook_workspace_event", "workspace_id", "event_id_hash", unique=True
         ),
         Index("idx_webhook_workspace_time", "workspace_id", "received_at"),
-        Index("idx_webhook_phone_time", "phone_number_id", "received_at"),
+        Index("idx_webhook_channel_time", "channel_id", "received_at"),
         Index("idx_webhook_unprocessed", "processed", "received_at"),
         Index("idx_webhook_event_type", "event_type", "received_at"),
         Index("idx_webhook_payload_gin", "payload", postgresql_using="gin"),

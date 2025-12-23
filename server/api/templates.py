@@ -13,7 +13,7 @@ from server.core.db import get_async_session
 from server.core.monitoring import log_event
 from server.dependencies import User, get_current_user, get_workspace_member
 from server.models.base import TemplateCategory, TemplateStatus
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.marketing import Template
 from server.schemas.templates import (
     TemplateCreate,
@@ -63,27 +63,27 @@ async def create_template(
             detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}",
         )
 
-    # Verify phone number exists and belongs to workspace
+    # Verify channel exists and belongs to workspace
     result = await session.execute(
-        select(PhoneNumber).where(
-            PhoneNumber.id == data.phone_number_id,
-            PhoneNumber.workspace_id == data.workspace_id,
-            PhoneNumber.deleted_at.is_(None),
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == data.workspace_id,
+            Channel.deleted_at.is_(None),
         )
     )
-    phone_number = result.scalar_one_or_none()
+    channel = result.scalar_one_or_none()
 
-    if not phone_number:
+    if not channel:
         raise HTTPException(
             status_code=404,
-            detail="Phone number not found or doesn't belong to workspace",
+            detail="Channel not found or doesn't belong to workspace",
         )
 
-    # Check if template with same name already exists for this phone number
+    # Check if template with same name already exists for this channel
     existing = await session.execute(
         select(Template).where(
             Template.workspace_id == data.workspace_id,
-            Template.phone_number_id == data.phone_number_id,
+            Template.channel_id == data.channel_id,
             Template.name == data.name,
             Template.deleted_at.is_(None),
         )
@@ -91,13 +91,13 @@ async def create_template(
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=409,
-            detail="Template with this name already exists for this phone number",
+            detail="Template with this name already exists for this channel",
         )
 
     # Create template
     template = Template(
         workspace_id=data.workspace_id,
-        phone_number_id=data.phone_number_id,
+        channel_id=data.channel_id,
         name=data.name,
         category=data.category,
         language=data.language,
@@ -119,7 +119,7 @@ async def create_template(
     return TemplateResponse(
         id=template.id,
         workspace_id=template.workspace_id,
-        phone_number_id=template.phone_number_id,
+        channel_id=template.channel_id,
         name=template.name,
         category=template.category,
         language=template.language,
@@ -137,7 +137,7 @@ async def list_templates(
     workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    phone_number_id: Optional[UUID] = Query(None, description="Filter by phone number"),
+    channel_id: Optional[UUID] = Query(None, description="Filter by channel"),
     status: Optional[str] = Query(None, description="Filter by status"),
     category: Optional[str] = Query(None, description="Filter by category"),
     limit: int = Query(20, ge=1, le=100),
@@ -157,8 +157,8 @@ async def list_templates(
         Template.deleted_at.is_(None),
     )
 
-    if phone_number_id:
-        query = query.where(Template.phone_number_id == phone_number_id)
+    if channel_id:
+        query = query.where(Template.channel_id == channel_id)
 
     if status:
         query = query.where(Template.status == status)
@@ -181,7 +181,7 @@ async def list_templates(
             TemplateResponse(
                 id=t.id,
                 workspace_id=t.workspace_id,
-                phone_number_id=t.phone_number_id,
+                channel_id=t.channel_id,
                 name=t.name,
                 category=t.category,
                 language=t.language,
@@ -230,7 +230,7 @@ async def get_template(
     return TemplateResponse(
         id=template.id,
         workspace_id=template.workspace_id,
-        phone_number_id=template.phone_number_id,
+        channel_id=template.channel_id,
         name=template.name,
         category=template.category,
         language=template.language,
@@ -299,7 +299,7 @@ async def update_template(
     return TemplateResponse(
         id=template.id,
         workspace_id=template.workspace_id,
-        phone_number_id=template.phone_number_id,
+        channel_id=template.channel_id,
         name=template.name,
         category=template.category,
         language=template.language,

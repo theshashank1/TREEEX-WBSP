@@ -31,7 +31,7 @@ from server.dependencies import (
     require_workspace_admin,
 )
 from server.models.base import MessageStatus
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.messaging import Message
 
 logger = logging.getLogger(__name__)
@@ -127,7 +127,7 @@ async def requeue_failed_messages(
         # Build query
         query = (
             select(Message)
-            .options(joinedload(Message.phone_number))
+            .options(joinedload(Message.channel))
             .where(
                 Message.workspace_id == workspace_id,
                 Message.status == MessageStatus.FAILED.value,
@@ -151,8 +151,8 @@ async def requeue_failed_messages(
 
         for msg in messages:
             # Ensure we have the Meta phone number ID
-            if not msg.phone_number:
-                logger.error(f"Message {msg.id} missing phone_number relation")
+            if not msg.channel:
+                logger.error(f"Message {msg.id} missing channel relation")
                 continue
 
             # Build queue payload
@@ -160,7 +160,7 @@ async def requeue_failed_messages(
                 "type": _get_message_type(msg.type),
                 "message_id": str(msg.id),
                 "workspace_id": str(msg.workspace_id),
-                "phone_number_id": str(msg.phone_number.phone_number_id),  # Use Meta ID
+                "phone_number_id": str(msg.channel.meta_phone_number_id),  # Use Meta ID
                 "to_number": msg.to_number,
                 **msg.content,  # Include original content
             }

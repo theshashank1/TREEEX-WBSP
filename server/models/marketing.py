@@ -27,8 +27,8 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
+    channel_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("channels.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     category: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -47,9 +47,7 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
     workspace: Mapped["Workspace"] = relationship(
         "Workspace", back_populates="templates"
     )
-    phone_number: Mapped["PhoneNumber"] = relationship(
-        "PhoneNumber", back_populates="templates"
-    )
+    channel: Mapped["Channel"] = relationship("Channel", back_populates="templates")
     creator: Mapped[Optional["WorkspaceMember"]] = relationship(
         "WorkspaceMember", back_populates="created_templates"
     )
@@ -61,14 +59,14 @@ class Template(TimestampMixin, SoftDeleteMixin, Base):
         Index(
             "idx_template_workspace_phone_name",
             "workspace_id",
-            "phone_number_id",
+            "channel_id",
             "name",
             unique=True,
         ),
         Index("idx_template_workspace_status", "workspace_id", "status"),
         Index("idx_template_workspace_category", "workspace_id", "category"),
-        Index("idx_template_phone_status", "phone_number_id", "status"),
-        Index("idx_template_phone", "phone_number_id"),
+        Index("idx_template_channel_status", "channel_id", "status"),
+        Index("idx_template_channel", "channel_id"),
         Index("idx_template_components_gin", "components", postgresql_using="gin"),
     )
 
@@ -82,8 +80,8 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="CASCADE"), nullable=False
+    channel_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("channels.id", ondelete="CASCADE"), nullable=False
     )
     template_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("templates.id", ondelete="SET NULL"), nullable=True
@@ -108,9 +106,7 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
     workspace: Mapped["Workspace"] = relationship(
         "Workspace", back_populates="campaigns"
     )
-    phone_number: Mapped["PhoneNumber"] = relationship(
-        "PhoneNumber", back_populates="campaigns"
-    )
+    channel: Mapped["Channel"] = relationship("Channel", back_populates="campaigns")
     template: Mapped[Optional["Template"]] = relationship(
         "Template", back_populates="campaigns"
     )
@@ -123,10 +119,10 @@ class Campaign(TimestampMixin, SoftDeleteMixin, Base):
 
     __table_args__ = (
         Index("idx_campaign_workspace_status", "workspace_id", "status"),
-        Index("idx_campaign_phone_status", "phone_number_id", "status"),
+        Index("idx_campaign_channel_status", "channel_id", "status"),
         Index("idx_campaign_scheduled", "scheduled_at"),
         Index("idx_campaign_workspace", "workspace_id"),
-        Index("idx_campaign_phone", "phone_number_id"),
+        Index("idx_campaign_channel", "channel_id"),
     )
 
 
@@ -145,8 +141,8 @@ class CampaignMessage(Base):
     contact_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False
     )
-    phone_number_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        ForeignKey("phone_numbers.id", ondelete="SET NULL"), nullable=True
+    channel_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("channels.id", ondelete="SET NULL"), nullable=True
     )
     message_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         ForeignKey("messages.id", ondelete="SET NULL"), nullable=True
@@ -165,8 +161,8 @@ class CampaignMessage(Base):
     contact: Mapped["Contact"] = relationship(
         "Contact", back_populates="campaign_messages"
     )
-    phone_number: Mapped[Optional["PhoneNumber"]] = relationship(
-        "PhoneNumber", back_populates="campaign_messages"
+    channel: Mapped[Optional["Channel"]] = relationship(
+        "Channel", back_populates="campaign_messages"
     )
     message: Mapped[Optional["Message"]] = relationship(
         "Message", back_populates="campaign_message"

@@ -21,7 +21,7 @@ from server.api import (
     contacts,
     media,
     messages,
-    phone_numbers,
+    channels,
     templates,
     webhooks,
     workspaces,
@@ -111,7 +111,7 @@ async def trigger_error():
 app.include_router(webhooks.router)
 app.include_router(auth.router, prefix="/api")
 app.include_router(workspaces.router, prefix="/api")
-app.include_router(phone_numbers.router, prefix="/api")
+app.include_router(channels.router, prefix="/api")
 app.include_router(campaigns.router, prefix="/api")
 app.include_router(media.router, prefix="/api")
 app.include_router(messages.router, prefix="/api")

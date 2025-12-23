@@ -53,7 +53,7 @@ from server.models.base import (
     MessageStatus,
     utc_now,
 )
-from server.models.contacts import Contact, PhoneNumber
+from server.models.contacts import Channel, Contact
 from server.models.messaging import Conversation, MediaFile, Message
 
 # ============================================================================
@@ -90,28 +90,29 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             log_event("webhook_message_missing_fields", level="warning", event=event)
             return False
 
-        phone_number = await session.execute(
-            select(PhoneNumber).where(
-                PhoneNumber.phone_number_id == phone_number_id_meta
+        channel_result = await session.execute(
+            select(Channel).where(
+                Channel.meta_phone_number_id == phone_number_id_meta
             )
         )
-        phone_number = phone_number.scalar_one_or_none()
+        channel = channel_result.scalar_one_or_none()
 
-        if not phone_number:
+        if not channel:
             log_event(
-                "webhook_phone_not_found",
+                "webhook_channel_not_found",
                 level="warning",
                 phone_number_id=phone_number_id_meta,
             )
             return False
 
-        workspace_id = phone_number.workspace_id
+        workspace_id = channel.workspace_id
 
         contact = await _get_or_create_contact(
             session=session,
             workspace_id=workspace_id,
             wa_id=contact_data.get("wa_id") or from_number,
             phone_number=from_number,
+            channel_id=channel.id,  # For ContactChannelState creation
             name=contact_data.get("name"),
         )
 
@@ -119,7 +120,7 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
             session=session,
             workspace_id=workspace_id,
             contact_id=contact.id,
-            phone_number_id=phone_number.id,
+            channel_id=channel.id,
         )
 
         message_time = utc_now()
@@ -147,11 +148,11 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
         message = Message(
             workspace_id=workspace_id,
             conversation_id=conversation.id,
-            phone_number_id=phone_number.id,
+            channel_id=channel.id,
             wa_message_id=wa_message_id,
             direction=MessageDirection.INCOMING.value,
             from_number=from_number,
-            to_number=metadata.get("display_phone_number", phone_number.phone_number),
+            to_number=metadata.get("display_phone_number", channel.phone_number),
             type=message_type,
             content=content,
             media_id=media_id,
@@ -170,7 +171,7 @@ async def handle_message_event(session: AsyncSession, event: Dict[str, Any]) -> 
 
         webhook_log = WebhookLog(
             workspace_id=workspace_id,
-            phone_number_id=phone_number.id,
+            channel_id=channel.id,
             event_type="message",
             event_id_hash=wa_message_id,
             payload=event,
@@ -287,16 +288,16 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             message.error_code = str(error.get("code", ""))
             message.error_message = error.get("message") or error.get("title")
 
-        phone_number = await session.execute(
-            select(PhoneNumber).where(
-                PhoneNumber.phone_number_id == phone_number_id_meta
+        channel_result = await session.execute(
+            select(Channel).where(
+                Channel.meta_phone_number_id == phone_number_id_meta
             )
         )
-        phone_number = phone_number.scalar_one_or_none()
+        channel = channel_result.scalar_one_or_none()
 
         webhook_log = WebhookLog(
             workspace_id=message.workspace_id,
-            phone_number_id=phone_number.id if phone_number else None,
+            channel_id=channel.id if channel else None,
             event_type=f"status:{status}",
             event_id_hash=f"{wa_message_id}:{status}",
             payload=event,
@@ -355,17 +356,17 @@ async def handle_error_event(session: AsyncSession, event: Dict[str, Any]) -> bo
             phone_number_id=phone_number_id_meta,
         )
 
-        phone_number = await session.execute(
-            select(PhoneNumber).where(
-                PhoneNumber.phone_number_id == phone_number_id_meta
+        channel_result = await session.execute(
+            select(Channel).where(
+                Channel.meta_phone_number_id == phone_number_id_meta
             )
         )
-        phone_number = phone_number.scalar_one_or_none()
+        channel = channel_result.scalar_one_or_none()
 
-        if phone_number:
+        if channel:
             webhook_log = WebhookLog(
-                workspace_id=phone_number.workspace_id,
-                phone_number_id=phone_number.id,
+                workspace_id=channel.workspace_id,
+                channel_id=channel.id,
                 event_type="error",
                 payload=event,
                 processed=True,
@@ -433,7 +434,7 @@ async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) ->
 
             webhook_log = WebhookLog(
                 workspace_id=template.workspace_id,
-                phone_number_id=template.phone_number_id,
+                channel_id=template.channel_id,
                 event_type=f"template:{template_event}",
                 payload=event,
                 processed=True,
@@ -512,9 +513,14 @@ async def _get_or_create_contact(
     workspace_id: UUID,
     wa_id: str,
     phone_number: str,
+    channel_id: UUID,  # Added: the channel receiving the message
     name: Optional[str] = None,
 ) -> Contact:
-    """Find existing contact or create new one."""
+    """
+    Find existing contact or create new one.
+    Also creates/updates ContactChannelState for auto opt-in on inbound messages.
+    """
+    from server.models.contacts import ContactChannelState
 
     result = await session.execute(
         select(Contact).where(
@@ -526,24 +532,53 @@ async def _get_or_create_contact(
     )
     contact = result.scalar_one_or_none()
 
+    is_new_contact = False
     if contact:
         if name and name != contact.name:
             contact.name = name
-        return contact
+    else:
+        # Create contact identity (no opt-in at workspace level)
+        contact = Contact(
+            workspace_id=workspace_id,
+            wa_id=wa_id,
+            phone_number=phone_number,
+            name=name,
+            source_channel_id=channel_id,  # First channel to interact = source
+        )
+        session.add(contact)
+        await session.flush()
+        is_new_contact = True
 
-    contact = Contact(
-        workspace_id=workspace_id,
-        wa_id=wa_id,
-        phone_number=phone_number,
-        name=name,
-        opted_in=True,  # Implicit opt-in when they message us
-        opt_in_source="chat",
-        opt_in_date=utc_now(),
+        log_event("contact_created", workspace_id=str(workspace_id), wa_id=wa_id)
+
+    # Create or update ContactChannelState for this channel (auto opt-in on inbound)
+    state_result = await session.execute(
+        select(ContactChannelState).where(
+            ContactChannelState.contact_id == contact.id,
+            ContactChannelState.channel_id == channel_id,
+        )
     )
-    session.add(contact)
-    await session.flush()
+    channel_state = state_result.scalar_one_or_none()
 
-    log_event("contact_created", workspace_id=str(workspace_id), wa_id=wa_id)
+    if channel_state:
+        # Update last_message_at and ensure opted-in (they messaged us)
+        channel_state.opt_in_status = True
+        channel_state.last_message_at = utc_now()
+        # If they were blocked and are now messaging us, clear the block
+        if channel_state.blocked:
+            channel_state.blocked = False
+    else:
+        # Create new state with implicit opt-in
+        channel_state = ContactChannelState(
+            workspace_id=workspace_id,
+            contact_id=contact.id,
+            channel_id=channel_id,
+            opt_in_status=True,  # Implicit opt-in when they message us
+            opt_in_type="inbound",
+            opt_in_date=utc_now(),
+            last_message_at=utc_now(),
+        )
+        session.add(channel_state)
 
     return contact
 
@@ -552,7 +587,7 @@ async def _get_or_create_conversation(
     session: AsyncSession,
     workspace_id: UUID,
     contact_id: UUID,
-    phone_number_id: UUID,
+    channel_id: UUID,
 ) -> Conversation:
     """Find existing conversation or create new one."""
 
@@ -561,7 +596,7 @@ async def _get_or_create_conversation(
             and_(
                 Conversation.workspace_id == workspace_id,
                 Conversation.contact_id == contact_id,
-                Conversation.phone_number_id == phone_number_id,
+                Conversation.channel_id == channel_id,
             )
         )
     )
@@ -574,7 +609,7 @@ async def _get_or_create_conversation(
     conversation = Conversation(
         workspace_id=workspace_id,
         contact_id=contact_id,
-        phone_number_id=phone_number_id,
+        channel_id=channel_id,
         status=ConversationStatus.OPEN.value,
         conversation_type=ConversationType.USER_INITIATED.value,
         last_message_at=now,

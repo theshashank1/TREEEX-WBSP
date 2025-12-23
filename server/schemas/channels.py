@@ -1,5 +1,5 @@
 """
-Pydantic schemas for Phone Number API.
+Pydantic schemas for WhatsApp Channels (formerly Phone Number API).
 """
 
 from datetime import datetime
@@ -31,13 +31,13 @@ class ErrorResponse(BaseModel):
 # ============================================================================
 
 
-class PhoneNumberCreate(BaseModel):
-    """Request schema for registering a new phone number."""
+class ChannelCreate(BaseModel):
+    """Request schema for registering a new channel."""
 
     workspace_id: Optional[UUID] = Field(
         None, description="Workspace UUID (optional if in path)"
     )
-    phone_number_id: str = Field(
+    meta_phone_number_id: str = Field(
         ..., description="Meta's Phone Number ID from Business Suite"
     )
     access_token: str = Field(
@@ -45,13 +45,13 @@ class PhoneNumberCreate(BaseModel):
         description="System User Access Token with whatsapp_business_messaging permission",
     )
     display_name: Optional[str] = Field(None, description="Friendly name")
-    business_id: Optional[str] = Field(
+    meta_business_id: Optional[str] = Field(
         None, description="WhatsApp Business Account ID (WABA ID)"
     )
 
 
-class PhoneNumberUpdate(BaseModel):
-    """Request schema for updating phone number settings."""
+class ChannelUpdate(BaseModel):
+    """Request schema for updating channel settings."""
 
     display_name: Optional[str] = Field(None, description="Friendly name")
     access_token: Optional[str] = Field(
@@ -67,15 +67,15 @@ class PhoneNumberUpdate(BaseModel):
 # ============================================================================
 
 
-class PhoneNumberResponse(BaseModel):
-    """Response schema for full phone number details."""
+class ChannelResponse(BaseModel):
+    """Response schema for full channel details."""
 
     id: UUID
     workspace_id: UUID
     phone_number: str
-    phone_number_id: str
+    meta_phone_number_id: str
     display_name: Optional[str] = None
-    business_id: Optional[str] = None
+    meta_business_id: Optional[str] = None
     quality_rating: str = Field(
         default="UNKNOWN", description="GREEN/YELLOW/RED/UNKNOWN"
     )
@@ -90,16 +90,16 @@ class PhoneNumberResponse(BaseModel):
         from_attributes = True
 
 
-class PhoneNumberListResponse(BaseModel):
-    """Paginated list of phone numbers."""
+class ChannelListResponse(BaseModel):
+    """Paginated list of channels."""
 
-    data: List[PhoneNumberResponse]
+    data: List[ChannelResponse]
     total: int
     limit: int
     offset: int
 
 
-class PhoneNumberSyncResponse(BaseModel):
+class ChannelSyncResponse(BaseModel):
     """Response for sync operation."""
 
     id: UUID
@@ -114,9 +114,9 @@ class PhoneNumberSyncResponse(BaseModel):
 __all__ = [
     "ErrorDetail",
     "ErrorResponse",
-    "PhoneNumberCreate",
-    "PhoneNumberUpdate",
-    "PhoneNumberResponse",
-    "PhoneNumberListResponse",
-    "PhoneNumberSyncResponse",
+    "ChannelCreate",
+    "ChannelUpdate",
+    "ChannelResponse",
+    "ChannelListResponse",
+    "ChannelSyncResponse",
 ]
