@@ -6,8 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.db import get_async_session
-from server.core.supabase import Client, get_user
-from server.dependencies import get_supabase_client
+from server.dependencies import get_current_user
 from server.models.access import User, Workspace, WorkspaceMember
 from server.models.base import MemberRole, MemberStatus, utc_now
 from server.schemas.workspaces import (
@@ -23,23 +22,7 @@ router = APIRouter(prefix="/workspaces", tags=["Workspaces"])
 
 # Dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
-SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
-
-
-async def get_current_user(session: SessionDep, supabase: SupabaseDep) -> User:
-    """Get authenticated user from Supabase token and verify they exist in local database."""
-    supabase_user = get_user(supabase)
-
-    result = await session.execute(select(User).where(User.id == supabase_user.id))
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found in database")
-
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="User account is inactive")
-
-    return user
+UserDep = Annotated[User, Depends(get_current_user)]
 
 
 async def get_workspace_with_permission(
@@ -88,11 +71,9 @@ async def get_workspace_with_permission(
 async def create_workspace(
     data: WorkspaceCreate,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """Create a new workspace."""
-    user = await get_current_user(session, supabase)
-
     try:
         # Create workspace (slug, api_key, webhook_secret are auto-generated)
         workspace = Workspace(
@@ -127,11 +108,9 @@ async def create_workspace(
 @router.get("", response_model=List[WorkspaceListResponse])
 async def list_workspaces(
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """List all workspaces user is a member of."""
-    user = await get_current_user(session, supabase)
-
     # Get all memberships with workspace data
     result = await session.execute(
         select(WorkspaceMember, Workspace)
@@ -163,11 +142,9 @@ async def list_workspaces(
 async def get_workspace(
     workspace_id: UUID,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """Get specific workspace. Requires membership."""
-    user = await get_current_user(session, supabase)
-
     workspace = await get_workspace_with_permission(
         workspace_id=workspace_id,
         user_id=user.id,
@@ -182,11 +159,9 @@ async def update_workspace(
     workspace_id: UUID,
     data: WorkspaceUpdate,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """Update workspace. Requires OWNER or ADMIN role."""
-    user = await get_current_user(session, supabase)
-
     workspace = await get_workspace_with_permission(
         workspace_id=workspace_id,
         user_id=user.id,
@@ -217,11 +192,9 @@ async def update_workspace(
 async def delete_workspace(
     workspace_id: UUID,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """Soft delete workspace. Requires OWNER role only."""
-    user = await get_current_user(session, supabase)
-
     workspace = await get_workspace_with_permission(
         workspace_id=workspace_id,
         user_id=user.id,
@@ -242,11 +215,9 @@ async def delete_workspace(
 async def list_workspace_members(
     workspace_id: UUID,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """List workspace members. Requires membership."""
-    user = await get_current_user(session, supabase)
-
     # Verify user has access to workspace
     await get_workspace_with_permission(
         workspace_id=workspace_id,
@@ -271,11 +242,9 @@ async def add_workspace_member(
     workspace_id: UUID,
     data: AddMemberRequest,
     session: SessionDep,
-    supabase: SupabaseDep,
+    user: UserDep,
 ):
     """Add member to workspace. Requires OWNER or ADMIN role."""
-    user = await get_current_user(session, supabase)
-
     # Verify user has permission to add members
     await get_workspace_with_permission(
         workspace_id=workspace_id,
