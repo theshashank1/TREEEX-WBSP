@@ -1,6 +1,7 @@
 """
 Phone Number API endpoints for WhatsApp Business.
 """
+
 from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
@@ -18,7 +19,12 @@ from server.dependencies import (
     get_workspace_member,
     require_workspace_admin,
 )
-from server.models.base import MemberRole, PhoneNumberQuality, PhoneNumberStatus, utc_now
+from server.models.base import (
+    MemberRole,
+    PhoneNumberQuality,
+    PhoneNumberStatus,
+    utc_now,
+)
 from server.models.contacts import PhoneNumber
 from server.schemas.phone_numbers import (
     ErrorDetail,
@@ -30,7 +36,9 @@ from server.schemas.phone_numbers import (
 )
 from server.whatsapp.client import WhatsAppClient
 
-router = APIRouter(prefix="/phone-numbers", tags=["Phone Numbers"])
+router = APIRouter(
+    prefix="/workspaces/{workspace_id}/phone-numbers", tags=["Phone Numbers"]
+)
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -58,6 +66,7 @@ def _phone_number_to_response(phone: PhoneNumber) -> PhoneNumberResponse:
 
 @router.post("", response_model=PhoneNumberResponse, status_code=201)
 async def create_phone_number(
+    workspace_id: UUID,
     data: PhoneNumberCreate,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -74,7 +83,10 @@ async def create_phone_number(
     6. Return PhoneNumberResponse
     """
     # Verify user has admin access to workspace
-    member = await require_workspace_admin(data.workspace_id, current_user, session)
+    member = await require_workspace_admin(workspace_id, current_user, session)
+
+    # Force workspace_id from path
+    data.workspace_id = workspace_id
 
     # Initialize WhatsApp client
     wa_client = WhatsAppClient(access_token=data.access_token)
@@ -85,7 +97,7 @@ async def create_phone_number(
         log_event(
             "phone_number_create_failed",
             level="warning",
-            workspace_id=str(data.workspace_id),
+            workspace_id=str(workspace_id),
             error_code=token_error.code if token_error else "unknown",
             error_message=token_error.message if token_error else "unknown",
         )
@@ -99,7 +111,11 @@ async def create_phone_number(
             status_code=400,
             detail={
                 "code": error_code,
-                "message": token_error.message if token_error else "The access token is invalid or expired.",
+                "message": (
+                    token_error.message
+                    if token_error
+                    else "The access token is invalid or expired."
+                ),
             },
         )
 
@@ -109,7 +125,7 @@ async def create_phone_number(
         log_event(
             "phone_number_create_failed",
             level="warning",
-            workspace_id=str(data.workspace_id),
+            workspace_id=str(workspace_id),
             phone_number_id=data.phone_number_id,
             error_code=phone_error.code if phone_error else "unknown",
         )
@@ -117,7 +133,11 @@ async def create_phone_number(
             status_code=400,
             detail={
                 "code": "INVALID_PHONE_NUMBER_ID",
-                "message": phone_error.message if phone_error else "Phone number ID doesn't exist in Meta.",
+                "message": (
+                    phone_error.message
+                    if phone_error
+                    else "Phone number ID doesn't exist in Meta."
+                ),
             },
         )
 
@@ -140,14 +160,16 @@ async def create_phone_number(
     # Create PhoneNumber record
     now = utc_now()
     phone_number = PhoneNumber(
-        workspace_id=data.workspace_id,
+        workspace_id=workspace_id,
         phone_number=phone_info.phone_number,
         phone_number_id=data.phone_number_id,
         display_name=data.display_name or phone_info.verified_name,
         access_token=data.access_token,
         business_id=data.business_id,
         quality_rating=phone_info.quality_rating or PhoneNumberQuality.UNKNOWN.value,
-        message_limit=WhatsAppClient.parse_message_limit(phone_info.messaging_limit_tier),
+        message_limit=WhatsAppClient.parse_message_limit(
+            phone_info.messaging_limit_tier
+        ),
         tier=phone_info.messaging_limit_tier,
         status=PhoneNumberStatus.ACTIVE.value,
         verified_at=now,
@@ -160,7 +182,7 @@ async def create_phone_number(
     log_event(
         "phone_number_created",
         level="info",
-        workspace_id=str(data.workspace_id),
+        workspace_id=str(workspace_id),
         phone_number_id=data.phone_number_id,
         phone_number=phone_info.phone_number,
     )
@@ -170,10 +192,12 @@ async def create_phone_number(
 
 @router.get("", response_model=PhoneNumberListResponse)
 async def list_phone_numbers(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID to filter by"),
-    status: Optional[str] = Query(None, description="Filter by status (pending, active, disabled)"),
+    status: Optional[str] = Query(
+        None, description="Filter by status (pending, active, disabled)"
+    ),
     limit: int = Query(20, ge=1, le=100, description="Results per page"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
 ):
@@ -214,6 +238,7 @@ async def list_phone_numbers(
 
 @router.get("/{phone_number_id}", response_model=PhoneNumberResponse)
 async def get_phone_number(
+    workspace_id: UUID,
     phone_number_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -227,6 +252,7 @@ async def get_phone_number(
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == phone_number_id,
+            PhoneNumber.workspace_id == workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -239,13 +265,14 @@ async def get_phone_number(
         )
 
     # Verify workspace membership
-    await get_workspace_member(phone_number.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     return _phone_number_to_response(phone_number)
 
 
 @router.patch("/{phone_number_id}", response_model=PhoneNumberResponse)
 async def update_phone_number(
+    workspace_id: UUID,
     phone_number_id: UUID,
     data: PhoneNumberUpdate,
     session: SessionDep,
@@ -260,6 +287,7 @@ async def update_phone_number(
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == phone_number_id,
+            PhoneNumber.workspace_id == workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -272,7 +300,7 @@ async def update_phone_number(
         )
 
     # Verify admin access
-    await require_workspace_admin(phone_number.workspace_id, current_user, session)
+    await require_workspace_admin(workspace_id, current_user, session)
 
     # Validate new access token if provided
     if data.access_token:
@@ -286,7 +314,11 @@ async def update_phone_number(
                 status_code=400,
                 detail={
                     "code": error_code,
-                    "message": token_error.message if token_error else "The access token is invalid or expired.",
+                    "message": (
+                        token_error.message
+                        if token_error
+                        else "The access token is invalid or expired."
+                    ),
                 },
             )
         phone_number.access_token = data.access_token
@@ -321,6 +353,7 @@ async def update_phone_number(
 
 @router.delete("/{phone_number_id}", status_code=204)
 async def delete_phone_number(
+    workspace_id: UUID,
     phone_number_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -334,6 +367,7 @@ async def delete_phone_number(
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == phone_number_id,
+            PhoneNumber.workspace_id == workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -346,7 +380,7 @@ async def delete_phone_number(
         )
 
     # Verify admin access
-    await require_workspace_admin(phone_number.workspace_id, current_user, session)
+    await require_workspace_admin(workspace_id, current_user, session)
 
     # Soft delete
     phone_number.soft_delete()
@@ -364,6 +398,7 @@ async def delete_phone_number(
 
 @router.post("/{phone_number_id}/sync", response_model=PhoneNumberSyncResponse)
 async def sync_phone_number(
+    workspace_id: UUID,
     phone_number_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -378,6 +413,7 @@ async def sync_phone_number(
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == phone_number_id,
+            PhoneNumber.workspace_id == workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -390,25 +426,35 @@ async def sync_phone_number(
         )
 
     # Verify workspace membership
-    await get_workspace_member(phone_number.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     # Fetch from Meta API
     wa_client = WhatsAppClient(access_token=phone_number.access_token)
-    phone_info, phone_error = await wa_client.get_phone_number(phone_number.phone_number_id)
+    phone_info, phone_error = await wa_client.get_phone_number(
+        phone_number.phone_number_id
+    )
 
     if not phone_info:
         raise HTTPException(
             status_code=400,
             detail={
                 "code": "SYNC_FAILED",
-                "message": phone_error.message if phone_error else "Failed to sync from Meta API.",
+                "message": (
+                    phone_error.message
+                    if phone_error
+                    else "Failed to sync from Meta API."
+                ),
             },
         )
 
     # Update phone number with fresh data
-    phone_number.quality_rating = phone_info.quality_rating or PhoneNumberQuality.UNKNOWN.value
+    phone_number.quality_rating = (
+        phone_info.quality_rating or PhoneNumberQuality.UNKNOWN.value
+    )
     phone_number.tier = phone_info.messaging_limit_tier
-    phone_number.message_limit = WhatsAppClient.parse_message_limit(phone_info.messaging_limit_tier)
+    phone_number.message_limit = WhatsAppClient.parse_message_limit(
+        phone_info.messaging_limit_tier
+    )
 
     now = utc_now()
     await session.commit()
@@ -434,25 +480,27 @@ async def sync_phone_number(
 
 @router.post("/{phone_number_id}/exchange-token", response_model=PhoneNumberResponse)
 async def exchange_token_for_long_term(
+    workspace_id: UUID,
     phone_number_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
     Exchange short-lived access token for long-lived token.
-    
+
     This endpoint attempts to exchange the current access token for a long-lived
     token (typically 60 days vs 1 hour). This is useful when you have a short-lived
     user access token and want to convert it to a long-lived one.
-    
+
     Note: System user tokens are already long-lived and don't need exchange.
-    
+
     Requires workspace admin access.
     """
     # Fetch phone number
     result = await session.execute(
         select(PhoneNumber).where(
             PhoneNumber.id == phone_number_id,
+            PhoneNumber.workspace_id == workspace_id,
             PhoneNumber.deleted_at.is_(None),
         )
     )
@@ -465,7 +513,7 @@ async def exchange_token_for_long_term(
         )
 
     # Verify admin access
-    await require_workspace_admin(phone_number.workspace_id, current_user, session)
+    await require_workspace_admin(workspace_id, current_user, session)
 
     # Exchange token
     wa_client = WhatsAppClient(access_token=phone_number.access_token)
@@ -482,7 +530,11 @@ async def exchange_token_for_long_term(
             status_code=400,
             detail={
                 "code": "TOKEN_EXCHANGE_FAILED",
-                "message": error.message if error else "Failed to exchange token for long-lived token.",
+                "message": (
+                    error.message
+                    if error
+                    else "Failed to exchange token for long-lived token."
+                ),
             },
         )
 

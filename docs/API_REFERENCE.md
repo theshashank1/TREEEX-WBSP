@@ -1900,7 +1900,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/phone-numbers</code>
+  <code>/api/workspaces/{workspace_id}/phone-numbers</code>
 </div>
 
 Register a new WhatsApp Business phone number.
@@ -1919,6 +1919,15 @@ This endpoint requires authentication.
 
 :::
 
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+
 #### Request Body (`application/json`)
 
 See schema: [`PhoneNumberCreate`](#phonenumbercreate)
@@ -1927,7 +1936,6 @@ See schema: [`PhoneNumberCreate`](#phonenumbercreate)
 
 ```json
 {
-  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
   "phone_number_id": "phone_number_id",
   "access_token": "access_token",
   "display_name": "display_name",
@@ -1938,11 +1946,10 @@ See schema: [`PhoneNumberCreate`](#phonenumbercreate)
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/phone-numbers' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
-  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
   "phone_number_id": "phone_number_id",
   "access_token": "access_token",
   "display_name": "display_name",
@@ -1951,14 +1958,13 @@ curl -X POST 'http://localhost:8000/api/phone-numbers' \
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN',
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
     phone_number_id: "phone_number_id",
     access_token: "access_token",
     display_name: "display_name",
@@ -2009,7 +2015,6 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `workspace_id` | `string (uuid)` | ✅ | Workspace ID to filter by |
 | `status` | `any` | ❌ | Filter by status (pending, active, disabled) |
 | `limit` | `integer` | ❌ | Results per page (default: `20`) |
 | `offset` | `integer` | ❌ | Offset for pagination (default: `0`) |
@@ -2018,12 +2023,12 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET 'http://localhost:8000/api/phone-numbers' \
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers?workspace_id=550e8400-e29b-41d4-a716-446655440000', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers', {
   method: 'GET',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN'
@@ -2073,18 +2078,19 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
 | `phone_number_id` | `string (uuid)` | ✅ |  |
 
 
 #### Example Request
 
 ```bash
-curl -X GET 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'GET',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN'
@@ -2134,6 +2140,7 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
 | `phone_number_id` | `string (uuid)` | ✅ |  |
 
 
@@ -2154,7 +2161,7 @@ See schema: [`PhoneNumberUpdate`](#phonenumberupdate)
 #### Example Request
 
 ```bash
-curl -X PATCH 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+curl -X PATCH 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -2165,7 +2172,7 @@ curl -X PATCH 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-4
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'PATCH',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN',
@@ -2221,18 +2228,19 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
 | `phone_number_id` | `string (uuid)` | ✅ |  |
 
 
 #### Example Request
 
 ```bash
-curl -X DELETE 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
+curl -X DELETE 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000', {
   method: 'DELETE',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN'
@@ -2261,7 +2269,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/phone-numbers/{phone_number_id}/sync</code>
+  <code>/api/workspaces/{workspace_id}/phone-numbers/{phone_number_id}/sync</code>
 </div>
 
 Sync phone number data from Meta API.
@@ -2281,18 +2289,19 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
 | `phone_number_id` | `string (uuid)` | ✅ |  |
 
 
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000/sync', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN'
@@ -2323,7 +2332,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/phone-numbers/{phone_number_id}/exchange-token</code>
+  <code>/api/workspaces/{workspace_id}/phone-numbers/{phone_number_id}/exchange-token</code>
 </div>
 
 Exchange short-lived access token for long-lived token.
@@ -2348,18 +2357,19 @@ This endpoint requires authentication.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
 | `phone_number_id` | `string (uuid)` | ✅ |  |
 
 
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/phone-numbers/550e8400-e29b-41d4-a716-446655440000/exchange-token', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN'

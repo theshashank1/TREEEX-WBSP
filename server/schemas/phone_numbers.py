@@ -34,7 +34,9 @@ class ErrorResponse(BaseModel):
 class PhoneNumberCreate(BaseModel):
     """Request schema for registering a new phone number."""
 
-    workspace_id: UUID = Field(..., description="Workspace UUID")
+    workspace_id: Optional[UUID] = Field(
+        None, description="Workspace UUID (optional if in path)"
+    )
     phone_number_id: str = Field(
         ..., description="Meta's Phone Number ID from Business Suite"
     )
