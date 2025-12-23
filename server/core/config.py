@@ -109,9 +109,21 @@ class Settings(BaseSettings):
     NGROK_AUTHTOKEN: Optional[str] = None
     NGROK_DOMAIN: Optional[str] = None
 
+    @model_validator(mode="after")
+    def clean_ngrok_domain(self) -> "Settings":
+        """Strip protocol from NGROK_DOMAIN if present"""
+        if self.NGROK_DOMAIN:
+            self.NGROK_DOMAIN = (
+                self.NGROK_DOMAIN.replace("https://", "")
+                .replace("http://", "")
+                .split("/")[0]
+            )
+        return self
+
     # Monitoring
     APPLICATIONINSIGHTS_CONNECTION_STRING: Optional[str] = None
     LOG_DIR: Optional[str] = None
+    SENTRY_DSN: Optional[str] = None
 
 
 # Singleton instance

@@ -7,8 +7,10 @@ Configures FastAPI application, middleware, lifecycle events, and routers.
 from contextlib import asynccontextmanager
 from datetime import datetime
 
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from supabase import create_client
 
 # Import routers
@@ -44,6 +46,19 @@ async def lifespan(app: FastAPI):
     # --- Shutdown ---
     await redis_client.shutdown()
 
+
+# Initialize Sentry
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        integrations=[FastApiIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+    )
+
+else:
+    raise ValueError("SENTRY_DSN is not set in the environment")
 
 app = FastAPI(
     title="TREEEX WhatsApp BSP",
@@ -81,6 +96,12 @@ async def health_check():
 async def readiness_check():
     """Readiness check endpoint. Returns 200 if ready."""
     return {"status": "ready"}
+
+
+@app.get("/sentry-debug", tags=["Health"])
+async def trigger_error():
+    """Trigger an error to test Sentry integration."""
+    return 1 / 0
 
 
 # =============================================================================
