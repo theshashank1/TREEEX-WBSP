@@ -36,7 +36,13 @@ MAX_AUDIO_SIZE = 16 * 1024 * 1024  # 16 MB
 MAX_DOCUMENT_SIZE = 100 * 1024 * 1024  # 100 MB
 
 # Allowed MIME types per category
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"}
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/bmp",
+    "image/webp",
+}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/3gpp", "video/quicktime"}
 ALLOWED_AUDIO_TYPES = {"audio/aac", "audio/mp4", "audio/mpeg", "audio/amr", "audio/ogg"}
 ALLOWED_DOCUMENT_TYPES = {
@@ -210,7 +216,18 @@ async def upload_media(
         )
 
     # Upload to Azure Blob Storage
-    filename = file.filename or f"upload_{media_type}"
+    import os
+
+    from werkzeug.utils import secure_filename
+
+    # Sanitize filname
+    safe_filename = (
+        secure_filename(file.filename) if file.filename else f"upload_{media_type}"
+    )
+    if not safe_filename:
+        safe_filename = f"upload_{media_type}"
+
+    filename = safe_filename
     blob_url, blob_name, error = await azure_storage.upload_file(
         file_data=file_data,
         filename=filename,
@@ -378,7 +395,10 @@ async def download_media(
         )
         raise HTTPException(
             status_code=500,
-            detail={"code": "URL_PARSE_ERROR", "message": "Failed to parse storage URL"},
+            detail={
+                "code": "URL_PARSE_ERROR",
+                "message": "Failed to parse storage URL",
+            },
         )
 
     # Generate SAS URL with 60 minute expiry
@@ -387,7 +407,10 @@ async def download_media(
     if not sas_url:
         raise HTTPException(
             status_code=500,
-            detail={"code": "SAS_GENERATION_ERROR", "message": "Failed to generate download URL"},
+            detail={
+                "code": "SAS_GENERATION_ERROR",
+                "message": "Failed to generate download URL",
+            },
         )
 
     log_event(
@@ -403,7 +426,9 @@ async def get_media_url(
     media_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    expiry_minutes: int = Query(60, ge=5, le=1440, description="URL validity in minutes"),
+    expiry_minutes: int = Query(
+        60, ge=5, le=1440, description="URL validity in minutes"
+    ),
 ):
     """
     Get a temporary signed URL for a media file.
@@ -448,7 +473,10 @@ async def get_media_url(
         )
         raise HTTPException(
             status_code=500,
-            detail={"code": "URL_PARSE_ERROR", "message": "Failed to parse storage URL"},
+            detail={
+                "code": "URL_PARSE_ERROR",
+                "message": "Failed to parse storage URL",
+            },
         )
 
     # Generate SAS URL with specified expiry
@@ -457,7 +485,10 @@ async def get_media_url(
     if not sas_url:
         raise HTTPException(
             status_code=500,
-            detail={"code": "SAS_GENERATION_ERROR", "message": "Failed to generate temporary URL"},
+            detail={
+                "code": "SAS_GENERATION_ERROR",
+                "message": "Failed to generate temporary URL",
+            },
         )
 
     log_event(
