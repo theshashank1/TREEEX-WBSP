@@ -2761,6 +2761,242 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 ---
 
 
+## Campaigns
+
+### Create Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns</code>
+</div>
+
+Create a new campaign.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+#### Request Body (`application/json`)
+
+See schema: [`CampaignCreate`](#campaigncreate)
+
+**Example:**
+
+```json
+{
+  "phone_number_id": "phone_number_id",
+  "template_id": "template_id",
+  "name": "name"
+}
+```
+
+#### Example Request
+
+```bash
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/campaigns' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "phone_number_id": "phone_number_id",
+  "template_id": "template_id",
+  "name": "name"
+}'
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+### List Campaigns
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns</code>
+</div>
+
+List campaigns for a workspace.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `status` | `any` | ❌ | Filter by status |
+| `phone_number_id` | `string (uuid)` | ❌ | Filter by phone number |
+| `limit` | `integer` | ❌ | Results per page (default: `20`) |
+| `offset` | `integer` | ❌ | Offset for pagination (default: `0`) |
+
+#### Example Request
+
+```bash
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/campaigns' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
+```
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignListResponse`](#campaignlistresponse)
+
+---
+
+### Get Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}</code>
+</div>
+
+Get campaign details.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+### Update Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}</code>
+</div>
+
+Update campaign.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Request Body (`application/json`)
+
+See schema: [`CampaignUpdate`](#campaignupdate)
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+### Delete Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}</code>
+</div>
+
+Soft delete a campaign.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Responses
+
+**204** - Successful Response
+
+---
+
+### Execute Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}/execute</code>
+</div>
+
+Start campaign execution. Queues the campaign for processing.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ |  |
+| `campaign_id` | `string (uuid)` | ✅ |  |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+### Pause Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}/pause</code>
+</div>
+
+Pause a running campaign.
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+### Cancel Campaign
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/campaigns/{campaign_id}/cancel</code>
+</div>
+
+Cancel a running or scheduled campaign.
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`CampaignResponse`](#campaignresponse)
+
+---
+
+
 ## Webhooks
 
 ### Verify Webhook
