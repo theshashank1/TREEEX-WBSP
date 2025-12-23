@@ -22,7 +22,7 @@ from server.schemas.templates import (
     TemplateUpdate,
 )
 
-router = APIRouter(prefix="/templates", tags=["Templates"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/templates", tags=["Templates"])
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -36,6 +36,7 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 @router.post("", response_model=TemplateResponse, status_code=201)
 async def create_template(
+    workspace_id: UUID,
     data: TemplateCreate,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -49,7 +50,10 @@ async def create_template(
     Requires workspace membership.
     """
     # Verify workspace membership
-    await get_workspace_member(data.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
+
+    # Force workspace_id from path
+    data.workspace_id = workspace_id
 
     # Validate category
     valid_categories = [c.value for c in TemplateCategory]
@@ -130,9 +134,9 @@ async def create_template(
 
 @router.get("", response_model=TemplateListResponse)
 async def list_templates(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID to filter by"),
     phone_number_id: Optional[UUID] = Query(None, description="Filter by phone number"),
     status: Optional[str] = Query(None, description="Filter by status"),
     category: Optional[str] = Query(None, description="Filter by category"),
@@ -198,6 +202,7 @@ async def list_templates(
 
 @router.get("/{template_id}", response_model=TemplateResponse)
 async def get_template(
+    workspace_id: UUID,
     template_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -210,6 +215,7 @@ async def get_template(
     result = await session.execute(
         select(Template).where(
             Template.id == template_id,
+            Template.workspace_id == workspace_id,
             Template.deleted_at.is_(None),
         )
     )
@@ -219,7 +225,7 @@ async def get_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     # Verify workspace membership
-    await get_workspace_member(template.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     return TemplateResponse(
         id=template.id,
@@ -239,6 +245,7 @@ async def get_template(
 
 @router.patch("/{template_id}", response_model=TemplateResponse)
 async def update_template(
+    workspace_id: UUID,
     template_id: UUID,
     data: TemplateUpdate,
     session: SessionDep,
@@ -255,6 +262,7 @@ async def update_template(
     result = await session.execute(
         select(Template).where(
             Template.id == template_id,
+            Template.workspace_id == workspace_id,
             Template.deleted_at.is_(None),
         )
     )
@@ -264,7 +272,7 @@ async def update_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     # Verify workspace membership
-    await get_workspace_member(template.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     # Update fields
     if data.components is not None:
@@ -306,6 +314,7 @@ async def update_template(
 
 @router.delete("/{template_id}", status_code=204)
 async def delete_template(
+    workspace_id: UUID,
     template_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -318,6 +327,7 @@ async def delete_template(
     result = await session.execute(
         select(Template).where(
             Template.id == template_id,
+            Template.workspace_id == workspace_id,
             Template.deleted_at.is_(None),
         )
     )
@@ -327,7 +337,7 @@ async def delete_template(
         raise HTTPException(status_code=404, detail="Template not found")
 
     # Verify workspace membership
-    await get_workspace_member(template.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     # Soft delete
     template.soft_delete()

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 class TemplateCreate(BaseModel):
     """Schema for creating a new template"""
 
-    workspace_id: UUID
+    workspace_id: Optional[UUID] = None  # Populated from path parameter
     phone_number_id: UUID
     name: str = Field(
         ...,

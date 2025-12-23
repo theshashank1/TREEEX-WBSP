@@ -2761,6 +2761,128 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 ---
 
 
+## Templates
+
+### Create Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/templates</code>
+</div>
+
+Create a new WhatsApp message template. Templates must be approved by Meta before use.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+#### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `phone_number_id` | `uuid` | ✅ | Phone number to register template on |
+| `name` | `string` | ✅ | Template name (lowercase, no spaces) |
+| `category` | `string` | ✅ | MARKETING, UTILITY, or AUTHENTICATION |
+| `language` | `string` | ❌ | Language code (default: en) |
+| `components` | `object` | ✅ | Template components |
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+---
+
+### List Templates
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/templates</code>
+</div>
+
+List templates for a workspace.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `phone_number_id` | `uuid` | ❌ | Filter by phone number |
+| `status` | `string` | ❌ | Filter by status (PENDING, APPROVED, REJECTED) |
+| `category` | `string` | ❌ | Filter by category |
+| `limit` | `integer` | ❌ | Results per page (default: 20) |
+| `offset` | `integer` | ❌ | Offset for pagination |
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateListResponse`](#templatelistresponse)
+
+---
+
+### Get Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
+  <code>/api/workspaces/{workspace_id}/templates/{template_id}</code>
+</div>
+
+Get template details.
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+---
+
+### Update Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
+  <code>/api/workspaces/{workspace_id}/templates/{template_id}</code>
+</div>
+
+Update template components or status.
+
+#### Responses
+
+**200** - Successful Response
+
+Returns: [`TemplateResponse`](#templateresponse)
+
+---
+
+### Delete Template
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
+  <code>/api/workspaces/{workspace_id}/templates/{template_id}</code>
+</div>
+
+Soft delete a template.
+
+#### Responses
+
+**204** - Successful Response
+
+---
+
+
 ## Media
 
 ### Upload Media
