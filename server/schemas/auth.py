@@ -13,11 +13,16 @@ class Provider(str, Enum):
     github = "GitHub"
 
 
-class Signup(BaseModel):
-    """Request model for Signup"""
+class Signin(BaseModel):
+    """Request model for Signin"""
 
     email: EmailStr
     password: str
+
+
+class Signup(Signin):
+    """Request model for Signup"""
+
     name: Optional[str] = None  # Changed from username to match DB 'name'
 
 
@@ -27,6 +32,8 @@ class SignupResponse(BaseModel):
     user_id: UUID
     name: str
     email: EmailStr
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -37,10 +44,24 @@ class SigninResponse(BaseModel):
 
     user_id: UUID
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
     class Config:
         from_attributes = True
 
 
-__all__ = ["Provider", "Signup", "SignupResponse", "SigninResponse"]
+class RefreshRequest(BaseModel):
+    """Request model for token refresh"""
+
+    refresh_token: str
+
+
+__all__ = [
+    "Provider",
+    "Signin",
+    "Signup",
+    "SignupResponse",
+    "SigninResponse",
+    "RefreshRequest",
+]

@@ -1,17 +1,21 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.db import get_async_session
-from server.core.supabase import Client, get_user
-from server.dependencies import get_supabase_client
+from server.core.supabase import Client
+from server.dependencies import bearer_scheme, get_supabase_client
 from server.models.access import User
 from server.schemas.auth import *
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"],
+)
 
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 SupabaseDep = Annotated[Client, Depends(get_supabase_client)]
@@ -58,6 +62,8 @@ async def signup(
             user_id=user.id,
             name=user.name,
             email=user.email,
+            access_token=response.session.access_token if response.session else None,
+            refresh_token=response.session.refresh_token if response.session else None,
         )
     except Exception as e:
         await session.rollback()
@@ -66,7 +72,7 @@ async def signup(
 
 @router.post("/signin", response_model=SigninResponse)
 async def signin(
-    data: Signup,
+    data: Signin,
     session: SessionDep,
     supabase: SupabaseDep,
     provider: Provider = Provider.email,
@@ -103,6 +109,7 @@ async def signin(
         return SigninResponse(
             user_id=response.user.id,
             access_token=response.session.access_token,
+            refresh_token=response.session.refresh_token,
         )
     except Exception as e:
         await session.rollback()
@@ -113,10 +120,38 @@ async def signin(
 
 
 @router.post("/refresh")
-async def refresh(supabase: SupabaseDep):
-    return supabase.auth.refresh_session()
+async def refresh(data: RefreshRequest, supabase: SupabaseDep):
+    try:
+        response = supabase.auth.refresh_session(data.refresh_token)
+        if not response.session:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+        return {
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token,
+            "token_type": "bearer",
+            "expires_at": response.session.expires_at,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=str(e))
 
 
 @router.get("/me")
-async def me(supabase: SupabaseDep):
-    return get_user(supabase)
+async def me(
+    request: Request,
+    session: SessionDep,
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+):
+    """Get current authenticated user info."""
+    from server.dependencies import get_current_user
+
+    user = await get_current_user(request, credentials, session)
+    return {
+        "user_id": str(user.id),
+        "email": user.email,
+        "name": user.name,
+        "email_verified": user.email_verified,
+        "is_active": user.is_active,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+        "last_login_at": user.last_login_at.isoformat() if user.last_login_at else None,
+    }
