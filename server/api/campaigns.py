@@ -2,6 +2,7 @@
 Campaign Management API endpoints.
 """
 
+from datetime import datetime
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -16,7 +17,7 @@ from server.dependencies import User, get_current_user, get_workspace_member
 from server.models.base import CampaignStatus, MessageStatus
 from server.models.marketing import Campaign
 
-router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/campaigns", tags=["Campaigns"])
 
 # Type aliases
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -38,7 +39,7 @@ class CampaignExecutionRequest(BaseModel):
 
 
 class CampaignCreate(BaseModel):
-    workspace_id: UUID
+    workspace_id: Optional[UUID] = None  # Optional, overridden by path
     phone_number_id: UUID
     template_id: Optional[UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
@@ -61,6 +62,11 @@ class CampaignResponse(BaseModel):
     read_count: int
     failed_count: int
     status: str
+    scheduled_at: Optional[datetime] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
@@ -80,6 +86,7 @@ class CampaignListResponse(BaseModel):
 
 @router.post("", response_model=CampaignResponse, status_code=201)
 async def create_campaign(
+    workspace_id: UUID,
     data: CampaignCreate,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -87,10 +94,10 @@ async def create_campaign(
     """
     Create a new campaign.
     """
-    await get_workspace_member(data.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     campaign = Campaign(
-        workspace_id=data.workspace_id,
+        workspace_id=workspace_id,
         phone_number_id=data.phone_number_id,
         template_id=data.template_id,
         name=data.name,
@@ -104,7 +111,7 @@ async def create_campaign(
     log_event(
         "campaign_created",
         campaign_id=str(campaign.id),
-        workspace_id=str(data.workspace_id),
+        workspace_id=str(workspace_id),
     )
 
     return campaign
@@ -112,10 +119,11 @@ async def create_campaign(
 
 @router.get("", response_model=CampaignListResponse)
 async def list_campaigns(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID to filter by"),
     status: Optional[str] = Query(None, description="Filter by status"),
+    phone_number_id: Optional[UUID] = Query(None, description="Filter by phone number"),
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ):
@@ -128,6 +136,9 @@ async def list_campaigns(
         Campaign.workspace_id == workspace_id,
         Campaign.deleted_at.is_(None),
     )
+
+    if phone_number_id:
+        query = query.where(Campaign.phone_number_id == phone_number_id)
 
     if status:
         query = query.where(Campaign.status == status)
@@ -150,6 +161,7 @@ async def list_campaigns(
 
 @router.get("/{campaign_id}", response_model=CampaignResponse)
 async def get_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -160,6 +172,7 @@ async def get_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -168,13 +181,14 @@ async def get_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     return campaign
 
 
 @router.patch("/{campaign_id}", response_model=CampaignResponse)
 async def update_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     data: CampaignUpdate,
     session: SessionDep,
@@ -186,6 +200,7 @@ async def update_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -194,7 +209,7 @@ async def update_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if data.name is not None:
         campaign.name = data.name
@@ -221,6 +236,7 @@ async def update_campaign(
 
 @router.delete("/{campaign_id}", status_code=204)
 async def delete_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -231,6 +247,7 @@ async def delete_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -239,7 +256,7 @@ async def delete_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     campaign.soft_delete()
     await session.commit()
@@ -254,6 +271,7 @@ async def delete_campaign(
 
 @router.get("/{campaign_id}/contacts")
 async def list_campaign_contacts(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -268,6 +286,7 @@ async def list_campaign_contacts(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -275,7 +294,7 @@ async def list_campaign_contacts(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     from server.models.contacts import Contact
     from server.models.marketing import CampaignMessage
@@ -317,6 +336,7 @@ async def list_campaign_contacts(
 
 @router.post("/{campaign_id}/contacts", status_code=200)
 async def add_campaign_contacts(
+    workspace_id: UUID,
     campaign_id: UUID,
     data: CampaignContactAddRequest,
     session: SessionDep,
@@ -329,6 +349,7 @@ async def add_campaign_contacts(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -336,7 +357,7 @@ async def add_campaign_contacts(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if campaign.status != CampaignStatus.DRAFT.value:
         raise HTTPException(
@@ -401,6 +422,7 @@ async def add_campaign_contacts(
 
 @router.delete("/{campaign_id}/contacts", status_code=200)
 async def remove_campaign_contacts(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -411,6 +433,7 @@ async def remove_campaign_contacts(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -418,7 +441,7 @@ async def remove_campaign_contacts(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if campaign.status != CampaignStatus.DRAFT.value:
         raise HTTPException(
@@ -444,6 +467,7 @@ async def remove_campaign_contacts(
 
 @router.post("/{campaign_id}/execute", response_model=CampaignResponse)
 async def execute_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -455,6 +479,7 @@ async def execute_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -462,7 +487,7 @@ async def execute_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     # Allow starting from DRAFT or SCHEDULED
     allowed_statuses = [CampaignStatus.DRAFT.value, CampaignStatus.SCHEDULED.value]
@@ -509,6 +534,7 @@ async def execute_campaign(
 
 @router.post("/{campaign_id}/pause", response_model=CampaignResponse)
 async def pause_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -520,6 +546,7 @@ async def pause_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -528,7 +555,7 @@ async def pause_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     if campaign.status != CampaignStatus.RUNNING.value:
         raise HTTPException(
@@ -550,6 +577,7 @@ async def pause_campaign(
 
 @router.post("/{campaign_id}/cancel", response_model=CampaignResponse)
 async def cancel_campaign(
+    workspace_id: UUID,
     campaign_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -561,6 +589,7 @@ async def cancel_campaign(
     result = await session.execute(
         select(Campaign).where(
             Campaign.id == campaign_id,
+            Campaign.workspace_id == workspace_id,
             Campaign.deleted_at.is_(None),
         )
     )
@@ -569,7 +598,7 @@ async def cancel_campaign(
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
 
-    await get_workspace_member(campaign.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
 
     cancellable = [
         CampaignStatus.RUNNING.value,
