@@ -25,6 +25,7 @@ from uuid import UUID
 from pydantic import ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from server.core.config import settings
 from server.core.db import async_session_maker as async_session
@@ -733,6 +734,15 @@ async def process_outbound_message(
                 error_code=error_code,
                 error_message=error_message,
             )
+            if data.get("is_campaign") and data.get("campaign_message_id"):
+                await update_campaign_status(
+                    session,
+                    data["campaign_message_id"],
+                    status,
+                    wa_message_id,
+                    error_message,
+                )
+
             await session.commit()
 
             worker_state.total_latency_ms += (time.monotonic() - start_time) * 1000
@@ -741,6 +751,52 @@ async def process_outbound_message(
     except Exception as e:
         log_exception("outbound_worker_error", e, message_id=message_id)
         return False
+
+
+async def update_campaign_status(
+    session: AsyncSession,
+    campaign_message_id: str,
+    status: str,
+    wa_message_id: Optional[str] = None,
+    error_message: Optional[str] = None,
+):
+    """
+    Update campaign message status and increment campaign counters.
+    Called after Meta API response to track sent/failed counts.
+    """
+    from datetime import datetime, timezone
+
+    from server.models.marketing import Campaign, CampaignMessage
+
+    result = await session.execute(
+        select(CampaignMessage).where(CampaignMessage.id == UUID(campaign_message_id))
+    )
+    msg = result.scalar_one_or_none()
+
+    if not msg:
+        log_event("campaign_msg_not_found", id=campaign_message_id, level="warning")
+        return
+
+    # Update message fields
+    msg.status = status
+    if error_message:
+        msg.error_message = error_message
+    if status == MessageStatus.SENT.value:
+        msg.sent_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # Update campaign counters atomically
+    if status == MessageStatus.SENT.value:
+        await session.execute(
+            update(Campaign)
+            .where(Campaign.id == msg.campaign_id)
+            .values(sent_count=Campaign.sent_count + 1)
+        )
+    elif status == MessageStatus.FAILED.value:
+        await session.execute(
+            update(Campaign)
+            .where(Campaign.id == msg.campaign_id)
+            .values(failed_count=Campaign.failed_count + 1)
+        )
 
 
 async def worker_loop(worker_id: int = 0) -> None:

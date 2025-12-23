@@ -94,6 +94,7 @@ class MessageDirection(str, enum.Enum):
 
 class MessageStatus(str, enum.Enum):
     PENDING = "pending"
+    QUEUED = "queued"
     SENT = "sent"
     DELIVERED = "delivered"
     READ = "read"
@@ -116,7 +117,9 @@ class TemplateStatus(str, enum.Enum):
 class CampaignStatus(str, enum.Enum):
     DRAFT = "draft"
     SCHEDULED = "scheduled"
-    SENDING = "sending"
+    RUNNING = "running"
+    DISPATCHED = "dispatched"
+    SENDING = "sending"  # Legacy, maybe deprecate later or use as alias
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 

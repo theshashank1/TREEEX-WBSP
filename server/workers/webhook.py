@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.core.config import settings
@@ -324,6 +324,11 @@ async def handle_status_event(session: AsyncSession, event: Dict[str, Any]) -> b
             status=status,
         )
 
+        # Campaign Analytics
+        await update_campaign_metrics(session, message.id, new_status or status)
+
+        return True
+
         return True
 
     except Exception as e:
@@ -450,6 +455,51 @@ async def handle_template_event(session: AsyncSession, event: Dict[str, Any]) ->
         log_exception("webhook_template_handler_error", e, event=event)
         await session.rollback()
         return False
+
+
+async def update_campaign_metrics(
+    session: AsyncSession,
+    message_id: UUID,
+    status: str,
+) -> None:
+    """
+    Update campaign metrics if message belongs to a campaign.
+    """
+    from server.models.marketing import Campaign, CampaignMessage
+
+    # Check if this message is part of a campaign
+    result = await session.execute(
+        select(CampaignMessage).where(CampaignMessage.message_id == message_id)
+    )
+    camp_msg = result.scalar_one_or_none()
+
+    if not camp_msg:
+        return
+
+    # Guard: Don't double count final states
+    current_status = camp_msg.status
+    if current_status == status:
+        return
+
+    # Update status
+    camp_msg.status = status
+
+    # Update Campaign counters
+    # We use conditional updates to avoid race conditions
+    to_update = {}
+    if status == MessageStatus.DELIVERED.value:
+        to_update["delivered_count"] = Campaign.delivered_count + 1
+    elif status == MessageStatus.READ.value:
+        to_update["read_count"] = Campaign.read_count + 1
+    elif status == MessageStatus.FAILED.value:
+        to_update["failed_count"] = Campaign.failed_count + 1
+
+    if to_update:
+        await session.execute(
+            update(Campaign)
+            .where(Campaign.id == camp_msg.campaign_id)
+            .values(**to_update)
+        )
 
 
 # ============================================================================
