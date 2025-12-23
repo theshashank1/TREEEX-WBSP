@@ -115,4 +115,6 @@ __all__ = [
     "PhoneNumberCreate",
     "PhoneNumberUpdate",
     "PhoneNumberResponse",
+    "PhoneNumberListResponse",
+    "PhoneNumberSyncResponse",
 ]

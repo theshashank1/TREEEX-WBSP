@@ -11,7 +11,6 @@ from typing import Annotated, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
-from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +18,15 @@ from server.core.db import get_async_session
 from server.core.monitoring import log_event, log_exception
 from server.dependencies import User, get_current_user, get_workspace_member
 from server.models.contacts import Contact
+from server.schemas.contacts import (
+    E164_REGEX,
+    ContactCreate,
+    ContactListResponse,
+    ContactResponse,
+    ContactUpdate,
+    ImportResponse,
+    ImportRowResult,
+)
 
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
@@ -31,88 +39,8 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 # CONSTANTS
 # ============================================================================
 
-# E.164 phone number regex - allows 1-15 total digits including country code
-E164_REGEX = re.compile(r"^\+[1-9]\d{0,14}$")
-
 # Maximum contacts per import
 MAX_IMPORT_ROWS = 10000
-
-
-# ============================================================================
-# SCHEMAS
-# ============================================================================
-
-
-class ContactCreate(BaseModel):
-    """Schema for creating a new contact"""
-
-    workspace_id: UUID
-    phone_number: str = Field(..., description="Phone number in E.164 format (e.g., +15551234567)")
-    name: Optional[str] = Field(None, max_length=255)
-    tags: Optional[List[str]] = Field(default_factory=list, description="Labels/tags for the contact")
-
-    @field_validator("phone_number")
-    @classmethod
-    def validate_phone_number(cls, v: str) -> str:
-        v = v.strip()
-        if not E164_REGEX.match(v):
-            raise ValueError(
-                "Phone number must be in E.164 format (e.g., +15551234567)"
-            )
-        return v
-
-
-class ContactUpdate(BaseModel):
-    """Schema for updating a contact"""
-
-    name: Optional[str] = Field(None, max_length=255)
-    tags: Optional[List[str]] = None
-    opted_in: Optional[bool] = None
-
-
-class ContactResponse(BaseModel):
-    """Schema for contact response"""
-
-    id: UUID
-    workspace_id: UUID
-    wa_id: str
-    phone_number: str
-    name: Optional[str]
-    opted_in: bool
-    tags: Optional[List[str]]
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class ContactListResponse(BaseModel):
-    """Schema for paginated contact list"""
-
-    data: List[ContactResponse]
-    total: int
-    limit: int
-    offset: int
-
-
-class ImportRowResult(BaseModel):
-    """Result for a single import row"""
-
-    row_number: int
-    phone_number: Optional[str]
-    status: str  # "imported", "updated", "failed"
-    reason: Optional[str] = None
-
-
-class ImportResponse(BaseModel):
-    """Schema for import response"""
-
-    total_rows: int
-    imported: int
-    updated: int
-    failed: int
-    results: List[ImportRowResult]
 
 
 # ============================================================================
@@ -443,7 +371,9 @@ async def import_contacts(
                 headers.append(str(cell.value).lower().strip() if cell.value else "")
 
             # Parse data rows
-            for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            for row_idx, row in enumerate(
+                ws.iter_rows(min_row=2, values_only=True), start=2
+            ):
                 row_dict = {}
                 for i, value in enumerate(row):
                     if i < len(headers) and headers[i]:
@@ -505,7 +435,14 @@ async def import_contacts(
     for row_num, row in rows:
         # Find phone column
         phone = None
-        for key in ["phone", "phone_number", "phonenumber", "mobile", "tel", "telephone"]:
+        for key in [
+            "phone",
+            "phone_number",
+            "phonenumber",
+            "mobile",
+            "tel",
+            "telephone",
+        ]:
             if key in row and row[key]:
                 phone = row[key].strip()
                 break
