@@ -112,7 +112,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 #### Request Body (`application/json`)
 
-See schema: [`Signup`](#signup)
+See schema: [`Signin`](#signin)
 
 **Example:**
 
@@ -120,7 +120,7 @@ See schema: [`Signup`](#signup)
 {
   "email": "user@example.com",
   "password": "SecurePassword123!",
-  "name": "name"
+
 }
 ```
 
@@ -129,7 +129,7 @@ See schema: [`Signup`](#signup)
 ```bash
 curl -X POST 'http://localhost:8000/api/auth/signin' \
   -H 'Content-Type: application/json' \
-  -d '{"email":"user@example.com","password":"SecurePassword123!","name":"name"}'
+  -d '{"email":"user@example.com","password":"SecurePassword123!"}'
 ```
 
 ```javascript
@@ -140,8 +140,7 @@ const response = await fetch('http://localhost:8000/api/auth/signin', {
   },
   body: JSON.stringify({
       "email": "user@example.com",
-      "password": "SecurePassword123!",
-      "name": "name"
+      "password": "SecurePassword123!"
   })
 });
 
@@ -175,13 +174,20 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/auth/refresh'
+curl -X POST 'http://localhost:8000/api/auth/refresh' \
+  -H 'Content-Type: application/json' \
+  -d '{"refresh_token": "your_refresh_token"}'
 ```
 
 ```javascript
 const response = await fetch('http://localhost:8000/api/auth/refresh', {
   method: 'POST',
-
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    "refresh_token": "your_refresh_token"
+  })
 });
 
 const data = await response.json();
