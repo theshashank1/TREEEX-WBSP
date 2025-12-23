@@ -27,18 +27,16 @@ from server.models.base import (
 )
 from server.models.contacts import Channel
 from server.schemas.channels import (
-    ErrorDetail,
     ChannelCreate,
     ChannelListResponse,
     ChannelResponse,
     ChannelSyncResponse,
     ChannelUpdate,
+    ErrorDetail,
 )
 from server.whatsapp.client import WhatsAppClient
 
-router = APIRouter(
-    prefix="/workspaces/{workspace_id}/channels", tags=["Channels"]
-)
+router = APIRouter(prefix="/workspaces/{workspace_id}/channels", tags=["Channels"])
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -121,7 +119,9 @@ async def create_channel(
 
     # Fetch phone number details from Meta
     # Note: wa_client.get_phone_number expects meta_phone_number_id string
-    phone_info, phone_error = await wa_client.get_phone_number(data.meta_phone_number_id)
+    phone_info, phone_error = await wa_client.get_phone_number(
+        data.meta_phone_number_id
+    )
     if not phone_info:
         log_event(
             "channel_create_failed",
