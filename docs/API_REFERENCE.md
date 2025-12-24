@@ -726,7 +726,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/contacts</code>
+  <code>/api/workspaces/{workspace_id}/contacts</code>
 </div>
 
 Create a new contact.
@@ -748,7 +748,6 @@ See schema: [`ContactCreate`](#contactcreate)
 
 ```json
 {
-  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
   "phone_number": "phone_number",
   "name": "name",
   "tags": []
@@ -758,11 +757,10 @@ See schema: [`ContactCreate`](#contactcreate)
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/contacts' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
-  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
   "phone_number": "phone_number",
   "name": "name",
   "tags": []
@@ -808,7 +806,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
-  <code>/api/contacts</code>
+  <code>/api/workspaces/{workspace_id}/contacts</code>
 </div>
 
 List contacts for a workspace.
@@ -824,11 +822,16 @@ This endpoint requires authentication.
 
 #### Parameters
 
-**Query Parameters**
+**Path Parameters**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
 | `tags` | `any` | ❌ | Filter by tags (comma-separated) |
 | `opted_in` | `any` | ❌ | Filter by opt-in status |
 | `search` | `any` | ❌ | Search by name or phone |
@@ -839,7 +842,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET 'http://localhost:8000/api/contacts' \
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -875,7 +878,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ GET }}</span>
-  <code>/api/contacts/{contact_id}</code>
+  <code>/api/workspaces/{workspace_id}/contacts/{contact_id}</code>
 </div>
 
 Get contact details.
@@ -900,7 +903,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X GET 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+curl -X GET 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -936,7 +939,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#50E3C2", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ PATCH }}</span>
-  <code>/api/contacts/{contact_id}</code>
+  <code>/api/workspaces/{workspace_id}/contacts/{contact_id}</code>
 </div>
 
 Update a contact.
@@ -975,7 +978,7 @@ See schema: [`ContactUpdate`](#contactupdate)
 #### Example Request
 
 ```bash
-curl -X PATCH 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+curl -X PATCH 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -1023,7 +1026,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#F93E3E", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ DELETE }}</span>
-  <code>/api/contacts/{contact_id}</code>
+  <code>/api/workspaces/{workspace_id}/contacts/{contact_id}</code>
 </div>
 
 Soft delete a contact.
@@ -1048,7 +1051,7 @@ This endpoint requires authentication.
 #### Example Request
 
 ```bash
-curl -X DELETE 'http://localhost:8000/api/contacts/550e8400-e29b-41d4-a716-446655440000' \
+curl -X DELETE 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts/550e8400-e29b-41d4-a716-446655440000' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN'
 ```
 
@@ -1082,7 +1085,7 @@ Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 <div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
   <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
-  <code>/api/contacts/import</code>
+  <code>/api/workspaces/{workspace_id}/contacts/import</code>
 </div>
 
 Import contacts from CSV or Excel file.
@@ -1103,11 +1106,16 @@ This endpoint requires authentication.
 
 #### Parameters
 
-**Query Parameters**
+**Path Parameters**
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `workspace_id` | `string (uuid)` | ✅ | Workspace ID |
+
+**Query Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
 
 
 #### Request Body (`multipart/form-data`)
@@ -1125,7 +1133,7 @@ See schema: [`Body_import_contacts_api_contacts_import_post`](#body_import_conta
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/contacts/import' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/contacts/import' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json'
 ```
@@ -5019,3 +5027,357 @@ Request model for updating a workspace
   "settings": {}
 }
 ```
+
+
+## Admin
+
+Administrative endpoints for managing the outbound messaging system. All endpoints require workspace membership or admin privileges.
+
+### Requeue Failed Messages
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>POST</span>
+  <code>/api/workspaces/{workspace_id}/admin/messages/requeue</code>
+</div>
+
+Requeue failed messages for retry. Requires Admin or Owner role in the workspace.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Request Body
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| message_ids | rray[string] |  | Specific message IDs to requeue (if null, requeues all failed) |
+| max_messages | integer |  | Maximum number of messages to requeue (default: 100) |
+
+#### Example Request
+
+`ash
+curl -X POST 'http://localhost:8000/api/workspaces/{workspace_id}/admin/messages/requeue' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "max_messages": 50
+}'
+`
+
+#### Responses
+
+**200** - Successful Response
+
+Returns requeue operation results including count and message IDs.
+
+---
+
+### Get Message State
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>GET</span>
+  <code>/api/workspaces/{workspace_id}/admin/messages/{message_id}</code>
+</div>
+
+Get the current state of a message by ID.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+| message_id | string (uuid) |  | Message ID |
+
+#### Example Request
+
+`ash
+curl -X GET 'http://localhost:8000/api/workspaces/{workspace_id}/admin/messages/{message_id}' \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+`
+
+---
+
+### Get Queue Statistics
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>GET</span>
+  <code>/api/workspaces/{workspace_id}/admin/queues/stats</code>
+</div>
+
+Get current queue statistics (outbound, dead letter, high priority, campaign jobs).
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Example Request
+
+`ash
+curl -X GET 'http://localhost:8000/api/workspaces/{workspace_id}/admin/queues/stats' \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+`
+
+---
+
+### Health Check
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>GET</span>
+  <code>/api/workspaces/{workspace_id}/admin/health</code>
+</div>
+
+Check health of all system components (Redis, database).
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Example Request
+
+`ash
+curl -X GET 'http://localhost:8000/api/workspaces/{workspace_id}/admin/health' \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+`
+
+---
+
+### Get Message Statistics
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>GET</span>
+  <code>/api/workspaces/{workspace_id}/admin/messages/stats</code>
+</div>
+
+Get message statistics by status for the workspace.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Example Request
+
+`ash
+curl -X GET 'http://localhost:8000/api/workspaces/{workspace_id}/admin/messages/stats' \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+`
+
+---
+
+## Messages
+
+Send and track WhatsApp messages. All endpoints are workspace-scoped and require authentication.
+
+### Send Text Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>POST</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/text</code>
+</div>
+
+Send a text message asynchronously.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Request Body
+
+See schema: [SendTextMessageRequest](#sendtextmessagerequest)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+| channel_id | string (uuid) |  | Channel to send from |
+| 	o | string |  | Recipient phone number |
+| 	ext | string |  | Message text |
+
+#### Example Request
+
+`ash
+curl -X POST 'http://localhost:8000/api/workspaces/{workspace_id}/messages/send/text' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440001",
+  "to": "+919876543210",
+  "text": "Hello! This is a test message."
+}'
+`
+
+`javascript
+const response = await fetch('http://localhost:8000/api/workspaces/{workspace_id}/messages/send/text', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    workspace_id: "550e8400-e29b-41d4-a716-446655440000",
+    channel_id: "550e8400-e29b-41d4-a716-446655440001",
+    to: "+919876543210",
+    text: "Hello! This is a test message."
+  })
+});
+
+const data = await response.json();
+`
+
+#### Responses
+
+**201** - Message Queued Successfully
+
+---
+
+### Send Template Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>POST</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/template</code>
+</div>
+
+Send a template message (for initiating conversations outside 24h window).
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Request Body
+
+See schema: [SendTemplateMessageRequest](#sendtemplatemessagerequest)
+
+#### Example Request
+
+`ash
+curl -X POST 'http://localhost:8000/api/workspaces/{workspace_id}/messages/send/template' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440001",
+  "to": "+919876543210",
+  "template_name": "welcome_message",
+  "template_language": "en",
+  "template_components": {}
+}'
+`
+
+---
+
+### Send Media Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>POST</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/media</code>
+</div>
+
+Send a media message (image, video, audio, or document).
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+
+#### Request Body
+
+See schema: [SendMediaMessageRequest](#sendmediamessagerequest)
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+| channel_id | string (uuid) |  | Channel to send from |
+| 	o | string |  | Recipient phone number |
+| media_type | string |  | Type: image, video, audio, document |
+| media_id | string (uuid) |  | Existing media file ID (or use media_url) |
+| media_url | string |  | External media URL (or use media_id) |
+| caption | string |  | Media caption |
+| ilename | string |  | Filename for documents |
+
+#### Example Request
+
+`ash
+curl -X POST 'http://localhost:8000/api/workspaces/{workspace_id}/messages/send/media' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440001",
+  "to": "+919876543210",
+  "media_type": "image",
+  "media_id": "550e8400-e29b-41d4-a716-446655440002",
+  "caption": "Check out this image!"
+}'
+`
+
+---
+
+### Get Message Status
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#61AFFE", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>GET</span>
+  <code>/api/workspaces/{workspace_id}/messages/{message_id}/status</code>
+</div>
+
+Get message delivery status.
+
+#### Parameters
+
+**Path Parameters**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| workspace_id | string (uuid) |  | Workspace ID |
+| message_id | string (uuid) |  | Message ID |
+
+#### Example Request
+
+`ash
+curl -X GET 'http://localhost:8000/api/workspaces/{workspace_id}/messages/{message_id}/status' \
+  -H 'Authorization: Bearer YOUR_TOKEN'
+`
+
+`javascript
+const response = await fetch('http://localhost:8000/api/workspaces/{workspace_id}/messages/{message_id}/status', {
+  method: 'GET',
+  headers: {
+    'Authorization': 'Bearer YOUR_TOKEN'
+  }
+});
+
+const data = await response.json();
+`
+
+#### Responses
+
+**200** - Successful Response
+
+Returns message status including delivery and read receipts.
