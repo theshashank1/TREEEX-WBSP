@@ -36,7 +36,7 @@ from server.core.monitoring import log_event, log_exception
 from server.core.redis import Queue, dequeue, enqueue, move_to_dlq
 from server.core.redis import shutdown as redis_shutdown
 from server.core.redis import startup as redis_startup
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.messaging import MediaFile
 from server.services import azure_storage
 from server.whatsapp.client import WhatsAppClient
@@ -104,21 +104,21 @@ async def process_media_job(job: Dict[str, Any]) -> bool:
                 return True
 
             result = await session.execute(
-                select(PhoneNumber).where(
-                    PhoneNumber.phone_number_id == phone_number_id_meta
+                select(Channel).where(
+                    Channel.meta_phone_number_id == phone_number_id_meta
                 )
             )
-            phone_number = result.scalar_one_or_none()
+            channel = result.scalar_one_or_none()
 
-            if not phone_number:
+            if not channel:
                 log_event(
-                    "media_job_phone_not_found",
+                    "media_job_channel_not_found",
                     level="warning",
                     phone_number_id=phone_number_id_meta,
                 )
                 return False
 
-            client = WhatsAppClient(access_token=phone_number.access_token)
+            client = WhatsAppClient(access_token=channel.access_token)
             file_bytes, downloaded_mime_type, error = await client.download_media(
                 media_id=wa_media_id,
                 phone_number_id=phone_number_id_meta,

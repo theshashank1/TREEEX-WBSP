@@ -83,8 +83,8 @@ class Workspace(TimestampMixin, SoftDeleteMixin, Base):
         "WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan"
     )
 
-    phone_numbers: Mapped[List["PhoneNumber"]] = relationship(
-        "PhoneNumber", back_populates="workspace", cascade="all, delete-orphan"
+    channels: Mapped[List["Channel"]] = relationship(
+        "Channel", back_populates="workspace", cascade="all, delete-orphan"
     )
     contacts: Mapped[List["Contact"]] = relationship(
         "Contact", back_populates="workspace", cascade="all, delete-orphan"

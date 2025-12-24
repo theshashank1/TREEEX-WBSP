@@ -31,12 +31,12 @@ from server.dependencies import (
     require_workspace_admin,
 )
 from server.models.base import MessageStatus
-from server.models.contacts import PhoneNumber
+from server.models.contacts import Channel
 from server.models.messaging import Message
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/admin", tags=["Admin"])
 
 
 # =============================================================================
@@ -47,7 +47,6 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 class RequeueRequest(BaseModel):
     """Request to requeue failed messages."""
 
-    workspace_id: str
     message_ids: Optional[List[str]] = None  # If None, requeue all failed
     max_messages: int = 100
 
@@ -110,6 +109,7 @@ CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 @router.post("/messages/requeue", response_model=RequeueResponse)
 async def requeue_failed_messages(
+    workspace_id: UUID,
     request: RequeueRequest,
     current_user: CurrentUserDep,
     session: SessionDep,
@@ -119,7 +119,6 @@ async def requeue_failed_messages(
     Requires Admin/Owner role in the workspace.
     """
     try:
-        workspace_id = UUID(request.workspace_id)
 
         # Security: Require admin privileges
         await require_workspace_admin(workspace_id, current_user, session)
@@ -127,7 +126,7 @@ async def requeue_failed_messages(
         # Build query
         query = (
             select(Message)
-            .options(joinedload(Message.phone_number))
+            .options(joinedload(Message.channel))
             .where(
                 Message.workspace_id == workspace_id,
                 Message.status == MessageStatus.FAILED.value,
@@ -151,8 +150,8 @@ async def requeue_failed_messages(
 
         for msg in messages:
             # Ensure we have the Meta phone number ID
-            if not msg.phone_number:
-                logger.error(f"Message {msg.id} missing phone_number relation")
+            if not msg.channel:
+                logger.error(f"Message {msg.id} missing channel relation")
                 continue
 
             # Build queue payload
@@ -160,7 +159,7 @@ async def requeue_failed_messages(
                 "type": _get_message_type(msg.type),
                 "message_id": str(msg.id),
                 "workspace_id": str(msg.workspace_id),
-                "phone_number_id": str(msg.phone_number.phone_number_id),  # Use Meta ID
+                "phone_number_id": str(msg.channel.meta_phone_number_id),  # Use Meta ID
                 "to_number": msg.to_number,
                 **msg.content,  # Include original content
             }
@@ -197,6 +196,7 @@ async def requeue_failed_messages(
 
 @router.get("/messages/{message_id}", response_model=MessageStateResponse)
 async def get_message_state(
+    workspace_id: UUID,
     message_id: str,
     current_user: CurrentUserDep,
     session: SessionDep,
@@ -206,16 +206,18 @@ async def get_message_state(
     Verifies user has access to the message's workspace.
     """
     try:
+        # Security: Check workspace access first
+        await get_workspace_member(workspace_id, current_user, session)
+
         result = await session.execute(
-            select(Message).where(Message.id == UUID(message_id))
+            select(Message).where(
+                Message.id == UUID(message_id), Message.workspace_id == workspace_id
+            )
         )
         message = result.scalar_one_or_none()
 
         if not message:
             raise HTTPException(status_code=404, detail="Message not found")
-
-        # Security: Check workspace access
-        await get_workspace_member(message.workspace_id, current_user, session)
 
         return MessageStateResponse(
             id=str(message.id),
@@ -244,13 +246,17 @@ async def get_message_state(
 
 @router.get("/queues/stats", response_model=QueueStatsResponse)
 async def get_queue_stats(
+    workspace_id: UUID,
     current_user: CurrentUserDep,
+    session: SessionDep,
 ):
     """
     Get current queue statistics.
-    Authenticated users only.
+    Requires workspace membership.
     """
     try:
+        # Security: Verify workspace membership
+        await get_workspace_member(workspace_id, current_user, session)
         outbound = await queue_length(Queue.OUTBOUND_MESSAGES)
         dlq = await queue_length(Queue.DEAD_LETTER)
         priority = await queue_length(Queue.HIGH_PRIORITY)
@@ -270,13 +276,17 @@ async def get_queue_stats(
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
 ):
     """
     Check health of all system components.
-    Authenticated users only.
+    Requires workspace membership.
     """
+    # Security: Verify workspace membership
+    await get_workspace_member(workspace_id, current_user, session)
+
     redis_ok = await redis_health()
 
     # Check database
@@ -311,29 +321,23 @@ async def health_check(
 
 @router.get("/messages/stats")
 async def get_message_stats(
+    workspace_id: UUID,
     current_user: CurrentUserDep,
     session: SessionDep,
-    workspace_id: Optional[str] = Query(None),
 ):
     """
     Get message statistics by status.
-    Authenticated users only. Enforces workspace access.
+    Requires workspace membership.
     """
     try:
-        query = select(Message.status, func.count(Message.id).label("count")).group_by(
-            Message.status
-        )
+        # Security: Check workspace access
+        await get_workspace_member(workspace_id, current_user, session)
 
-        if workspace_id:
-            # Check access
-            await get_workspace_member(UUID(workspace_id), current_user, session)
-            query = query.where(Message.workspace_id == UUID(workspace_id))
-        else:
-            # If no workspace_id provided, filter to user's workspaces?
-            # For simplicity/security, require a workspace_id in production admin usually.
-            # But let's check what memberships user has.
-            # Doing a global join is expensive.
-            pass  # TODO: Implement improved global filtering if needed.
+        query = (
+            select(Message.status, func.count(Message.id).label("count"))
+            .group_by(Message.status)
+            .where(Message.workspace_id == workspace_id)
+        )
 
         result = await session.execute(query)
         stats = {row.status: row.count for row in result}
