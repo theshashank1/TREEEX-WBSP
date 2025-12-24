@@ -33,7 +33,7 @@ from server.schemas.messages import (
 )
 from server.services import azure_storage
 
-router = APIRouter(prefix="/messages", tags=["Messages"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/messages", tags=["Messages"])
 
 # Type aliases
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -44,6 +44,7 @@ VALID_MEDIA_TYPES = {"image", "video", "audio", "document"}
 
 @router.post("/send/text", response_model=MessageQueuedResponse, status_code=201)
 async def send_text_message(
+    workspace_id: UUID,
     data: SendTextMessageRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -51,12 +52,14 @@ async def send_text_message(
     """
     Send a text message asynchronously.
     """
-    member = await get_workspace_member(data.workspace_id, current_user, session)
+    # Security: Verify workspace membership
+    member = await get_workspace_member(workspace_id, current_user, session)
 
+    # Verify channel belongs to workspace
     result = await session.execute(
         select(Channel).where(
             Channel.id == data.channel_id,
-            Channel.workspace_id == data.workspace_id,
+            Channel.workspace_id == workspace_id,
             Channel.deleted_at.is_(None),
         )
     )
@@ -120,6 +123,7 @@ async def send_text_message(
 
 @router.post("/send/template", response_model=MessageQueuedResponse, status_code=201)
 async def send_template_message(
+    workspace_id: UUID,
     data: SendTemplateMessageRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -127,12 +131,14 @@ async def send_template_message(
     """
     Send a template message asynchronously.
     """
-    member = await get_workspace_member(data.workspace_id, current_user, session)
+    # Security: Verify workspace membership
+    member = await get_workspace_member(workspace_id, current_user, session)
 
+    # Verify channel belongs to workspace
     result = await session.execute(
         select(Channel).where(
             Channel.id == data.channel_id,
-            Channel.workspace_id == data.workspace_id,
+            Channel.workspace_id == workspace_id,
             Channel.deleted_at.is_(None),
         )
     )
@@ -219,6 +225,7 @@ async def send_template_message(
 
 @router.post("/send/media", response_model=MessageQueuedResponse, status_code=201)
 async def send_media_message(
+    workspace_id: UUID,
     data: SendMediaMessageRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -226,12 +233,14 @@ async def send_media_message(
     """
     Send a media message asynchronously.
     """
-    member = await get_workspace_member(data.workspace_id, current_user, session)
+    # Security: Verify workspace membership
+    member = await get_workspace_member(workspace_id, current_user, session)
 
+    # Verify channel belongs to workspace
     result = await session.execute(
         select(Channel).where(
             Channel.id == data.channel_id,
-            Channel.workspace_id == data.workspace_id,
+            Channel.workspace_id == workspace_id,
             Channel.deleted_at.is_(None),
         )
     )
@@ -344,6 +353,7 @@ async def send_media_message(
 
 @router.get("/{message_id}/status", response_model=MessageStatusResponse)
 async def get_message_status(
+    workspace_id: UUID,
     message_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -351,13 +361,19 @@ async def get_message_status(
     """
     Get message delivery status.
     """
-    result = await session.execute(select(Message).where(Message.id == message_id))
+    # Security: Verify workspace membership
+    await get_workspace_member(workspace_id, current_user, session)
+
+    # Verify message belongs to workspace
+    result = await session.execute(
+        select(Message).where(
+            Message.id == message_id, Message.workspace_id == workspace_id
+        )
+    )
     message = result.scalar_one_or_none()
 
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
-
-    await get_workspace_member(message.workspace_id, current_user, session)
 
     return MessageStatusResponse(
         id=message.id,
