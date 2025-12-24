@@ -28,7 +28,7 @@ from server.schemas.contacts import (
     ImportRowResult,
 )
 
-router = APIRouter(prefix="/contacts", tags=["Contacts"])
+router = APIRouter(prefix="/workspaces/{workspace_id}/contacts", tags=["Contacts"])
 
 # Type aliases for dependencies
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
@@ -82,6 +82,7 @@ def parse_labels(labels_str: Optional[str]) -> List[str]:
 
 @router.post("", response_model=ContactResponse, status_code=201)
 async def create_contact(
+    workspace_id: UUID,
     data: ContactCreate,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -93,7 +94,10 @@ async def create_contact(
     Requires workspace membership.
     """
     # Verify workspace membership
-    await get_workspace_member(data.workspace_id, current_user, session)
+    await get_workspace_member(workspace_id, current_user, session)
+
+    # Force workspace_id from path
+    data.workspace_id = workspace_id
 
     # Check for existing contact with same phone number
     wa_id = data.phone_number.replace("+", "")
@@ -142,9 +146,9 @@ async def create_contact(
 
 @router.get("", response_model=ContactListResponse)
 async def list_contacts(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID"),
     tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
     search: Optional[str] = Query(None, description="Search by name or phone"),
     limit: int = Query(20, ge=1, le=100),
@@ -203,6 +207,7 @@ async def list_contacts(
 
 @router.get("/{contact_id}", response_model=ContactResponse)
 async def get_contact(
+    workspace_id: UUID,
     contact_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -212,9 +217,13 @@ async def get_contact(
 
     Requires workspace membership.
     """
+    # Verify workspace membership
+    await get_workspace_member(workspace_id, current_user, session)
+
     result = await session.execute(
         select(Contact).where(
             Contact.id == contact_id,
+            Contact.workspace_id == workspace_id,
             Contact.deleted_at.is_(None),
         )
     )
@@ -223,14 +232,12 @@ async def get_contact(
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
-    # Verify workspace membership
-    await get_workspace_member(contact.workspace_id, current_user, session)
-
     return contact
 
 
 @router.patch("/{contact_id}", response_model=ContactResponse)
 async def update_contact(
+    workspace_id: UUID,
     contact_id: UUID,
     data: ContactUpdate,
     session: SessionDep,
@@ -241,9 +248,13 @@ async def update_contact(
 
     Requires workspace membership.
     """
+    # Verify workspace membership
+    await get_workspace_member(workspace_id, current_user, session)
+
     result = await session.execute(
         select(Contact).where(
             Contact.id == contact_id,
+            Contact.workspace_id == workspace_id,
             Contact.deleted_at.is_(None),
         )
     )
@@ -251,9 +262,6 @@ async def update_contact(
 
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Verify workspace membership
-    await get_workspace_member(contact.workspace_id, current_user, session)
 
     # Update fields (identity only - opt-in managed per phone via ContactPhoneState)
     if data.name is not None:
@@ -275,6 +283,7 @@ async def update_contact(
 
 @router.delete("/{contact_id}", status_code=204)
 async def delete_contact(
+    workspace_id: UUID,
     contact_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
@@ -284,9 +293,13 @@ async def delete_contact(
 
     Requires workspace membership.
     """
+    # Verify workspace membership
+    await get_workspace_member(workspace_id, current_user, session)
+
     result = await session.execute(
         select(Contact).where(
             Contact.id == contact_id,
+            Contact.workspace_id == workspace_id,
             Contact.deleted_at.is_(None),
         )
     )
@@ -294,9 +307,6 @@ async def delete_contact(
 
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
-
-    # Verify workspace membership
-    await get_workspace_member(contact.workspace_id, current_user, session)
 
     # Soft delete
     contact.soft_delete()
@@ -312,9 +322,9 @@ async def delete_contact(
 
 @router.post("/import", response_model=ImportResponse)
 async def import_contacts(
+    workspace_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
-    workspace_id: UUID = Query(..., description="Workspace ID"),
     file: UploadFile = File(..., description="CSV or Excel file"),
 ):
     """

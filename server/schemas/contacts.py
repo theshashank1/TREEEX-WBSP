@@ -25,7 +25,7 @@ E164_REGEX = re.compile(r"^\+[1-9]\d{0,14}$")
 class ContactCreate(BaseModel):
     """Schema for creating a new contact (identity only)"""
 
-    workspace_id: UUID
+    workspace_id: Optional[UUID] = None
     phone_number: str = Field(
         ..., description="Phone number in E.164 format (e.g., +15551234567)"
     )
