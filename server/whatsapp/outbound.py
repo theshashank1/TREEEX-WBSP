@@ -188,6 +188,29 @@ class OutboundClient:
                 )
             )
 
+    async def send_payload(self, payload: Dict[str, Any]) -> SendResult:
+        """
+        Send a pre-rendered WhatsApp payload dict.
+
+        Use this with the renderer module:
+
+        Example:
+            >>> from server.whatsapp.renderer import render
+            >>> from server.schemas.outbound import TextMessage
+            >>>
+            >>> cmd = TextMessage(...)
+            >>> payload = render(cmd)
+            >>> result = await client.send_payload(payload)
+
+        Args:
+            payload: Dict from renderer.render()
+
+        Returns:
+            SendResult with wa_message_id or error
+        """
+        message_type = payload.get("type", "unknown")
+        return await self._send_message(payload, message_type)
+
     # =========================================================================
     # TEXT MESSAGES
     # =========================================================================
