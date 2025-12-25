@@ -105,19 +105,16 @@ class WorkerState:
     messages_retried: int = 0
     total_latency_ms: float = 0
 
-    @classmethod
-    def shutdown(cls):
-        cls.running = False
+    def shutdown(self):
+        self.running = False
         log_event("outbound_worker_shutdown_signal")
 
-    @classmethod
-    def pause(cls):
-        cls.paused = True
+    def pause(self):
+        self.paused = True
         log_event("outbound_worker_paused")
 
-    @classmethod
-    def resume(cls):
-        cls.paused = False
+    def resume(self):
+        self.paused = False
         log_event("outbound_worker_resumed")
 
     @property
@@ -128,7 +125,7 @@ class WorkerState:
         return self.total_latency_ms / total
 
 
-# Global worker state
+# Global worker state instance
 worker_state = WorkerState()
 
 
@@ -786,7 +783,6 @@ async def worker_loop(worker_id: int = 0) -> None:
 
     await redis_startup()
     rate_limiter = TokenBucketRateLimiter(
-        rate=config.rate_limit_per_phone,
         capacity=config.rate_limit_per_phone,
         refill_rate=config.rate_limit_per_phone,
         global_capacity=config.rate_limit_global,
@@ -908,7 +904,12 @@ async def main(num_workers: int = 1) -> None:
         ]
 
         # Wait for all workers
-        await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Log any exceptions
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                log_exception(f"Worker {i} failed", result)
 
     finally:
         await redis_shutdown()
