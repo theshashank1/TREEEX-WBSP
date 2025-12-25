@@ -16,7 +16,7 @@ from server.core.config import settings
 from server.core.monitoring import log_event, log_exception
 
 # Default API version
-DEFAULT_API_VERSION = "v21.0"
+DEFAULT_API_VERSION = "v22.0"
 META_GRAPH_API_BASE = "https://graph.facebook.com"
 HTTP_TIMEOUT = 10.0
 
