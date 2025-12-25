@@ -35,6 +35,7 @@ from server.core.redis import startup as redis_startup
 from server.models.base import CampaignStatus, MessageStatus
 from server.models.contacts import Channel
 from server.models.marketing import Campaign, CampaignMessage
+from server.schemas.outbound import TemplateMessage
 
 # =============================================================================
 # CONFIGURATION
@@ -185,20 +186,21 @@ async def process_campaign_job(job_data: dict) -> bool:
                     msg.error_message = "Contact has no phone number"
                     continue
 
-                # Build outbound message job
-                message_job = {
-                    "type": "template_message",
-                    "message_id": str(uuid4()),  # Unique ID for outbound worker
-                    "workspace_id": str(campaign.workspace_id),
-                    "phone_number_id": meta_phone_number_id,  # Meta's ID
-                    "to_number": msg.contact.phone_number,
-                    "template_name": campaign.template.name,
-                    "language_code": campaign.template.language,
-                    "components": campaign.template.components,
-                    # Campaign tracking
-                    "is_campaign": True,
-                    "campaign_message_id": str(msg.id),
-                }
+                # Build outbound message using Pydantic command
+                command = TemplateMessage(
+                    message_id=str(uuid4()),
+                    workspace_id=str(campaign.workspace_id),
+                    phone_number_id=meta_phone_number_id,
+                    to_number=msg.contact.phone_number,
+                    template_name=campaign.template.name,
+                    language_code=campaign.template.language,
+                    components=campaign.template.components,
+                )
+
+                # Serialize to dict with campaign tracking metadata
+                message_job = command.model_dump()
+                message_job["is_campaign"] = True
+                message_job["campaign_message_id"] = str(msg.id)
 
                 # Enqueue to outbound worker
                 success = await enqueue(Queue.OUTBOUND_MESSAGES, message_job)

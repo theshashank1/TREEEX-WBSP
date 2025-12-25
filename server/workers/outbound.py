@@ -67,6 +67,7 @@ from server.schemas.outbound import (
 )
 from server.services.azure_storage import extract_blob_name_from_url, generate_sas_url
 from server.whatsapp.outbound import OutboundClient, SendResult
+from server.whatsapp.renderer import render
 
 # =============================================================================
 # CONFIGURATION
@@ -496,91 +497,21 @@ async def send_message(
     client: OutboundClient,
     msg: OutboundMessage,
 ) -> SendResult:
-    if isinstance(msg, TextMessage):
-        return await client.send_text_message(
-            to_number=msg.to_number,
-            text=msg.text,
-            preview_url=msg.preview_url,
-            reply_to_message_id=msg.reply_to_message_id,
-        )
+    """
+    Send any message type using Command → Renderer → Client flow.
 
-    if isinstance(msg, TemplateMessage):
-        components = None
-        if msg.components:
-            components = [c.model_dump() for c in msg.components]
-        return await client.send_template_message(
-            to_number=msg.to_number,
-            template_name=msg.template_name,
-            language_code=msg.language_code,
-            components=components,
-        )
-
-    if isinstance(msg, MediaMessage):
-        return await client.send_media_message(
-            to_number=msg.to_number,
-            media_type=msg.media_type,
-            media_url=msg.media_url,
-            media_id=msg.media_id,
-            caption=msg.caption,
-            filename=msg.filename,
-            reply_to_message_id=msg.reply_to_message_id,
-        )
-
-    if isinstance(msg, InteractiveButtonsMessage):
-        return await client.send_interactive_buttons(
-            to_number=msg.to_number,
-            body_text=msg.body_text,
-            buttons=[{"id": b.id, "title": b.title} for b in msg.buttons],
-            header_text=msg.header_text,
-            footer_text=msg.footer_text,
-            reply_to_message_id=msg.reply_to_message_id,
-        )
-
-    if isinstance(msg, InteractiveListMessage):
-        sections = []
-        for section in msg.sections:
-            sections.append(
-                {
-                    "title": section.title,
-                    "rows": [
-                        {"id": r.id, "title": r.title, "description": r.description}
-                        for r in section.rows
-                    ],
-                }
-            )
-        return await client.send_interactive_list(
-            to_number=msg.to_number,
-            body_text=msg.body_text,
-            button_text=msg.button_text,
-            sections=sections,
-            header_text=msg.header_text,
-            footer_text=msg.footer_text,
-            reply_to_message_id=msg.reply_to_message_id,
-        )
-
-    if isinstance(msg, LocationMessage):
-        return await client.send_location(
-            to_number=msg.to_number,
-            latitude=msg.latitude,
-            longitude=msg.longitude,
-            name=msg.name,
-            address=msg.address,
-            reply_to_message_id=msg.reply_to_message_id,
-        )
-
-    if isinstance(msg, ReactionMessage):
-        return await client.send_reaction(
-            to_number=msg.to_number,
-            message_id=msg.target_message_id,
-            emoji=msg.emoji,
-        )
-
+    Simplified from 90+ lines to use the renderer module.
+    """
+    # Special case: mark as read has different flow
     if isinstance(msg, MarkAsReadMessage):
         return await client.mark_as_read(msg.target_message_id)
 
-    return SendResult(
-        error={"code": -1, "message": f"Unknown message type: {msg.type}"}
-    )
+    # Standard flow: render command to dict, send via client
+    try:
+        payload = render(msg)
+        return await client.send_payload(payload)
+    except ValueError as e:
+        return SendResult(error={"code": -1, "message": str(e)})
 
 
 # =============================================================================

@@ -71,15 +71,14 @@ class TemplateComponent(BaseModel):
 
 
 class BaseOutboundMessage(BaseModel):
-    """Base schema for outbound messages."""
+    """Base schema for outbound messages - pure business intent."""
 
-    type: str = Field(..., description="Message type identifier")
     message_id: str = Field(..., description="UUID - idempotency key")
     workspace_id: str = Field(..., description="Workspace UUID")
     phone_number_id: str = Field(..., description="Meta phone_number_id")
     to_number: str = Field(..., description="Recipient E.164 phone number")
 
-    # Optional fields
+    # Optional context fields
     reply_to_message_id: Optional[str] = Field(
         None, description="wa_message_id to reply to"
     )
@@ -93,7 +92,7 @@ class BaseOutboundMessage(BaseModel):
     @field_validator("to_number")
     @classmethod
     def validate_phone_number(cls, v: str) -> str:
-        """Ensure phone number is in E.164 format and numeric."""
+        """Business validation: Ensure phone number is in E.164 format."""
         cleaned = v.lstrip("+")
         if not cleaned.isdigit():
             raise ValueError("Phone number must contain only digits")
@@ -108,7 +107,7 @@ class BaseOutboundMessage(BaseModel):
 
 
 class TextMessage(BaseOutboundMessage):
-    """Text message payload."""
+    """Text message command."""
 
     type: Literal["text_message"] = "text_message"
     text: str = Field(..., max_length=4096, description="Message text")
@@ -116,7 +115,7 @@ class TextMessage(BaseOutboundMessage):
 
 
 class TemplateMessage(BaseOutboundMessage):
-    """Template message payload."""
+    """Template message command."""
 
     type: Literal["template_message"] = "template_message"
     template_name: str = Field(..., description="Approved template name")
@@ -127,7 +126,7 @@ class TemplateMessage(BaseOutboundMessage):
 
 
 class MediaMessage(BaseOutboundMessage):
-    """Media message (image, video, audio, document, sticker)."""
+    """Media message command (image, video, audio, document, sticker)."""
 
     type: Literal["media_message"] = "media_message"
     media_type: Literal["image", "video", "audio", "document", "sticker"]
@@ -149,12 +148,12 @@ class MediaMessage(BaseOutboundMessage):
 
 
 class InteractiveButtonsMessage(BaseOutboundMessage):
-    """Interactive message with reply buttons."""
+    """Interactive message command with reply buttons."""
 
     type: Literal["interactive_buttons"] = "interactive_buttons"
     body_text: str = Field(..., max_length=1024, description="Main message body")
     buttons: List[Button] = Field(
-        ..., min_length=1, max_length=3, description="Reply buttons"
+        ..., min_length=1, max_length=3, description="Reply buttons (max 3)"
     )
     header_text: Optional[str] = Field(
         None, max_length=60, description="Optional header"
@@ -165,7 +164,7 @@ class InteractiveButtonsMessage(BaseOutboundMessage):
 
 
 class InteractiveListMessage(BaseOutboundMessage):
-    """Interactive list message."""
+    """Interactive list message command."""
 
     type: Literal["interactive_list"] = "interactive_list"
     body_text: str = Field(..., max_length=1024, description="Main message body")
@@ -180,7 +179,7 @@ class InteractiveListMessage(BaseOutboundMessage):
 
 
 class LocationMessage(BaseOutboundMessage):
-    """Location pin message."""
+    """Location pin message command."""
 
     type: Literal["location_message"] = "location_message"
     latitude: float = Field(..., ge=-90, le=90)
@@ -190,7 +189,7 @@ class LocationMessage(BaseOutboundMessage):
 
 
 class ReactionMessage(BaseOutboundMessage):
-    """Reaction emoji message."""
+    """Reaction emoji message command."""
 
     type: Literal["reaction_message"] = "reaction_message"
     target_message_id: str = Field(..., description="wa_message_id to react to")
@@ -198,11 +197,11 @@ class ReactionMessage(BaseOutboundMessage):
 
 
 class MarkAsReadMessage(BaseOutboundMessage):
-    """Mark message as read."""
+    """Mark message as read command."""
 
     type: Literal["mark_as_read"] = "mark_as_read"
     target_message_id: str = Field(..., description="wa_message_id to mark as read")
-    to_number: Optional[str] = None  # type: ignore
+    to_number: Optional[str] = None  # type: ignore - not needed for read receipts
 
 
 # =============================================================================
@@ -221,26 +220,35 @@ OutboundMessage = Union[
 ]
 
 
+# Type string to class mapping
+MESSAGE_TYPE_MAP = {
+    "text_message": TextMessage,
+    "template_message": TemplateMessage,
+    "media_message": MediaMessage,
+    "interactive_buttons": InteractiveButtonsMessage,
+    "interactive_list": InteractiveListMessage,
+    "location_message": LocationMessage,
+    "reaction_message": ReactionMessage,
+    "mark_as_read": MarkAsReadMessage,
+}
+
+
 def parse_outbound_message(data: Dict[str, Any]) -> OutboundMessage:
     """
     Parse a dict into the appropriate outbound message type.
 
-    Raises ValueError if type unknown.
+    Args:
+        data: Dict with 'type' field indicating message type
+
+    Returns:
+        Validated Pydantic message instance
+
+    Raises:
+        ValueError: If type is unknown
     """
     message_type = data.get("type")
+    model_class = MESSAGE_TYPE_MAP.get(message_type)
 
-    type_map = {
-        "text_message": TextMessage,
-        "template_message": TemplateMessage,
-        "media_message": MediaMessage,
-        "interactive_buttons": InteractiveButtonsMessage,
-        "interactive_list": InteractiveListMessage,
-        "location_message": LocationMessage,
-        "reaction_message": ReactionMessage,
-        "mark_as_read": MarkAsReadMessage,
-    }
-
-    model_class = type_map.get(message_type)
     if not model_class:
         raise ValueError(f"Unknown message type: {message_type}")
 
