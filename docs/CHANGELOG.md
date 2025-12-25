@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `server/workers/campaign.py` - Now uses Pydantic `TemplateMessage` commands
 - `server/whatsapp/outbound.py` - Added `send_payload()` method
 
+### Removed
+- **`server/handlers/`** - Redundant orchestration layer removed for a cleaner architecture
+
 ### Changed
 - Moved test files from root to `tests/` directory
 - Updated `pyproject.toml` with proper metadata and keywords
