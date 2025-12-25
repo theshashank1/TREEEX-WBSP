@@ -13,6 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `CONTRIBUTING.md` contributor guidelines
 - pytest and pytest-asyncio dev dependencies
 - NGROK_AUTHTOKEN and NGROK_DOMAIN environment variable support
+- **`server/whatsapp/renderer.py`** - Command → dict converter
+- **`tests/test_renderer.py`** - 12 unit tests for renderer
+
+### Changed
+- **Messaging architecture**: Command → Renderer → dict → Client flow
+- `server/workers/outbound.py` - Simplified from 90 lines to 18 lines
+- `server/workers/campaign.py` - Now uses Pydantic `TemplateMessage` commands
+- `server/whatsapp/outbound.py` - Added `send_payload()` method
 
 ### Changed
 - Moved test files from root to `tests/` directory

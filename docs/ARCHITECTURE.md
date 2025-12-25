@@ -66,6 +66,23 @@ graph TB
   3. Writes to DB (Async).
   4. Downloads media if present.
 
+### 4. Messaging Architecture
+
+The outbound messaging follows a **Command → Renderer → Client** pattern:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│ Pydantic Command│────▶│    Renderer     │────▶│  OutboundClient │
+│   (Validation)  │     │  (Dict Builder) │     │   (HTTP Send)   │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
+
+| Layer | File | Purpose |
+|-------|------|---------|
+| **Commands** | `schemas/outbound.py` | Pydantic models validating business input |
+| **Renderer** | `whatsapp/renderer.py` | Converts commands to WhatsApp API dicts |
+| **Client** | `whatsapp/outbound.py` | HTTP transport to Meta Graph API |
+
 ---
 
 ## 💡 Key Design Decisions (ADRs)

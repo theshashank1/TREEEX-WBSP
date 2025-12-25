@@ -16,57 +16,46 @@ python -m server.workers.outbound --workers 4
 
 ### Enqueue Messages
 
+Use Pydantic commands for type-safe message creation:
+
 ```python
 from server.core.redis import Queue, enqueue
+from server.schemas.outbound import TextMessage, TemplateMessage, MediaMessage
 import uuid
 
-# Text message
-await enqueue(Queue.OUTBOUND_MESSAGES, {
-    "type": "text_message",
-    "message_id": str(uuid.uuid4()),
-    "workspace_id": str(workspace_id),
-    "phone_number_id": str(phone_number_id),  # Meta's phone_number_id
-    "to_number": "+15551234567",
-    "text": "Hello from WhatsApp!",
-    "preview_url": True,
-})
+# Text message (with Pydantic validation)
+cmd = TextMessage(
+    message_id=str(uuid.uuid4()),
+    workspace_id=str(workspace_id),
+    phone_number_id=str(phone_number_id),
+    to_number="+15551234567",
+    text="Hello from WhatsApp!",
+    preview_url=True,
+)
+await enqueue(Queue.OUTBOUND_MESSAGES, cmd.model_dump())
 
-# Interactive buttons
-await enqueue(Queue.OUTBOUND_MESSAGES, {
-    "type": "interactive_buttons",
-    "message_id": str(uuid.uuid4()),
-    "workspace_id": str(workspace_id),
-    "phone_number_id": str(phone_number_id),
-    "to_number": "+15551234567",
-    "body_text": "Would you like to continue?",
-    "buttons": [
-        {"id": "yes", "title": "Yes ✓"},
-        {"id": "no", "title": "No ✗"},
-    ],
-})
-
-# Template message (for business-initiated conversations)
-await enqueue(Queue.OUTBOUND_MESSAGES, {
-    "type": "template_message",
-    "message_id": str(uuid.uuid4()),
-    "workspace_id": str(workspace_id),
-    "phone_number_id": str(phone_number_id),
-    "to_number": "+15551234567",
-    "template_name": "hello_world",
-    "language_code": "en",
-})
+# Template message
+cmd = TemplateMessage(
+    message_id=str(uuid.uuid4()),
+    workspace_id=str(workspace_id),
+    phone_number_id=str(phone_number_id),
+    to_number="+15551234567",
+    template_name="hello_world",
+    language_code="en",
+)
+await enqueue(Queue.OUTBOUND_MESSAGES, cmd.model_dump())
 
 # Media message
-await enqueue(Queue.OUTBOUND_MESSAGES, {
-    "type": "media_message",
-    "message_id": str(uuid.uuid4()),
-    "workspace_id": str(workspace_id),
-    "phone_number_id": str(phone_number_id),
-    "to_number": "+15551234567",
-    "media_type": "image",
-    "media_url": "https://example.com/image.jpg",
-    "caption": "Check this out!",
-})
+cmd = MediaMessage(
+    message_id=str(uuid.uuid4()),
+    workspace_id=str(workspace_id),
+    phone_number_id=str(phone_number_id),
+    to_number="+15551234567",
+    media_type="image",
+    media_url="https://example.com/image.jpg",
+    caption="Check this out!",
+)
+await enqueue(Queue.OUTBOUND_MESSAGES, cmd.model_dump())
 ```
 
 ## Message Types
@@ -121,15 +110,21 @@ POST /api/admin/messages/requeue    # Requeue failed messages
 
 | File | Purpose |
 |------|---------|
-| `server/whatsapp/outbound.py` | OutboundClient - WhatsApp API wrapper |
-| `server/schemas/outbound.py` | Pydantic message validation |
+| `server/schemas/outbound.py` | Pydantic commands - validation layer |
+| `server/whatsapp/renderer.py` | **NEW** - Converts commands to WhatsApp dicts |
+| `server/whatsapp/outbound.py` | OutboundClient - HTTP transport |
 | `server/workers/outbound.py` | Queue worker with retry logic |
 | `server/core/rate_limiter.py` | Token bucket rate limiter |
 | `server/api/admin.py` | Admin endpoints |
-| `tests/test_outbound.py` | Test suite |
+| `tests/test_renderer.py` | Renderer unit tests |
+| `tests/test_outbound.py` | Integration tests |
 
 ## Running Tests
 
 ```bash
-python -m pytest tests/test_outbound.py -v
+# Renderer tests (unit)
+uv run python -m pytest tests/test_renderer.py -v
+
+# Full test suite
+uv run python -m pytest tests/ -v
 ```
