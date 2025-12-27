@@ -27,7 +27,11 @@ from server.schemas.messages import (
     MessageQueuedResponse,
     MessageResponse,
     MessageStatusResponse,
+    SendInteractiveButtonsRequest,
+    SendInteractiveListRequest,
+    SendLocationRequest,
     SendMediaMessageRequest,
+    SendReactionRequest,
     SendTemplateMessageRequest,
     SendTextMessageRequest,
 )
@@ -88,7 +92,8 @@ async def send_text_message(
         "from_number": channel.phone_number,
         "to_number": data.to,
         "text": data.text,
-        "preview_url": False,
+        "preview_url": data.preview_url,
+        "reply_to_message_id": data.reply_to_message_id,
         "sent_by": str(member.id),
     }
 
@@ -381,4 +386,255 @@ async def get_message_status(
         status=message.status,
         delivered_at=message.delivered_at.isoformat() if message.delivered_at else None,
         read_at=message.read_at.isoformat() if message.read_at else None,
+    )
+
+
+# =============================================================================
+# LOCATION MESSAGE
+# =============================================================================
+
+
+@router.post("/send/location", response_model=MessageQueuedResponse, status_code=201)
+async def send_location_message(
+    workspace_id: UUID,
+    data: SendLocationRequest,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+):
+    """Send a location pin message asynchronously."""
+    member = await get_workspace_member(workspace_id, current_user, session)
+
+    result = await session.execute(
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
+        )
+    )
+    channel = result.scalar_one_or_none()
+
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+
+    if not channel.access_token:
+        raise HTTPException(status_code=400, detail="Channel has no access token")
+
+    message_id = uuid_module.uuid4()
+
+    job = {
+        "type": "location_message",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": channel.meta_phone_number_id,
+        "to_number": data.to,
+        "latitude": data.latitude,
+        "longitude": data.longitude,
+        "name": data.name,
+        "address": data.address,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+    if not success:
+        raise HTTPException(status_code=503, detail="Failed to queue message")
+
+    log_event("location_message_queued", message_id=str(message_id), to=data.to)
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        channel_id=data.channel_id,
+        to_number=data.to,
+        type="location",
+        status=MessageStatus.PENDING.value,
+        queued=True,
+    )
+
+
+# =============================================================================
+# INTERACTIVE BUTTONS
+# =============================================================================
+
+
+@router.post(
+    "/send/interactive/buttons", response_model=MessageQueuedResponse, status_code=201
+)
+async def send_interactive_buttons_message(
+    workspace_id: UUID,
+    data: SendInteractiveButtonsRequest,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+):
+    """Send an interactive buttons message asynchronously."""
+    member = await get_workspace_member(workspace_id, current_user, session)
+
+    result = await session.execute(
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
+        )
+    )
+    channel = result.scalar_one_or_none()
+
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+
+    if not channel.access_token:
+        raise HTTPException(status_code=400, detail="Channel has no access token")
+
+    message_id = uuid_module.uuid4()
+
+    job = {
+        "type": "interactive_buttons",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": channel.meta_phone_number_id,
+        "to_number": data.to,
+        "body_text": data.body_text,
+        "buttons": [btn.model_dump() for btn in data.buttons],
+        "header_text": data.header_text,
+        "footer_text": data.footer_text,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+    if not success:
+        raise HTTPException(status_code=503, detail="Failed to queue message")
+
+    log_event("interactive_buttons_queued", message_id=str(message_id), to=data.to)
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        channel_id=data.channel_id,
+        to_number=data.to,
+        type="interactive",
+        status=MessageStatus.PENDING.value,
+        queued=True,
+    )
+
+
+# =============================================================================
+# INTERACTIVE LIST
+# =============================================================================
+
+
+@router.post(
+    "/send/interactive/list", response_model=MessageQueuedResponse, status_code=201
+)
+async def send_interactive_list_message(
+    workspace_id: UUID,
+    data: SendInteractiveListRequest,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+):
+    """Send an interactive list message asynchronously."""
+    member = await get_workspace_member(workspace_id, current_user, session)
+
+    result = await session.execute(
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
+        )
+    )
+    channel = result.scalar_one_or_none()
+
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+
+    if not channel.access_token:
+        raise HTTPException(status_code=400, detail="Channel has no access token")
+
+    message_id = uuid_module.uuid4()
+
+    job = {
+        "type": "interactive_list",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": channel.meta_phone_number_id,
+        "to_number": data.to,
+        "body_text": data.body_text,
+        "button_text": data.button_text,
+        "sections": [s.model_dump() for s in data.sections],
+        "header_text": data.header_text,
+        "footer_text": data.footer_text,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+    if not success:
+        raise HTTPException(status_code=503, detail="Failed to queue message")
+
+    log_event("interactive_list_queued", message_id=str(message_id), to=data.to)
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        channel_id=data.channel_id,
+        to_number=data.to,
+        type="interactive",
+        status=MessageStatus.PENDING.value,
+        queued=True,
+    )
+
+
+# =============================================================================
+# REACTION
+# =============================================================================
+
+
+@router.post("/send/reaction", response_model=MessageQueuedResponse, status_code=201)
+async def send_reaction_message(
+    workspace_id: UUID,
+    data: SendReactionRequest,
+    session: SessionDep,
+    current_user: CurrentUserDep,
+):
+    """Send a reaction emoji to an existing message."""
+    member = await get_workspace_member(workspace_id, current_user, session)
+
+    result = await session.execute(
+        select(Channel).where(
+            Channel.id == data.channel_id,
+            Channel.workspace_id == workspace_id,
+            Channel.deleted_at.is_(None),
+        )
+    )
+    channel = result.scalar_one_or_none()
+
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+
+    if not channel.access_token:
+        raise HTTPException(status_code=400, detail="Channel has no access token")
+
+    message_id = uuid_module.uuid4()
+
+    job = {
+        "type": "reaction_message",
+        "message_id": str(message_id),
+        "workspace_id": str(data.workspace_id),
+        "phone_number_id": channel.meta_phone_number_id,
+        "to_number": data.to,
+        "target_message_id": data.message_id,
+        "emoji": data.emoji,
+        "sent_by": str(member.id),
+    }
+
+    success = await enqueue(Queue.OUTBOUND_MESSAGES, job)
+    if not success:
+        raise HTTPException(status_code=503, detail="Failed to queue message")
+
+    log_event("reaction_message_queued", message_id=str(message_id), to=data.to)
+
+    return MessageQueuedResponse(
+        id=message_id,
+        workspace_id=data.workspace_id,
+        channel_id=data.channel_id,
+        to_number=data.to,
+        type="reaction",
+        status=MessageStatus.PENDING.value,
+        queued=True,
     )

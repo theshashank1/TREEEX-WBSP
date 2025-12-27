@@ -23,6 +23,10 @@ class SendTextMessageRequest(BaseModel):
     channel_id: UUID
     to: str = Field(..., description="Recipient phone number")
     text: str = Field(..., min_length=1, description="Message text")
+    preview_url: bool = Field(False, description="Show URL previews")
+    reply_to_message_id: Optional[str] = Field(
+        None, description="wa_message_id to reply to"
+    )
 
 
 class SendTemplateMessageRequest(BaseModel):
@@ -99,10 +103,91 @@ class MessageQueuedResponse(BaseModel):
     queued: bool = True
 
 
+# ============================================================================
+# NEW MESSAGE TYPE SCHEMAS
+# ============================================================================
+
+
+class SendLocationRequest(BaseModel):
+    """Schema for sending a location message"""
+
+    workspace_id: UUID
+    channel_id: UUID
+    to: str = Field(..., description="Recipient phone number")
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude")
+    name: Optional[str] = Field(None, max_length=100, description="Location name")
+    address: Optional[str] = Field(None, max_length=200, description="Location address")
+
+
+class ButtonItem(BaseModel):
+    """Single button for interactive message"""
+
+    id: str = Field(..., max_length=256)
+    title: str = Field(..., max_length=20)
+
+
+class SendInteractiveButtonsRequest(BaseModel):
+    """Schema for sending interactive buttons message"""
+
+    workspace_id: UUID
+    channel_id: UUID
+    to: str = Field(..., description="Recipient phone number")
+    body_text: str = Field(..., max_length=1024, description="Message body")
+    buttons: List[ButtonItem] = Field(..., min_length=1, max_length=3)
+    header_text: Optional[str] = Field(None, max_length=60)
+    footer_text: Optional[str] = Field(None, max_length=60)
+
+
+class ListRowItem(BaseModel):
+    """Row in an interactive list section"""
+
+    id: str = Field(..., max_length=200)
+    title: str = Field(..., max_length=24)
+    description: Optional[str] = Field(None, max_length=72)
+
+
+class ListSectionItem(BaseModel):
+    """Section in an interactive list"""
+
+    title: Optional[str] = Field(None, max_length=24)
+    rows: List[ListRowItem] = Field(..., min_length=1, max_length=10)
+
+
+class SendInteractiveListRequest(BaseModel):
+    """Schema for sending interactive list message"""
+
+    workspace_id: UUID
+    channel_id: UUID
+    to: str = Field(..., description="Recipient phone number")
+    body_text: str = Field(..., max_length=1024, description="Message body")
+    button_text: str = Field(..., max_length=20, description="List button text")
+    sections: List[ListSectionItem] = Field(..., min_length=1, max_length=10)
+    header_text: Optional[str] = Field(None, max_length=60)
+    footer_text: Optional[str] = Field(None, max_length=60)
+
+
+class SendReactionRequest(BaseModel):
+    """Schema for sending a reaction to a message"""
+
+    workspace_id: UUID
+    channel_id: UUID
+    to: str = Field(..., description="Recipient phone number")
+    message_id: str = Field(..., description="wa_message_id to react to")
+    emoji: str = Field(..., description="Emoji character")
+
+
 __all__ = [
     "SendTextMessageRequest",
     "SendTemplateMessageRequest",
     "SendMediaMessageRequest",
+    "SendLocationRequest",
+    "SendInteractiveButtonsRequest",
+    "SendInteractiveListRequest",
+    "SendReactionRequest",
+    "ButtonItem",
+    "ListRowItem",
+    "ListSectionItem",
     "MessageResponse",
     "MessageStatusResponse",
     "MessageQueuedResponse",

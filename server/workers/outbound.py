@@ -675,7 +675,7 @@ async def process_outbound_message(
 
             if result.success:
                 status = MessageStatus.SENT.value
-                wa_message_id = result.message_id
+                wa_message_id = result.wa_message_id
                 error_code = None
                 error_message = None
 
@@ -691,8 +691,10 @@ async def process_outbound_message(
             else:
                 status = MessageStatus.FAILED.value
                 wa_message_id = None
-                error_code = str(result.error.get("code") or "")
-                error_message = result.error.get("message") or "Unknown error"
+                error_code = str(result.error.code) if result.error else ""
+                error_message = (
+                    result.error.message if result.error else "Unknown error"
+                )
 
                 worker_state.messages_failed += 1
                 log_event(
@@ -705,7 +707,7 @@ async def process_outbound_message(
             await create_or_update_message(
                 session,
                 msg,
-                phone_number,
+                channel,
                 status=status,
                 wa_message_id=wa_message_id,
                 error_code=error_code,
