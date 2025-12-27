@@ -143,3 +143,12 @@ Thumbs.db
 
 openapi_check.json
 PROJECT_SPECIFICATION.md
+
+# Temporary / Generated Files
+issues_details.json
+issues_list.json
+test_output.txt
+test_output_utf8.txt
+
+ui/
+website/
