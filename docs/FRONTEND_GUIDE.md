@@ -108,24 +108,24 @@ class APIClient {
   }
 
   // Message methods
-  async sendTextMessage(workspaceId, phoneNumberId, to, text) {
-    return this.request('/api/messages/send/text', {
+  async sendTextMessage(workspaceId, channelId, to, text) {
+    return this.request(`/api/workspaces/${workspaceId}/messages/send/text`, {
       method: 'POST',
       body: JSON.stringify({
         workspace_id: workspaceId,
-        phone_number_id: phoneNumberId,
+        channel_id: channelId,
         to,
         text
       })
     });
   }
 
-  async sendMediaMessage(workspaceId, phoneNumberId, to, mediaType, mediaId, caption) {
-    return this.request('/api/messages/send/media', {
+  async sendMediaMessage(workspaceId, channelId, to, mediaType, mediaId, caption) {
+    return this.request(`/api/workspaces/${workspaceId}/messages/send/media`, {
       method: 'POST',
       body: JSON.stringify({
         workspace_id: workspaceId,
-        phone_number_id: phoneNumberId,
+        channel_id: channelId,
         to,
         media_type: mediaType,
         media_id: mediaId,
@@ -141,7 +141,7 @@ class APIClient {
     formData.append('file', file);
 
     const token = this.getToken();
-    const response = await fetch(`${this.baseURL}/api/media`, {
+    const response = await fetch(`${this.baseURL}/api/workspaces/${workspaceId}/media`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -157,14 +157,14 @@ class APIClient {
   }
 
   async listMedia(workspaceId, type = null, limit = 20, offset = 0) {
-    let query = `workspace_id=${workspaceId}&limit=${limit}&offset=${offset}`;
+    let query = `limit=${limit}&offset=${offset}`;
     if (type) query += `&type=${type}`;
-    return this.request(`/api/media?${query}`);
+    return this.request(`/api/workspaces/${workspaceId}/media?${query}`);
   }
 
   // Contact methods
   async createContact(workspaceId, phoneNumber, name = null, tags = null) {
-    return this.request('/api/contacts', {
+    return this.request(`/api/workspaces/${workspaceId}/contacts`, {
       method: 'POST',
       body: JSON.stringify({
         workspace_id: workspaceId,
@@ -177,10 +177,9 @@ class APIClient {
 
   async listContacts(workspaceId, filters = {}) {
     const params = new URLSearchParams({
-      workspace_id: workspaceId,
       ...filters
     });
-    return this.request(`/api/contacts?${params}`);
+    return this.request(`/api/workspaces/${workspaceId}/contacts?${params}`);
   }
 
   async importContacts(workspaceId, file) {
@@ -189,7 +188,7 @@ class APIClient {
 
     const token = this.getToken();
     const response = await fetch(
-      `${this.baseURL}/api/contacts/import?workspace_id=${workspaceId}`,
+      `${this.baseURL}/api/workspaces/${workspaceId}/contacts/import`,
       {
         method: 'POST',
         headers: {
@@ -207,12 +206,12 @@ class APIClient {
   }
 
   // Campaign methods
-  async createCampaign(workspaceId, phoneNumberId, name, templateId = null) {
-    return this.request('/api/campaigns', {
+  async createCampaign(workspaceId, channelId, name, templateId = null) {
+    return this.request(`/api/workspaces/${workspaceId}/campaigns`, {
       method: 'POST',
       body: JSON.stringify({
         workspace_id: workspaceId,
-        phone_number_id: phoneNumberId,
+        channel_id: channelId,
         name,
         template_id: templateId
       })
@@ -220,19 +219,19 @@ class APIClient {
   }
 
   async listCampaigns(workspaceId, status = null) {
-    let query = `workspace_id=${workspaceId}`;
-    if (status) query += `&status=${status}`;
-    return this.request(`/api/campaigns?${query}`);
+    let query = ``;
+    if (status) query += `status=${status}`;
+    return this.request(`/api/workspaces/${workspaceId}/campaigns?${query}`);
   }
 
-  async startCampaign(campaignId) {
-    return this.request(`/api/campaigns/${campaignId}/start`, {
+  async startCampaign(workspaceId, campaignId) {
+    return this.request(`/api/workspaces/${workspaceId}/campaigns/${campaignId}/execute`, {
       method: 'POST'
     });
   }
 
-  async pauseCampaign(campaignId) {
-    return this.request(`/api/campaigns/${campaignId}/pause`, {
+  async pauseCampaign(workspaceId, campaignId) {
+    return this.request(`/api/workspaces/${workspaceId}/campaigns/${campaignId}/pause`, {
       method: 'POST'
     });
   }
@@ -308,7 +307,7 @@ async function sendWelcomeMessage() {
   try {
     const result = await apiClient.sendTextMessage(
       'workspace-uuid-here',
-      'phone-number-uuid-here',
+      'channel-uuid-here',
       '+1234567890',
       'Welcome to our service!'
     );
@@ -333,7 +332,7 @@ async function sendImageMessage(imageFile, caption) {
     // Step 2: Send the media message
     const messageResult = await apiClient.sendMediaMessage(
       'workspace-uuid-here',
-      'phone-number-uuid-here',
+      'channel-uuid-here',
       '+1234567890',
       'image',
       mediaResult.id,
@@ -381,7 +380,7 @@ async function launchCampaign() {
     // Step 1: Create the campaign
     const campaign = await apiClient.createCampaign(
       'workspace-uuid-here',
-      'phone-number-uuid-here',
+      'channel-uuid-here',
       'Summer Sale Campaign',
       'template-uuid-here' // optional
     );
@@ -389,7 +388,10 @@ async function launchCampaign() {
     console.log('Campaign created:', campaign.id);
 
     // Step 2: Start the campaign
-    const started = await apiClient.startCampaign(campaign.id);
+    const started = await apiClient.startCampaign(
+      'workspace-uuid-here',
+      campaign.id
+    );
     console.log('Campaign status:', started.status);
 
   } catch (error) {
@@ -464,7 +466,7 @@ function LoginForm() {
 import { useState } from 'react';
 import { apiClient } from './api-client';
 
-function SendMessageForm({ workspaceId, phoneNumberId }) {
+function SendMessageForm({ workspaceId, channelId }) {
   const [recipient, setRecipient] = useState('');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null);
@@ -476,7 +478,7 @@ function SendMessageForm({ workspaceId, phoneNumberId }) {
     try {
       await apiClient.sendTextMessage(
         workspaceId,
-        phoneNumberId,
+        channelId,
         recipient,
         message
       );

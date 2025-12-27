@@ -1598,28 +1598,32 @@ See schema: [`SendTextMessageRequest`](#sendtextmessagerequest)
 ```json
 {
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "text": "text"
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "text": "Hello world! https://example.com",
+  "preview_url": true,
+  "reply_to_message_id": "optional_wa_message_id"
 }
 ```
 
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/messages/send/text' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/text' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "text": "text"
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "text": "Hello world! https://example.com",
+  "preview_url": true,
+  "reply_to_message_id": "optional_wa_message_id"
 }'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/messages/send/text', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/text', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN',
@@ -1627,9 +1631,11 @@ const response = await fetch('http://localhost:8000/api/messages/send/text', {
   },
   body: JSON.stringify({
     workspace_id: "550e8400-e29b-41d4-a716-446655440000",
-    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
-    to: "to",
-    text: "text"
+    channel_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "+15551234567",
+    text: "Hello world! https://example.com",
+    preview_url: true,
+    reply_to_message_id: "optional_wa_message_id"
   })
 });
 
@@ -1683,10 +1689,10 @@ See schema: [`SendTemplateMessageRequest`](#sendtemplatemessagerequest)
 ```json
 {
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "template_name": "template_name",
-  "template_language": "template_language",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "template_name": "hello_world",
+  "template_language": "en",
   "components": {}
 }
 ```
@@ -1694,21 +1700,21 @@ See schema: [`SendTemplateMessageRequest`](#sendtemplatemessagerequest)
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/messages/send/template' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/template' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "template_name": "template_name",
-  "template_language": "template_language",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "template_name": "hello_world",
+  "template_language": "en",
   "components": {}
 }'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/messages/send/template', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/template', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN',
@@ -1716,10 +1722,10 @@ const response = await fetch('http://localhost:8000/api/messages/send/template',
   },
   body: JSON.stringify({
     workspace_id: "550e8400-e29b-41d4-a716-446655440000",
-    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
-    to: "to",
-    template_name: "template_name",
-    template_language: "template_language",
+    channel_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "+15551234567",
+    template_name: "hello_world",
+    template_language: "en",
     components: {}
   })
 });
@@ -1780,32 +1786,32 @@ See schema: [`SendMediaMessageRequest`](#sendmediamessagerequest)
 ```json
 {
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "media_type": "media_type",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "media_type": "image",
   "media_id": "550e8400-e29b-41d4-a716-446655440000",
-  "caption": "caption"
+  "caption": "Check this out!"
 }
 ```
 
 #### Example Request
 
 ```bash
-curl -X POST 'http://localhost:8000/api/messages/send/media' \
+curl -X POST 'http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/media' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
   -d '{
   "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
-  "phone_number_id": "550e8400-e29b-41d4-a716-446655440000",
-  "to": "to",
-  "media_type": "media_type",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "media_type": "image",
   "media_id": "550e8400-e29b-41d4-a716-446655440000",
-  "caption": "caption"
+  "caption": "Check this out!"
 }'
 ```
 
 ```javascript
-const response = await fetch('http://localhost:8000/api/messages/send/media', {
+const response = await fetch('http://localhost:8000/api/workspaces/550e8400-e29b-41d4-a716-446655440000/messages/send/media', {
   method: 'POST',
   headers: {
     Authorization: 'Bearer YOUR_ACCESS_TOKEN',
@@ -1813,11 +1819,11 @@ const response = await fetch('http://localhost:8000/api/messages/send/media', {
   },
   body: JSON.stringify({
     workspace_id: "550e8400-e29b-41d4-a716-446655440000",
-    phone_number_id: "550e8400-e29b-41d4-a716-446655440000",
-    to: "to",
-    media_type: "media_type",
+    channel_id: "550e8400-e29b-41d4-a716-446655440000",
+    to: "+15551234567",
+    media_type: "image",
     media_id: "550e8400-e29b-41d4-a716-446655440000",
-    caption: "caption"
+    caption: "Check this out!"
   })
 });
 
@@ -1837,6 +1843,158 @@ Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
 Returns: [`HTTPValidationError`](#httpvalidationerror)
 
 
+
+---
+
+
+### Send Location Message
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/location</code>
+</div>
+
+Send a location pin.
+
+#### Request Body (`application/json`)
+
+See schema: [`SendLocationRequest`](#sendlocationrequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "latitude": 37.7749,
+  "longitude": -122.4194,
+  "name": "Headquarters",
+  "address": "123 Tech Street, San Francisco, CA"
+}
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
+
+---
+
+
+### Send Interactive Buttons
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/interactive/buttons</code>
+</div>
+
+Send a message with up to 3 quick reply buttons.
+
+#### Request Body (`application/json`)
+
+See schema: [`SendInteractiveButtonsRequest`](#sendinteractivebuttonsrequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "body_text": "Please select an option:",
+  "buttons": [
+    {"id": "yes", "title": "Yes"},
+    {"id": "no", "title": "No"}
+  ],
+  "header_text": "Confirmation",
+  "footer_text": "Select one"
+}
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
+
+---
+
+
+### Send Interactive List
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/interactive/list</code>
+</div>
+
+Send a message with a list menu (up to 10 rows).
+
+#### Request Body (`application/json`)
+
+See schema: [`SendInteractiveListRequest`](#sendinteractivelistrequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "body_text": "Please choose a service:",
+  "button_text": "View Menu",
+  "sections": [
+    {
+      "title": "Support",
+      "rows": [
+        {"id": "tech_support", "title": "Tech Support", "description": "Help with technical issues"},
+        {"id": "billing", "title": "Billing", "description": "Help with payments"}
+      ]
+    }
+  ]
+}
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
+
+---
+
+
+### Send Reaction
+
+<div style={{display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px"}}>
+  <span style={{backgroundColor: "#49CC90", color: "white", padding: "4px 12px", borderRadius: "4px", fontWeight: "bold", fontSize: "12px"}}>{{ POST }}</span>
+  <code>/api/workspaces/{workspace_id}/messages/send/reaction</code>
+</div>
+
+React to a message with an emoji.
+
+#### Request Body (`application/json`)
+
+See schema: [`SendReactionRequest`](#sendreactionrequest)
+
+**Example:**
+
+```json
+{
+  "workspace_id": "550e8400-e29b-41d4-a716-446655440000",
+  "channel_id": "550e8400-e29b-41d4-a716-446655440000",
+  "to": "+15551234567",
+  "message_id": "wamid.HBgLM...",
+  "emoji": "👍"
+}
+```
+
+#### Responses
+
+**201** - Successful Response
+
+Returns: [`MessageQueuedResponse`](#messagequeuedresponse)
 
 ---
 

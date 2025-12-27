@@ -41,12 +41,12 @@ curl -X POST http://localhost:8000/api/workspaces/ \
 The simplest message type.
 
 ```bash
-curl -X POST http://localhost:8000/api/messages/send/text \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/messages/send/text \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
     "workspace_id": "ws_uuid",
-    "phone_number_id": "phone_uuid",
+    "channel_id": "channel_uuid",
     "to": "1234567890",
     "text": "Hello form TREEEX!"
   }'
@@ -57,13 +57,15 @@ curl -X POST http://localhost:8000/api/messages/send/text \
 Templates must be approved by Meta first.
 
 ```bash
-curl -X POST http://localhost:8000/api/messages/send/template \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/messages/send/template \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
   -d '{
     "workspace_id": "ws_uuid",
-    "phone_number_id": "phone_uuid",
+    "channel_id": "channel_uuid",
     "to": "1234567890",
     "template_name": "hello_world",
-    "language": "en_US",
+    "template_language": "en_US",
     "components": []
   }'
 ```
@@ -74,19 +76,22 @@ First, upload the media to get a handle, then send the message.
 
 **Step A: Upload Media**
 ```bash
-curl -F "file=@image.jpg" \
+curl -H "Authorization: Bearer <token>" \
+     -F "file=@image.jpg" \
      -F "workspace_id=ws_uuid" \
-     http://localhost:8000/api/media/upload
+     http://localhost:8000/api/workspaces/ws_uuid/media
 ```
 
 **Step B: Send Message**
 ```bash
-curl -X POST http://localhost:8000/api/messages/send/media \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/messages/send/media \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
   -d '{
     "workspace_id": "ws_uuid",
-    "phone_number_id": "phone_uuid",
+    "channel_id": "channel_uuid",
     "to": "1234567890",
-    "type": "image",
+    "media_type": "image",
     "media_id": "<media_uuid_from_step_A>",
     "caption": "Check this out!"
   }'
@@ -100,11 +105,13 @@ Broadcasts allow you to send messages to thousands of contacts efficiently.
 
 ### 1. Create Campaign
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/ \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/campaigns/ \
   -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
   -d '{
     "name": "Summer Sale",
-    "template_name": "summer_promo",
+    "channel_id": "channel_uuid",
+    "template_id": "template_uuid",
     "workspace_id": "ws_uuid"
   }'
 ```
@@ -112,31 +119,32 @@ curl -X POST http://localhost:8000/api/campaigns/ \
 ### 2. Add Contacts
 Upload a list of contacts to the campaign.
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{id}/contacts \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/campaigns/{id}/contacts \
   -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
   -d '{
-    "contacts": ["+1234567890", "+9876543210"]
+    "contact_ids": ["uuid_1", "uuid_2"]
   }'
 ```
 
 ### 3. Execute Campaign
 Starts the campaign. Status moves from `DRAFT` -> `RUNNING`.
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{id}/execute \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/campaigns/{id}/execute \
   -H "Authorization: Bearer <token>"
 ```
 
 ### 4. Pause Campaign
 Pause a running campaign (Status -> `SCHEDULED`).
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{id}/pause \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/campaigns/{id}/pause \
   -H "Authorization: Bearer <token>"
 ```
 
 ### 5. Cancel Campaign
 Permanently cancel a campaign (Status -> `CANCELLED`).
 ```bash
-curl -X POST http://localhost:8000/api/campaigns/{id}/cancel \
+curl -X POST http://localhost:8000/api/workspaces/ws_uuid/campaigns/{id}/cancel \
   -H "Authorization: Bearer <token>"
 ```
 
